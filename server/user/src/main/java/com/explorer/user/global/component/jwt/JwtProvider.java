@@ -59,7 +59,7 @@ public class JwtProvider {
         return UserInfo.builder()
                 .userId(Long.valueOf((String) (map.get("jti"))))
                 .nickname((String) map.get(CLAIM_NICKNAME))
-                .avartar((Integer) map.get(CLAIM_AVATAR))
+                .avartar(Integer.parseInt((String.valueOf(map.get(CLAIM_AVATAR)))))
                 .build();
     }
 

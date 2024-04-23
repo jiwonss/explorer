@@ -7,7 +7,11 @@ import com.explorer.user.domain.user.exception.UserErrorCode;
 import com.explorer.user.domain.user.exception.UserException;
 import com.explorer.user.domain.user.repository.UserRepository;
 import com.explorer.user.domain.user.service.AuthService;
+import com.explorer.user.global.common.dto.UserInfo;
+import com.explorer.user.global.component.jwt.JwtProps;
 import com.explorer.user.global.component.jwt.JwtProvider;
+import com.explorer.user.global.component.jwt.exception.JwtErrorCode;
+import com.explorer.user.global.component.jwt.exception.JwtException;
 import com.explorer.user.global.component.jwt.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private final JwtProps jwtProps;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -74,6 +79,25 @@ public class AuthServiceImpl implements AuthService {
                                 .build()
                 )
                 .build();
+    }
+
+    @Override
+    public TokenInfo reissue(String accessToken, String refreshToken) {
+        UserInfo userInfo = jwtProvider.parseAccessTokenByBase64(accessToken);
+
+        User user = userRepository.findById(userInfo.getUserId())
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+
+        String newAccessToken = jwtProvider.issueAccessToken(user.getId(), user.getNickname(), user.getAvartar());
+        String newRefreshToken = jwtProvider.issueRefreshToken();
+
+        refreshTokenRepository.save(String.valueOf(userInfo.getUserId()), newRefreshToken);
+
+        return TokenInfo.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
     }
 
 

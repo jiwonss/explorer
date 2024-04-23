@@ -2,6 +2,7 @@ package com.explorer.user.domain.user.controller;
 
 import com.explorer.user.domain.user.dto.LoginRequest;
 import com.explorer.user.domain.user.dto.SignupRequest;
+import com.explorer.user.domain.user.dto.TokenRequest;
 import com.explorer.user.domain.user.service.AuthService;
 import com.explorer.user.global.common.dto.Message;
 import jakarta.validation.Valid;
@@ -35,6 +36,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
         return ResponseEntity.ok(Message.success(authService.login(loginRequest.email(), loginRequest.password())));
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<?> reissue(@RequestBody TokenRequest tokenRequest) {
+        return ResponseEntity.ok(Message.success(authService.reissue(tokenRequest.accessToken(), tokenRequest.refreshToken())));
     }
 
 }

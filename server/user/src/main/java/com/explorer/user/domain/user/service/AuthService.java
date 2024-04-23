@@ -1,6 +1,7 @@
 package com.explorer.user.domain.user.service;
 
 import com.explorer.user.domain.user.dto.LoginResponse;
+import com.explorer.user.domain.user.dto.TokenInfo;
 
 public interface AuthService {
 
@@ -8,5 +9,6 @@ public interface AuthService {
     boolean checkEmailDuplicates(String email);
     boolean checkNicknameDuplicates(String nickname);
     LoginResponse login(String email, String password);
+    TokenInfo reissue(String accessToken, String refreshToken);
 
 }

@@ -16,19 +16,19 @@ public class RefreshTokenRepository {
 
     private static final String KEY_PREFIX = "refreshToken::";
 
-    public void save(String playerId, String refreshToken) {
+    public void save(String userId, String refreshToken) {
         redisTemplate.opsForValue()
-                .set(KEY_PREFIX + playerId, refreshToken, jwtProps.refreshExpiration());
+                .set(KEY_PREFIX + userId, refreshToken, jwtProps.refreshExpiration());
     }
 
-    public Optional<String> find(String playerId) {
-        String token = redisTemplate.opsForValue().get(KEY_PREFIX + playerId);
+    public Optional<String> find(String userId) {
+        String token = redisTemplate.opsForValue().get(KEY_PREFIX + userId);
 
         return Optional.ofNullable(token);
     }
 
-    public void delete(String playerId) {
-        redisTemplate.delete(KEY_PREFIX + playerId);
+    public void delete(String userId) {
+        redisTemplate.delete(KEY_PREFIX + userId);
     }
 
 }
