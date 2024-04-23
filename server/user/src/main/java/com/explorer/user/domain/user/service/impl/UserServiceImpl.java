@@ -11,13 +11,4 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    @Override
-    public boolean checkEmailDuplicates(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    @Override
-    public boolean checkNicknameDuplicates(String nickname) {
-        return userRepository.existsByNickname(nickname);
-    }
 }
