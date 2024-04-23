@@ -21,7 +21,11 @@ spring:
           predicates:
             - Path=/user/user/**
           filters:
+            - AuthorizationHeaderFilter
             - RewritePath=/user/(?<segment>.*), /$\{segment}
+
+jwt:
+  access-key: d700abc47f739b58ae6a3f6a78ef6a02866c437589ebd9cce097e16b6a4e6f5f249299d1b9a871d598ad6eacba6adeb35d863b00eafece43e05fccc3a56ccd1f
 
 eureka:
   instance:
