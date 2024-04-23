@@ -1,8 +1,6 @@
 package com.explorer.user.domain.user.service.impl;
 
-import com.explorer.user.domain.user.dto.LoginRequest;
 import com.explorer.user.domain.user.dto.LoginResponse;
-import com.explorer.user.domain.user.dto.SignupRequest;
 import com.explorer.user.domain.user.dto.TokenInfo;
 import com.explorer.user.domain.user.entity.User;
 import com.explorer.user.domain.user.exception.UserErrorCode;
@@ -28,19 +26,19 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
-    public void signup(SignupRequest signupRequest) {
-        if (userRepository.existsByEmail(signupRequest.email())) {
+    public void signup(String email, String password, String nickname) {
+        if (userRepository.existsByEmail(email)) {
             throw new UserException(UserErrorCode.DUPLICATED_USER);
         }
 
-        if (userRepository.existsByNickname(signupRequest.nickname())) {
+        if (userRepository.existsByNickname(nickname)) {
             throw  new UserException(UserErrorCode.DUPLICATED_NICKNAME);
         }
 
         User user = User.builder()
-                .email(signupRequest.email())
-                .password(passwordEncoder.encode(signupRequest.password()))
-                .nickname(signupRequest.nickname())
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .nickname(nickname)
                 .build();
         userRepository.save(user);
     }
@@ -56,10 +54,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse login(LoginRequest loginRequest) {
-        User user = userRepository.findByEmail(loginRequest.email()).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+    public LoginResponse login(String email, String password) {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
 
-        if (!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
 

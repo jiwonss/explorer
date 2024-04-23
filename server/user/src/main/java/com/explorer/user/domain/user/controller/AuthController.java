@@ -18,7 +18,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest signupRequest) {
-        authService.signup(signupRequest);
+        authService.signup(signupRequest.email(), signupRequest.password(), signupRequest.nickname());
         return ResponseEntity.ok(Message.success());
     }
 
@@ -34,7 +34,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
-        return ResponseEntity.ok(Message.success(authService.login(loginRequest)));
+        return ResponseEntity.ok(Message.success(authService.login(loginRequest.email(), loginRequest.password())));
     }
 
 }
