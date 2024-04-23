@@ -82,7 +82,7 @@
 4. 실서버에 Docker를 설치 한 후 Container Registry에서 Image를 Pull 한다.
 5. Docker에서 Image를 run 한다.
 
-#명령어
+# 명령어
 
 ## 설치
 
@@ -118,8 +118,8 @@ sudo docker run hello-world
 
 ---
 
-- `**sudo apt-get update**` : 시스템 패키지 목록 업데이트
-- `**sudo apt-get install ca-certificates curl**` : `ca-certificates`와 `curl` 패키지 설치
+- **`sudo apt-get update`** : 시스템 패키지 목록 업데이트
+- **`sudo apt-get install ca-certificates curl`** : `ca-certificates`와 `curl` 패키지 설치
     - `ca-certificates` : SSL/TLS 연결을 인증하기 위한 인증서 관리
     - `curl` : URL을 통해 데이터를 전송하는 도구
 - **`sudo install -m 0755 -d /etc/apt/keyrings`** : `/etc/apt/keyrings` 디렉토리 생성 및 권한 설정
