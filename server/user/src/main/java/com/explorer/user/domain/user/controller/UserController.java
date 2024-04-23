@@ -16,14 +16,4 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/email")
-    public ResponseEntity<?> checkEmailDuplicates(@RequestParam String email) {
-        return ResponseEntity.ok(Message.success(userService.checkEmailDuplicates(email)));
-    }
-
-    @GetMapping("/nickname")
-    public ResponseEntity<?> checkNicknameDuplicates(@RequestParam String nickname) {
-        return ResponseEntity.ok(Message.success(userService.checkNicknameDuplicates(nickname)));
-    }
-
 }

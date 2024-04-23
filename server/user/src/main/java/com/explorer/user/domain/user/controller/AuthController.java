@@ -22,6 +22,16 @@ public class AuthController {
         return ResponseEntity.ok(Message.success());
     }
 
+    @GetMapping("/email")
+    public ResponseEntity<?> checkEmailDuplicates(@RequestParam String email) {
+        return ResponseEntity.ok(Message.success(authService.checkEmailDuplicates(email)));
+    }
+
+    @GetMapping("/nickname")
+    public ResponseEntity<?> checkNicknameDuplicates(@RequestParam String nickname) {
+        return ResponseEntity.ok(Message.success(authService.checkNicknameDuplicates(nickname)));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
         return ResponseEntity.ok(Message.success(authService.login(loginRequest)));

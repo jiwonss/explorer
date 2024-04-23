@@ -46,6 +46,16 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public boolean checkEmailDuplicates(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean checkNicknameDuplicates(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
+    @Override
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.email()).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
 
