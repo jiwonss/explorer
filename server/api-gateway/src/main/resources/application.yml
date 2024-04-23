@@ -4,6 +4,24 @@ server:
 spring:
   application:
     name: api-gateway
+  cloud:
+    gateway:
+      httpclient:
+        ssl:
+          useInsecureTrustManager: true
+      routes:
+        - id: auth
+          uri: lb://USER
+          predicates:
+            - Path=/user/auth/**
+          filters:
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
+        - id: user
+          uri: lb://USER
+          predicates:
+            - Path=/user/user/**
+          filters:
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
 
 eureka:
   instance:
