@@ -11,6 +11,6 @@ public class UserInfo {
 
     private Long userId;
     private String nickname;
-    private int avartar;
+    private int avatar;
 
 }

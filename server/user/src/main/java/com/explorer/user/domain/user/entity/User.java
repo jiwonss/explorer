@@ -25,7 +25,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String nickname;
 
-    private int avartar;
+    private int avatar;
 
     @Enumerated(EnumType.STRING)
     private Status status;
