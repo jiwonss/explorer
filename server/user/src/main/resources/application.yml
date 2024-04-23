@@ -1,0 +1,53 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: user
+  jpa:
+    open-in-view: false
+    defer-datasource-initialization: true
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        show_sql: true
+      jdbc:
+        batch_size: 100
+      default_batch_fetch_size: 100
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/explorer?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&zeroDateTimeBehavior=convertToNull
+    username: ssafy
+    password: ssafy
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  access-key: d700abc47f739b58ae6a3f6a78ef6a02866c437589ebd9cce097e16b6a4e6f5f249299d1b9a871d598ad6eacba6adeb35d863b00eafece43e05fccc3a56ccd1f
+  refresh-key: 70b9082a4b44e34708a8a4de636ae4f9e9ca5c86cb145a6982b713f416ac16c9618d068719f86e7cc74596aec7cd9edebf8a849612f5cf684e50b2d4d109a130
+  access-expiration: 1h
+  refresh-expiration: 7d
+
+logging:
+  level:
+    org.hibernate:
+      type.descriptor.sql: trace
+      org.hibernate.SQLQuery: debug
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    hostname: localhost
+    ip-address: localhost
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
