@@ -5,6 +5,8 @@
 - Open Source Configuration.md 생성
 - 
 24.04.24.수 <br>
+- erd 회의 : User db
+- db 설계 확정 : : IngameDB-MongoDB, UserDB-MariaDB
 [plan]<br>
 - Open Source Configuration.md : project 소개 추가
 - Ingame Real-Time Server 생성, basic setup
