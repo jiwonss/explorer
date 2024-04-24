@@ -6,11 +6,14 @@ import com.explorer.user.global.component.jwt.exception.JwtException;
 import com.explorer.user.global.error.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -19,7 +22,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> invalidInputExceptionHandler(MethodArgumentNotValidException e) {
         log.debug(Arrays.toString(e.getStackTrace()));
-        return ResponseEntity.ok(Message.fail(String.valueOf(ErrorCode.INVALID_INPUT), ErrorCode.INVALID_INPUT.getMessage()));
+
+        Map<String, String> map = new HashMap<>();
+        BindingResult bindingResult = e.getBindingResult();
+        bindingResult.getFieldErrors().forEach(fieldError -> {
+            map.put(fieldError.getField(), fieldError.getDefaultMessage());
+        });
+
+        return ResponseEntity.ok(Message.fail(String.valueOf(ErrorCode.INVALID_INPUT), map.toString()));
     }
 
     @ExceptionHandler(JwtException.class)

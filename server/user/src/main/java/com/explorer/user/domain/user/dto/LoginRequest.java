@@ -1,11 +1,14 @@
 package com.explorer.user.domain.user.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
 
-        @NotNull String email,
-        @NotNull String password
+        @NotBlank
+        String email,
+
+        @NotBlank
+        String password
 
 ) {
 }

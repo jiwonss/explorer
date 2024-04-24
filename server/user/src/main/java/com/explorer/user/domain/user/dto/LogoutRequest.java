@@ -1,10 +1,11 @@
 package com.explorer.user.domain.user.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record LogoutRequest(
 
-       @NotNull String refreshToken
+       @NotBlank
+       String refreshToken
 
 ) {
 }
