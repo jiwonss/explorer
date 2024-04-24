@@ -2,17 +2,22 @@ package com.explorer.user.global.component.jwt;
 
 import com.explorer.user.global.common.dto.UserInfo;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.json.BasicJsonParser;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
@@ -63,6 +68,17 @@ public class JwtProvider {
                 .build();
     }
 
+    public Date getExpirationDate(String accessToken) {
+        SignatureAlgorithm sa = SignatureAlgorithm.HS512;
+        SecretKeySpec secretKeySpec = new SecretKeySpec(props.accessKey().getBytes(), sa.getJcaName());
 
+        JwtParser jwtParser = Jwts.parser()
+                .verifyWith(secretKeySpec)
+                .build();
+
+        Claims claims = (Claims) jwtParser.parse(accessToken).getPayload();
+
+        return claims.getExpiration();
+    }
 
 }
