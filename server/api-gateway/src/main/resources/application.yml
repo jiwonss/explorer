@@ -19,7 +19,7 @@ spring:
         - id: user
           uri: lb://USER
           predicates:
-            - Path=/user/user/**
+            - Path=/user/users/**
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/user/(?<segment>.*), /$\{segment}
