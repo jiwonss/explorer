@@ -5,10 +5,10 @@ import com.explorer.user.domain.user.dto.TokenInfo;
 
 public interface AuthService {
 
-    void signup(String email, String password, String nickname);
-    boolean checkEmailDuplicates(String email);
+    void signup(String loginId, String password, String nickname);
+    boolean checkEmailDuplicates(String loginId);
     boolean checkNicknameDuplicates(String nickname);
-    LoginResponse login(String email, String password);
+    LoginResponse login(String loginId, String password);
     TokenInfo reissue(String accessToken, String refreshToken);
 
 }

@@ -7,7 +7,7 @@ public record SignupRequest (
 
         @NotBlank
         @Size(min = 6, max = 15)
-        String email,
+        String loginId,
 
         @NotBlank
         @Size(min = 8, max = 15)

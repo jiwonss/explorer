@@ -29,8 +29,8 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
-    public void signup(String email, String password, String nickname) {
-        if (userRepository.existsByEmail(email)) {
+    public void signup(String loginId, String password, String nickname) {
+        if (userRepository.existsByLoginId(loginId)) {
             throw new UserException(UserErrorCode.DUPLICATED_USER);
         }
 
@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = User.builder()
-                .email(email)
+                .loginId(loginId)
                 .password(passwordEncoder.encode(password))
                 .nickname(nickname)
                 .build();
@@ -47,8 +47,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public boolean checkEmailDuplicates(String email) {
-        return userRepository.existsByEmail(email);
+    public boolean checkEmailDuplicates(String loginId) {
+        return userRepository.existsByLoginId(loginId);
     }
 
     @Override
@@ -57,8 +57,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse login(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+    public LoginResponse login(String loginId, String password) {
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new UserException(UserErrorCode.INVALID_PASSWORD);

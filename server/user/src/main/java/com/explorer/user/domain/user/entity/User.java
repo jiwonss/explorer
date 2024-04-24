@@ -16,18 +16,20 @@ public class User {
     @Column(name = "user_id")
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @Column(name = "user_login_id", unique = true, nullable = false)
+    private String loginId;
 
-    @Column(nullable = false)
+    @Column(name = "user_password", nullable = false)
     private String password;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "user_nickname", unique = true, nullable = false)
     private String nickname;
 
+    @Column(name = "user_avatar")
     private int avatar;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "user_status")
     private Status status;
 
 }
