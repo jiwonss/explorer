@@ -4,45 +4,75 @@ using UnityEngine;
 
 public class CharacterMove : MonoBehaviour
 {
-    private Rigidbody rigid;
-    private bool isJumping = false; 
+    public Transform cameraTransform;
 
-    public int JumpPower;
-    public int MoveSpeed;
+    
+    public CharacterController characterController;
+
+
+    public float moveSpeed = 3f;
+
+    public float jumpSpeed = 3f;
+
+    public float gravity = -10f;
+
+    public float yVelocity = 0;
+
 
     void Start()
     {
-        rigid = GetComponent<Rigidbody>();
+        
     }
 
     void Update()
     {
-        Move();
-        Jump();
-    }
-
-    void Move()
-    {
+        
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        transform.Translate((new Vector3(h, 0, v) * MoveSpeed) * Time.deltaTime);
+
+        Vector3 moveDirection = new Vector3(h, 0, v);
+
+        
+        moveDirection = cameraTransform.TransformDirection(moveDirection);
+
+        
+        moveDirection *= moveSpeed;
+
+
+        if (characterController.isGrounded)
+
+        {
+            yVelocity = 0;
+
+            if (Input.GetKeyDown(KeyCode.Space))
+
+            {
+                yVelocity = jumpSpeed;
+
+            }
+        }
+        
+        yVelocity += (gravity * Time.deltaTime);
+
+        
+        moveDirection.y = yVelocity;
+
+
+        characterController.Move(moveDirection * Time.deltaTime);
+
+        Dash();
+    }
+    void Dash()
+    {
+
+        if (Input.GetKeyDown(KeyCode.LeftShift)){
+        moveSpeed += 10f;
+        }
+    
+        if(Input.GetKeyUp(KeyCode.LeftShift)) {
+        moveSpeed -= 10f;
+    }
     }
 
-    void Jump()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && !isJumping)
-        {
-            rigid.AddForce(Vector3.up * JumpPower, ForceMode.Impulse);
-            isJumping = true;
-        }
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isJumping = false; 
-        }
-    }
 }
