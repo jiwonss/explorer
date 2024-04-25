@@ -1,4 +1,4 @@
-package com.explorer.apigateway.global.jwt;
+package com.explorer.apigateway.global.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

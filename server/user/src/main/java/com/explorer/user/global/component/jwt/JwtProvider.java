@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.json.BasicJsonParser;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
@@ -63,6 +65,26 @@ public class JwtProvider {
                 .build();
     }
 
+    private Claims getAccessTokenPayload(String accessToken) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(props.accessKey().getBytes()))
+                .build()
+                .parseSignedClaims(accessToken).getPayload();
+    }
 
+    public Date getAccessTokenExpirationDate(String accessToken) {
+        return getAccessTokenPayload(accessToken).getExpiration();
+    }
+
+    private Claims getRefreshTokenPayload(String refreshToken) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(props.refreshKey().getBytes()))
+                .build()
+                .parseSignedClaims(refreshToken).getPayload();
+    }
+
+    public Date getRefreshTokenExpirationDate(String refreshToken) {
+        return getRefreshTokenPayload(refreshToken).getExpiration();
+    }
 
 }

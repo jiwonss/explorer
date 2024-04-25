@@ -1,14 +1,12 @@
 package com.explorer.apigateway.global.jwt;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@Getter
-@AllArgsConstructor
 @ConfigurationProperties(prefix = "jwt")
-public class JwtPros {
+public record JwtProps(
 
-    private String accessKey;
+        String accessKey
+
+) {
 
 }
