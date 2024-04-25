@@ -32,4 +32,9 @@ public class User {
     @Column(name = "user_status")
     private Status status;
 
+    public void updateProfile(User user) {
+        this.nickname = user.getNickname();
+        this.avatar = user.getAvatar();
+    }
+
 }
