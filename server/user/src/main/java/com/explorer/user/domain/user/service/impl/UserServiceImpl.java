@@ -1,5 +1,10 @@
 package com.explorer.user.domain.user.service.impl;
 
+import com.explorer.user.domain.user.dto.ProfileRequest;
+import com.explorer.user.domain.user.dto.ProfileResponse;
+import com.explorer.user.domain.user.entity.User;
+import com.explorer.user.domain.user.exception.UserErrorCode;
+import com.explorer.user.domain.user.exception.UserException;
 import com.explorer.user.domain.user.repository.UserRepository;
 import com.explorer.user.domain.user.service.UserService;
 import com.explorer.user.global.component.jwt.JwtProvider;
@@ -36,6 +41,19 @@ public class UserServiceImpl implements UserService {
 
         blackListRepository.save(accessToken, jwtProvider.getAccessTokenExpirationDate(accessToken));
         refreshTokenRepository.delete(String.valueOf(userId));
+    }
+
+    @Override
+    public ProfileResponse selectDetailUserInfo(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+        return ProfileResponse.fromUser(user);
+    }
+
+    @Transactional
+    @Override
+    public void updateUserInfo(Long userId, User user) {
+        User target = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+        target.updateProfile(user);
     }
 
 }
