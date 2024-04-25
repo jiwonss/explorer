@@ -2,16 +2,13 @@ package com.explorer.user.global.component.jwt;
 
 import com.explorer.user.global.common.dto.UserInfo;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.json.BasicJsonParser;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
@@ -68,17 +65,26 @@ public class JwtProvider {
                 .build();
     }
 
-    public Date getExpirationDate(String accessToken) {
-        SignatureAlgorithm sa = SignatureAlgorithm.HS512;
-        SecretKeySpec secretKeySpec = new SecretKeySpec(props.accessKey().getBytes(), sa.getJcaName());
+    private Claims getAccessTokenPayload(String accessToken) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(props.accessKey().getBytes()))
+                .build()
+                .parseSignedClaims(accessToken).getPayload();
+    }
 
-        JwtParser jwtParser = Jwts.parser()
-                .verifyWith(secretKeySpec)
-                .build();
+    public Date getAccessTokenExpirationDate(String accessToken) {
+        return getAccessTokenPayload(accessToken).getExpiration();
+    }
 
-        Claims claims = (Claims) jwtParser.parse(accessToken).getPayload();
+    private Claims getRefreshTokenPayload(String refreshToken) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(props.refreshKey().getBytes()))
+                .build()
+                .parseSignedClaims(refreshToken).getPayload();
+    }
 
-        return claims.getExpiration();
+    public Date getRefreshTokenExpirationDate(String refreshToken) {
+        return getRefreshTokenPayload(refreshToken).getExpiration();
     }
 
 }

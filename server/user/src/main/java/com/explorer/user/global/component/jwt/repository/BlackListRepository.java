@@ -21,8 +21,4 @@ public class BlackListRepository {
         redisTemplate.expire(key, expirationDate.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
 
-    public boolean exist(String accessToken) {
-        return redisTemplate.hasKey(KEY_PREFIX + accessToken);
-    }
-
 }

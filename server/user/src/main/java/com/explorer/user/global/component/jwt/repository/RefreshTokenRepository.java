@@ -26,6 +26,10 @@ public class RefreshTokenRepository {
         return Optional.ofNullable(token);
     }
 
+    public boolean exist(String userId) {
+        return redisTemplate.hasKey(KEY_PREFIX + userId);
+    }
+
     public void delete(String userId) {
         redisTemplate.delete(KEY_PREFIX + userId);
     }
