@@ -37,7 +37,7 @@ public class RequestHandler {
                         switch(event) {
                             case "createWaitingRoom" :
                                 log.info("create waiting room");
-                                teamCodeGenerator.getCode().subscribe(  // generate teamCode
+                                teamCodeGenerator.getCode().subscribe(  // get teamCode : just for test!!
                                         teamCode -> {
                                             log.info("create waiting room with code {}", teamCode);
                                         },
