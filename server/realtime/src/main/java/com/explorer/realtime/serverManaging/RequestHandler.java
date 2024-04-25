@@ -1,5 +1,6 @@
 package com.explorer.realtime.serverManaging;
 
+import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -14,6 +15,12 @@ public class RequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
+    private final TeamCodeGenerator teamCodeGenerator;
+
+    public RequestHandler(TeamCodeGenerator teamCodeGenerator) {
+        this.teamCodeGenerator = teamCodeGenerator;
+    }
+
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
         return inbound
@@ -23,13 +30,19 @@ public class RequestHandler {
                     try{
 
                         JSONObject json = new JSONObject(msg);      // parse string to json
-                        log.info("Received Json Data: {}", json);   // logging
+                        log.info("Received Json Data: {}", json);
 
                         String event = json.getString("event");
 
                         switch(event) {
                             case "createWaitingRoom" :
                                 log.info("create waiting room");
+                                teamCodeGenerator.getCode().subscribe(  // generate teamCode
+                                        teamCode -> {
+                                            log.info("create waiting room with code {}", teamCode);
+                                        },
+                                        error -> log.error("Error fetching team code", error)
+                                );
                                 break;
 
                             case "joinWaitingRoom":
