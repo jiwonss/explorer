@@ -25,6 +25,34 @@ public class RequestHandler {
                         JSONObject json = new JSONObject(msg);      // parse string to json
                         log.info("Received Json Data: {}", json);   // logging
 
+                        String event = json.getString("event");
+
+                        switch(event) {
+                            case "createWaitingRoom" :
+                                log.info("create waiting room");
+                                break;
+
+                            case "joinWaitingRoom":
+                                log.info("join waiting room");
+                                break;
+
+                            case "leaveWaitingRoom":
+                                log.info("leave waiting room");
+                                break;
+
+                            case "startGame" :
+                                log.info("start game");
+                                break;
+
+                            case "restartGame":
+                                log.info("restart game");
+                                break;
+
+                            case "endGame":
+                                log.info("endGame");
+                                break;
+                        }
+
                         return outbound.sendString(Mono.just("success"));   // echoing
 
                     } catch (JSONException e) {
