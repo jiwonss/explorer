@@ -16,8 +16,9 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("X-Authorization-Id") Long userId,
+                                 @RequestHeader("Authorization") String accessToken,
                                  @RequestBody LogoutRequest request) {
-        userService.logout(userId, request.refreshToken());
+        userService.logout(userId, accessToken.substring(7), request.refreshToken());
         return ResponseEntity.ok().body(Message.success());
     }
 

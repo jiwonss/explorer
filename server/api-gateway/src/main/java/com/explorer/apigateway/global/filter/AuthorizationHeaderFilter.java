@@ -1,13 +1,13 @@
 package com.explorer.apigateway.global.filter;
 
+import com.explorer.apigateway.global.common.dto.TokenInfo;
 import com.explorer.apigateway.global.error.exception.AuthenticationException;
 import com.explorer.apigateway.global.jwt.JwtUtils;
-import com.explorer.apigateway.global.jwt.TokenInfo;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -16,12 +16,10 @@ import org.springframework.stereotype.Component;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
+@Slf4j
 @Component
 @RefreshScope
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
-
-    @Value("${jwt.access-key}")
-    private String jwtKey;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -37,11 +35,12 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             try {
                 String accessToken = exchange.getRequest().getHeaders().get(AUTHORIZATION).get(0).substring(7);
+                if (jwtUtils.isBlackListed(accessToken)) {
+                    throw new AuthenticationException("사용할 수 없는 토큰입니다.");
+                }
 
                 TokenInfo token = jwtUtils.parseToken(accessToken);
-
                 addAuthorizationHeaders(exchange.getRequest(), token);
-
             } catch (ExpiredJwtException ex) {
                 throw new AuthenticationException("토큰이 만료되었습니다.");
             } catch (MalformedJwtException | SignatureException | IllegalArgumentException |
