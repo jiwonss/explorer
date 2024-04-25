@@ -16,6 +16,7 @@ public class TeamCodeGenerator {
     private static final Logger log = LoggerFactory.getLogger(TeamCodeGenerator.class);
     private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int CACHE_SIZE = 100;
+    private static final int CODE_LENGTH = 8;
     private Queue<String> codeCache = new ConcurrentLinkedQueue<>();
 
     public TeamCodeGenerator() {
@@ -32,7 +33,7 @@ public class TeamCodeGenerator {
 
     private void preloadCodes() {
         for (int i = 0; i < CACHE_SIZE; i++) {
-            codeCache.offer(generateRandomCode(8));
+            codeCache.offer(generateRandomCode(CODE_LENGTH));
         }
     }
 
