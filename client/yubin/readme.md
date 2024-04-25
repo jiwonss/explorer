@@ -15,3 +15,10 @@
   - MouseMove.cs
 - 플레이어 레이캐스트 기능 구현
   - Raycast.cs
+
+## 24.04.25
+
+- 프로그래스 바 구현
+  - ProgressBar.cs
+- 타이머 구현
+  - Timer.cs
