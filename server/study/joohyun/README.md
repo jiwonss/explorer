@@ -5,8 +5,9 @@
 - Open Source Configuration.md 생성
 - 
 24.04.24.수 <br>
-- erd 회의 : User db
-- db 설계 확정 : : IngameDB-MongoDB, UserDB-MariaDB
+- erd 확정 : User db
+- db 설계 확정 : : realtimeDB-MongoDB/redis/redis/redis, UserDB-MariaDB
+- realtime server 성능 측정 방법 조사
 [plan]<br>
 - Open Source Configuration.md : project 소개 추가
 - Ingame Real-Time Server 생성, basic setup
