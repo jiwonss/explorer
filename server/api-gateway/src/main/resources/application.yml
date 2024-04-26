@@ -4,11 +4,18 @@ server:
 spring:
   application:
     name: api-gateway
-  data:
-    redis:
-      host: localhost
-      port: 6379
+
+  profiles:
+    active: dev
+
+  config:
+    import: "optional:configserver:"
+
   cloud:
+    config:
+      uri: http://127.0.0.1:8888
+      name: api-gateway
+
     gateway:
       httpclient:
         ssl:
@@ -28,8 +35,11 @@ spring:
             - AuthorizationHeaderFilter
             - RewritePath=/user/(?<segment>.*), /$\{segment}
 
-jwt:
-  access-key: d700abc47f739b58ae6a3f6a78ef6a02866c437589ebd9cce097e16b6a4e6f5f249299d1b9a871d598ad6eacba6adeb35d863b00eafece43e05fccc3a56ccd1f
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans
 
 eureka:
   instance:
