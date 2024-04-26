@@ -1,7 +1,7 @@
 package com.explorer.realtime.serverManaging;
 
-import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
 import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
+import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -16,11 +16,12 @@ public class RequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
-    private final TeamCodeGenerator teamCodeGenerator;
+    private final WaitingRoomSessionHandler waitingRoomSessionHandler;
     private final IngameSessionHandler ingameSessionHandler;
 
-    public RequestHandler(TeamCodeGenerator teamCodeGenerator, IngameSessionHandler ingameSessionHandler) {
-        this.teamCodeGenerator = teamCodeGenerator;
+    public RequestHandler(WaitingRoomSessionHandler waitingRoomSessionHandler,
+                          IngameSessionHandler ingameSessionHandler) {
+        this.waitingRoomSessionHandler = waitingRoomSessionHandler;
         this.ingameSessionHandler = ingameSessionHandler;
     }
 
@@ -38,10 +39,10 @@ public class RequestHandler {
                         String type = json.getString("type");
 
                         switch(type) {
-                                case "waitingRoomSession" :
-                                    log.info("waiting room");
-                                    break;
-
+                            case "waitingRoomSession" :
+                                log.info("waiting room");
+                                waitingRoomSessionHandler.waitingRoomHandler(json);
+                                break;
 
                             case "ingameSession" :
                                 log.info("start game");
