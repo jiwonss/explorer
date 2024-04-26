@@ -1,7 +1,5 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
-
-import com.explorer.realtime.serverManaging.RequestHandler;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
