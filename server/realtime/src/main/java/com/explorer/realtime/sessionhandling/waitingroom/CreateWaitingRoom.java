@@ -26,7 +26,7 @@ public class CreateWaitingRoom {
         userInfoRepository.save(userInfo);
     }
 
-    public String createTeamCode() {
+    private String createTeamCode() {
         AtomicReference<String> teamCode = new AtomicReference<>();
         teamCodeGenerator.getCode().subscribe(
                 code -> {

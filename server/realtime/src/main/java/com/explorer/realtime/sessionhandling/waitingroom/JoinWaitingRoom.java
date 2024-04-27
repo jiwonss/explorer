@@ -27,7 +27,7 @@ public class JoinWaitingRoom {
         }
     }
 
-    public void check(String teamCode) {
+    private void check(String teamCode) {
         if (connectionRepository.count(teamCode) == 6) {
             throw  new ExceedingCapacityException();
         }
