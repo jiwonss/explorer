@@ -20,18 +20,17 @@ public class WaitingRoomSessionHandler {
 
     public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
         String event = json.getString("event");
-        UserInfo userInfo = UserInfo.of(json);
 
         switch(event) {
             case "createWaitingRoom" :
                 log.info("create waiting room");
-                createWaitingRoom.process(userInfo, connection);
+                createWaitingRoom.process(UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
                 break;
 
             case "joinWaitingRoom":
                 log.info("join waiting room");
-                String teamCode = json.getString("teamCode");
-                joinWaitingRoom.process(teamCode, userInfo, connection);
+                String joinTeamCode = json.getString("teamCode");
+                joinWaitingRoom.process(joinTeamCode, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
                 break;
 
             case "leaveWaitingRoom":

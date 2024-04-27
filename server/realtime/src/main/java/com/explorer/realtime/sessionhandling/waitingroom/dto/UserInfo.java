@@ -13,14 +13,14 @@ public class UserInfo {
     private Long userId;
     private String nickname;
     private int avatar;
+    private boolean isLeader;
 
-    public static UserInfo of(JSONObject json) {
+    public static UserInfo ofUserIdAndNicknameAndAvatar(JSONObject json) {
         return UserInfo.builder()
                 .userId(json.getLong("userId"))
                 .nickname(json.getString("nickname"))
                 .avatar(json.getInt("avatar"))
                 .build();
-
     }
 
 }
