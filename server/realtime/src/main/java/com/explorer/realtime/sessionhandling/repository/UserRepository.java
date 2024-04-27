@@ -9,11 +9,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class UserRepository {
 
-    private HashOperations<String, String, Object> hashOperations;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final HashOperations<String, String, Object> hashOperations;
 
     private static final String KEY_PREFIX = "user:";
 
     public UserRepository(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
         this.hashOperations = redisTemplate.opsForHash();
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
@@ -25,7 +27,7 @@ public class UserRepository {
     }
 
     public void delete(Long userId) {
-        hashOperations.delete(KEY_PREFIX + userId);
+        redisTemplate.delete(KEY_PREFIX + userId);
     }
 
 }

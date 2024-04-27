@@ -6,11 +6,13 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Repository;
 import reactor.netty.Connection;
 
+import java.util.Set;
+
 @Repository
 public class ChannelRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private HashOperations<String, String, Object> hashOperations;
+    private final HashOperations<String, String, Object> hashOperations;
 
     private static final String KEY_PREFIX = "channel:";
 
@@ -31,8 +33,12 @@ public class ChannelRepository {
         }, true);
     }
 
+    public Set<String> find(String teamCode) {
+        return hashOperations.keys(KEY_PREFIX + teamCode);
+    }
+
     public void delete(String teamCode) {
-        hashOperations.delete(KEY_PREFIX + teamCode);
+        redisTemplate.delete(KEY_PREFIX + teamCode);
     }
 
     public void leave(String teamCode, Long userId) {

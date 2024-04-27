@@ -17,6 +17,7 @@ public class WaitingRoomSessionHandler {
 
     private final CreateWaitingRoom createWaitingRoom;
     private final JoinWaitingRoom joinWaitingRoom;
+    private final LeaveWaitingRoom leaveWaitingRoom;
 
     public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
         String event = json.getString("event");
@@ -35,6 +36,8 @@ public class WaitingRoomSessionHandler {
 
             case "leaveWaitingRoom":
                 log.info("leave waiting room");
+                String leaveTeamCode = json.getString("teamCode");
+                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json), connection);
                 break;
         }
 

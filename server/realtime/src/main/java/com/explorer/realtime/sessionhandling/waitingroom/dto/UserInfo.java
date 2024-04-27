@@ -23,4 +23,11 @@ public class UserInfo {
                 .build();
     }
 
+    public static UserInfo ofUserIdAndIsLeader(JSONObject json) {
+        return UserInfo.builder()
+                .userId(json.getLong("userId"))
+                .isLeader(json.getBoolean("isLeader"))
+                .build();
+    }
+
 }
