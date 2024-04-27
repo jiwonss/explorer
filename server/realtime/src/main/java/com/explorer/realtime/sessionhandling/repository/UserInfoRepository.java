@@ -1,24 +1,25 @@
 package com.explorer.realtime.sessionhandling.repository;
 
+import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Repository;
-import reactor.netty.Connection;
 
 @Repository
-public class ConnectionRepository {
+public class UserInfoRepository {
 
     private HashOperations<String, String, Object> hashOperations;
 
-    public ConnectionRepository(RedisTemplate<String, Object> redisTemplate) {
+    public UserInfoRepository(RedisTemplate<String, Object> redisTemplate) {
         this.hashOperations = redisTemplate.opsForHash();
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
     }
 
-    public void save(String teamCode, Long userId, Connection connection) {
-        hashOperations.put(teamCode, String.valueOf(userId), connection.toString());
+    public void save(UserInfo userInfo) {
+        hashOperations.put(String.valueOf(userInfo.getUserId()), "nickname", userInfo.getNickname());
+        hashOperations.put(String.valueOf(userInfo.getUserId()), "avatar", String.valueOf(userInfo.getAvatar()));
     }
 
 }
