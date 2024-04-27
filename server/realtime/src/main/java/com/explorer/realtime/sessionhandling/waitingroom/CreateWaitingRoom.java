@@ -1,8 +1,8 @@
 package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
-import com.explorer.realtime.sessionhandling.repository.ConnectionRepository;
-import com.explorer.realtime.sessionhandling.repository.UserInfoRepository;
+import com.explorer.realtime.sessionhandling.repository.ChannelRepository;
+import com.explorer.realtime.sessionhandling.repository.UserRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +17,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CreateWaitingRoom {
 
     private final TeamCodeGenerator teamCodeGenerator;
-    private final ConnectionRepository connectionRepository;
-    private final UserInfoRepository userInfoRepository;
+    private final ChannelRepository channelRepository;
+    private final UserRepository userRepository;
 
     public void process(UserInfo userInfo, Connection connection) {
         String teamCode = createTeamCode();
-        connectionRepository.save(teamCode, userInfo.getUserId(), connection);
-        userInfoRepository.save(userInfo);
+        channelRepository.save(teamCode, userInfo.getUserId(), connection);
+        userRepository.save(userInfo);
     }
 
     private String createTeamCode() {

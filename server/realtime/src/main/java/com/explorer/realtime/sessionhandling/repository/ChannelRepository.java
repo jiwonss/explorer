@@ -7,14 +7,14 @@ import org.springframework.stereotype.Repository;
 import reactor.netty.Connection;
 
 @Repository
-public class ConnectionRepository {
+public class ChannelRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private HashOperations<String, String, Object> hashOperations;
 
     private static final String KEY_PREFIX = "channel:";
 
-    public ConnectionRepository(RedisTemplate<String, Object> redisTemplate) {
+    public ChannelRepository(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
         this.hashOperations = redisTemplate.opsForHash();
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
