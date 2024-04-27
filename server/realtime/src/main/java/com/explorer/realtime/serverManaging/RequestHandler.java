@@ -32,26 +32,26 @@ public class RequestHandler {
                 .asString()                                     // 2) convert data : byte -> string
                 .flatMap(msg -> {                               // 3) process data
                     try{
-
                         JSONObject json = new JSONObject(msg);      // parse string to json
                         log.info("Received Json Data: {}", json);
 
-                        String type = json.getString("type");
+                        inbound.withConnection(connection -> {
+                            String type = json.getString("type");
 
-                        switch(type) {
-                            case "waitingRoomSession" :
-                                log.info("waiting room");
-                                waitingRoomSessionHandler.waitingRoomHandler(json);
-                                break;
+                            switch(type) {
+                                case "waitingRoomSession" :
+                                    log.info("waiting room");
+                                    waitingRoomSessionHandler.waitingRoomHandler(json, connection);
+                                    break;
 
-                            case "ingameSession" :
-                                log.info("start game");
-                                ingameSessionHandler.ingameHandler(json);
-                                break;
-                        }
+                                case "ingameSession" :
+                                    log.info("start game");
+                                    ingameSessionHandler.ingameHandler(json);
+                                    break;
+                            }
+                        });
 
-                        return outbound.sendString(Mono.just("success"));   // echoing
-
+                        return outbound.sendString(Mono.just("success"));  // echoing
                     } catch (JSONException e) {
                         log.error("ERROR : {}", e.getMessage());
                         return Mono.empty();
