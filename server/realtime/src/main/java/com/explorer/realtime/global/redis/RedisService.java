@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Service
 public class RedisService {
 
@@ -17,6 +19,10 @@ public class RedisService {
 
     public Mono<Boolean> saveUidToTeamCode(String teamCode, String uid, String connectionInfo) {
         return redisOperations.opsForHash().put(teamCode, uid, connectionInfo);
+    }
+
+    public Mono<Map<Object, Object>> readUidsFromTeamCode(String teamCode) {
+        return redisOperations.opsForHash().entries(teamCode).collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
 }
