@@ -1,6 +1,7 @@
 package com.explorer.realtime.serverManaging;
 
 import com.explorer.realtime.global.redis.RedisService;
+import com.explorer.realtime.global.session.SessionManager;
 import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
 import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
 import org.json.JSONException;
@@ -18,11 +19,13 @@ public class RequestHandler {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private final TeamCodeGenerator teamCodeGenerator;
+    private final SessionManager sessionManager;
     private final RedisService redisService;
     private final IngameSessionHandler ingameSessionHandler;
 
-    public RequestHandler(TeamCodeGenerator teamCodeGenerator, RedisService redisService, IngameSessionHandler ingameSessionHandler) {
+    public RequestHandler(TeamCodeGenerator teamCodeGenerator, SessionManager sessionManager, RedisService redisService, IngameSessionHandler ingameSessionHandler) {
         this.teamCodeGenerator = teamCodeGenerator;
+        this.sessionManager = sessionManager;
         this.redisService = redisService;
         this.ingameSessionHandler = ingameSessionHandler;
     }
@@ -52,8 +55,9 @@ public class RequestHandler {
                                             String uid = json.getString("uid");
 
                                             inbound.withConnection(connection -> {
+                                                sessionManager.setConnection(uid, connection);
                                                 redisService.saveUidToTeamCode(teamCode, uid, "waitingRoom").subscribe();
-                                                log.info("uid: {}, connection: {}", uid, connection);
+                                                log.info("uid: {}, connection: {}", sessionManager.getUid(connection), sessionManager.getConnection(uid));
                                             });
                                     }
                                     break;
