@@ -1,5 +1,6 @@
 package com.explorer.realtime.serverManaging;
 
+import com.explorer.realtime.global.broadcasting.Broadcasting;
 import com.explorer.realtime.global.redis.RedisService;
 import com.explorer.realtime.global.session.SessionManager;
 import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
@@ -21,12 +22,14 @@ public class RequestHandler {
     private final TeamCodeGenerator teamCodeGenerator;
     private final SessionManager sessionManager;
     private final RedisService redisService;
+    private final Broadcasting broadcasting;
     private final IngameSessionHandler ingameSessionHandler;
 
-    public RequestHandler(TeamCodeGenerator teamCodeGenerator, SessionManager sessionManager, RedisService redisService, IngameSessionHandler ingameSessionHandler) {
+    public RequestHandler(TeamCodeGenerator teamCodeGenerator, SessionManager sessionManager, RedisService redisService, Broadcasting broadcasting, IngameSessionHandler ingameSessionHandler) {
         this.teamCodeGenerator = teamCodeGenerator;
         this.sessionManager = sessionManager;
         this.redisService = redisService;
+        this.broadcasting = broadcasting;
         this.ingameSessionHandler = ingameSessionHandler;
     }
 
@@ -65,6 +68,13 @@ public class RequestHandler {
 
                             case "ingameSession" :
                                 log.info("start game");
+                                switch (event) {
+                                    case "gameStart":
+                                        log.info("gameStart");
+                                        String teamCode = json.getString("teamCode");
+                                        broadcasting.broadcasting(teamCode).subscribe();
+                                        break;
+                                }
                                 ingameSessionHandler.ingameHandler(json);
                                 break;
                         }
