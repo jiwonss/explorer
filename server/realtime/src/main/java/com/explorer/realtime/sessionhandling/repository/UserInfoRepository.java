@@ -11,6 +11,8 @@ public class UserInfoRepository {
 
     private HashOperations<String, String, Object> hashOperations;
 
+    private static final String KEY_PREFIX = "user:";
+
     public UserInfoRepository(RedisTemplate<String, Object> redisTemplate) {
         this.hashOperations = redisTemplate.opsForHash();
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
@@ -18,8 +20,8 @@ public class UserInfoRepository {
     }
 
     public void save(UserInfo userInfo) {
-        hashOperations.put(String.valueOf(userInfo.getUserId()), "nickname", userInfo.getNickname());
-        hashOperations.put(String.valueOf(userInfo.getUserId()), "avatar", String.valueOf(userInfo.getAvatar()));
+        hashOperations.put(KEY_PREFIX + String.valueOf(userInfo.getUserId()), "nickname", userInfo.getNickname());
+        hashOperations.put(KEY_PREFIX + String.valueOf(userInfo.getUserId()), "avatar", String.valueOf(userInfo.getAvatar()));
     }
 
 }

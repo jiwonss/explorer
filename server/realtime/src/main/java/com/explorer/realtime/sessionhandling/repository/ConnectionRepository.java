@@ -12,6 +12,8 @@ public class ConnectionRepository {
     private final RedisTemplate<String, Object> redisTemplate;
     private HashOperations<String, String, Object> hashOperations;
 
+    private static final String KEY_PREFIX = "channel:";
+
     public ConnectionRepository(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
         this.hashOperations = redisTemplate.opsForHash();
@@ -20,13 +22,21 @@ public class ConnectionRepository {
     }
 
     public void save(String teamCode, Long userId, Connection connection) {
-        hashOperations.put(teamCode, String.valueOf(userId), connection.toString());
+        hashOperations.put(KEY_PREFIX + teamCode, String.valueOf(userId), connection.toString());
     }
 
     public Long count(String teamCode) {
         return redisTemplate.execute(connection -> {
-            return connection.hLen(teamCode.getBytes());
+            return connection.hLen((KEY_PREFIX + teamCode).getBytes());
         }, true);
+    }
+
+    public void delete(String teamCode) {
+        hashOperations.delete(KEY_PREFIX + teamCode);
+    }
+
+    public void leave(String teamCode, Long userId) {
+        hashOperations.delete(KEY_PREFIX + teamCode, String.valueOf(userId));
     }
 
 }
