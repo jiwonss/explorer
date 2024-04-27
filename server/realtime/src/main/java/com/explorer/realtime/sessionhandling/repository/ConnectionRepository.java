@@ -9,9 +9,11 @@ import reactor.netty.Connection;
 @Repository
 public class ConnectionRepository {
 
+    private final RedisTemplate<String, Object> redisTemplate;
     private HashOperations<String, String, Object> hashOperations;
 
     public ConnectionRepository(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
         this.hashOperations = redisTemplate.opsForHash();
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
@@ -19,6 +21,12 @@ public class ConnectionRepository {
 
     public void save(String teamCode, Long userId, Connection connection) {
         hashOperations.put(teamCode, String.valueOf(userId), connection.toString());
+    }
+
+    public Long count(String teamCode) {
+        return redisTemplate.execute(connection -> {
+            return connection.hLen(teamCode.getBytes());
+        }, true);
     }
 
 }
