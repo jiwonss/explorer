@@ -1,11 +1,12 @@
 package com.explorer.realtime.serverManaging;
 
 import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
-import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
+import com.explorer.realtime.sessionhandling.service.ChannelServiceImpl;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.netty.NettyInbound;
@@ -17,11 +18,13 @@ public class RequestHandler {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private final TeamCodeGenerator teamCodeGenerator;
-    private final IngameSessionHandler ingameSessionHandler;
 
-    public RequestHandler(TeamCodeGenerator teamCodeGenerator, IngameSessionHandler ingameSessionHandler) {
+    @Autowired
+    private  ChannelServiceImpl channelService;
+
+    public RequestHandler(TeamCodeGenerator teamCodeGenerator) {
         this.teamCodeGenerator = teamCodeGenerator;
-        this.ingameSessionHandler = ingameSessionHandler;
+//        this.ingameSessionHandler = ingameSessionHandler;
     }
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
@@ -35,17 +38,39 @@ public class RequestHandler {
                         JSONObject json = new JSONObject(msg);      // parse string to json
                         log.info("Received Json Data: {}", json);
 
-                        String type = json.getString("type");
+                        String event = json.getString("event");
 
-                        switch(type) {
-                                case "waitingRoomSession" :
-                                    log.info("waiting room");
-                                    break;
+                        switch(event) {
+                            case "createWaitingRoom" :
+                                log.info("create waiting room");
+                                teamCodeGenerator.getCode().subscribe(  // get teamCode : just for test!!
+                                        teamCode -> {
+                                            log.info("create waiting room with code {}", teamCode);
+                                        },
+                                        error -> log.error("Error fetching team code", error)
+                                );
+                                break;
 
+                            case "joinWaitingRoom":
+                                log.info("join waiting room");
+                                break;
 
-                            case "ingameSession" :
+                            case "leaveWaitingRoom":
+                                log.info("leave waiting room");
+                                break;
+
+                            case "startGame" :
                                 log.info("start game");
-                                ingameSessionHandler.ingameHandler(json);
+                                return channelService.createGame(json, outbound);
+//                                ingameSessionHandler.ingameHandler(json);
+//                                break;
+
+                            case "restartGame":
+                                log.info("restart game");
+                                break;
+
+                            case "endGame":
+                                log.info("endGame");
                                 break;
                         }
 
@@ -56,7 +81,8 @@ public class RequestHandler {
                         return Mono.empty();
                     }
                 })
-                .then();                                        // 4) complete reactive sequence
+                .then();
+        // 4) complete reactive sequence
 
     }
 }

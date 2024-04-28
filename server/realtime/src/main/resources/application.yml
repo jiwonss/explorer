@@ -9,3 +9,5 @@ spring:
       host: localhost
       port: 6379
 
+    mongodb:
+      uri : mongodb://ssafy:ssafy@localhost:27017/explorer?authSource=admin
