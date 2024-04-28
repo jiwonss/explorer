@@ -11,6 +11,7 @@ import com.explorer.user.global.common.dto.UserInfo;
 import com.explorer.user.global.component.jwt.JwtProps;
 import com.explorer.user.global.component.jwt.JwtProvider;
 import com.explorer.user.global.component.jwt.repository.RefreshTokenRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -96,6 +97,18 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(newRefreshToken)
                 .build();
 
+    }
+
+    @Transactional
+    @Override
+    public void changePassword(String loginId, String newPassword, String confirmNewPassword) {
+        User user = userRepository.findByLoginId(loginId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new UserException(UserErrorCode.INVALID_NEW_PASSWORD);
+        }
+
+        user.updatePassword(passwordEncoder.encode(newPassword));
     }
 
 
