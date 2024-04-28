@@ -2,6 +2,7 @@ package com.explorer.realtime.global.broadcasting;
 
 import com.explorer.realtime.global.redis.RedisService;
 import com.explorer.realtime.global.session.SessionManager;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ public class Broadcasting {
         this.redisService = redisService;
         this.sessionManager = sessionManager;
     }
-    public Mono<Void> broadcasting(String teamCode) {
+    public Mono<Void> broadcasting(String teamCode, JSONObject msg) {
         log.info("start broadcasting to {}", teamCode);
         return redisService.readUidsFromTeamCode(teamCode)
                 .flatMapMany(hashTable -> {
@@ -29,7 +30,7 @@ public class Broadcasting {
                                 Connection connection = sessionManager.getConnection(key.toString());
                                 if (connection != null) {
                                     log.info("sending message to {}", key);
-                                    return connection.outbound().sendString(Mono.just("GAME START!")).then();
+                                    return connection.outbound().sendString(Mono.just(msg.toString()+'\n')).then();
                                 } else {
                                     log.warn("No connection found for {}", key);
                                     return Mono.empty();
