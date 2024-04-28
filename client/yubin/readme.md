@@ -40,3 +40,10 @@
 - 생존 연구소 UI 구현
 - 생존 연구소 페이지 전환 구현
   - SurvivalLabRender.cs
+
+## 24.04.28
+
+- 원소연구소 페이지 구현
+  - 원소연구소 UI 구현
+  - 원소연구소 페이지 전환 구현
+    - ElementLabRender.cs
