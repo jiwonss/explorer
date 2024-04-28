@@ -13,7 +13,7 @@ public class BlackListRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    private static final String KEY_PREFIX = "blackList::";
+    private static final String KEY_PREFIX = "blackList:";
 
     public void save(String accessToken, Date expirationDate) {
         String key = KEY_PREFIX + accessToken;
