@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.waitingroom.error;
+package com.explorer.realtime.sessionhandling.waitingroom.exception;
 
 public class ExceedingCapacityException extends RuntimeException {
 

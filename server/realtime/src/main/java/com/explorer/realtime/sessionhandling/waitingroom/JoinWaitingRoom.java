@@ -3,7 +3,7 @@ package com.explorer.realtime.sessionhandling.waitingroom;
 import com.explorer.realtime.sessionhandling.repository.ChannelRepository;
 import com.explorer.realtime.sessionhandling.repository.UserRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import com.explorer.realtime.sessionhandling.waitingroom.error.ExceedingCapacityException;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
