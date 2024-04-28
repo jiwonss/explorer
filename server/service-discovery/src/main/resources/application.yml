@@ -5,14 +5,50 @@ spring:
   application:
     name: service-discovery
 
+  profiles:
+    active: prod
+
+management: # Actuator 설정 (애플리케이션의 상태 및 정보를 모니터링 및 관리하기 위한 기능을 제공)
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans # 노출할 엔드포인트 목록 설정
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
-    ip-address: localhost
-    hostname: localhost
-    prefer-ip-address: true
+    ip-address: 172.26.10.168 # 인스턴스가 등록될 때 사용할 IP 주소 설정
+    hostname: service-discovery # 인스턴스가 등록될 때 사용할 호스트 이름 설정
+    prefer-ip-address: true # Eureka 서버에 등록될 때 IP 주소를 사용하도록 설정
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: true # Eureka 서버에 자신을 등록할지 여부 설정
+    fetch-registry: false # Eureka 서버에서 등록 정보를 가져올지 여부 설정
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://172.26.10.168:8761/eureka # 기본 Eureka 서버 URL 설정
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: localhost # 인스턴스가 등록될 때 사용할 IP 주소 설정
+    hostname: localhost # 인스턴스가 등록될 때 사용할 호스트 이름 설정
+    prefer-ip-address: true # Eureka 서버에 등록될 때 IP 주소를 사용하도록 설정
+  client:
+    register-with-eureka: true # Eureka 서버에 자신을 등록할지 여부 설정
+    fetch-registry: false # Eureka 서버에서 등록 정보를 가져올지 여부 설정
+    service-url:
+      defaultZone: http://localhost:8761/eureka # 기본 Eureka 서버 URL 설정
+

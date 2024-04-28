@@ -6,15 +6,7 @@ spring:
     name: user
 
   profiles:
-    active: dev
-
-  config:
-    import: "optional:configserver:"
-
-  cloud:
-    config:
-      uri: http://127.0.0.1:8888
-      name: user
+    active: prod
 
 management:
   endpoints:
@@ -22,11 +14,49 @@ management:
       exposure:
         include: refresh, health, beans
 
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "optional:configserver:http://172.26.10.168:8888"
+
+  cloud:
+    config:
+      uri: http://172.26.10.168:8888
+      name: user
+
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
-    hostname: localhost
+    ip-address: 172.26.10.168
+    hostname: user
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://172.26.10.168:8761/eureka
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configserver:http://localhost:8888"
+
+  cloud:
+    config:
+      uri: http://localhost:8888
+      name: user
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
     ip-address: localhost
+    hostname: localhost
     prefer-ip-address: true
   client:
     fetch-registry: true
