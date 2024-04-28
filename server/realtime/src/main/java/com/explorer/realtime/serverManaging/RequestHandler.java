@@ -1,10 +1,11 @@
 package com.explorer.realtime.serverManaging;
 
 import com.explorer.realtime.global.broadcasting.Broadcasting;
+import com.explorer.realtime.global.broadcasting.Multicasting;
+import com.explorer.realtime.global.broadcasting.Unicasting;
 import com.explorer.realtime.global.redis.RedisService;
 import com.explorer.realtime.global.session.SessionManager;
 import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
-import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -23,14 +24,16 @@ public class RequestHandler {
     private final SessionManager sessionManager;
     private final RedisService redisService;
     private final Broadcasting broadcasting;
-    private final IngameSessionHandler ingameSessionHandler;
+    private final Multicasting multicasting;
+    private final Unicasting unicasting;
 
-    public RequestHandler(TeamCodeGenerator teamCodeGenerator, SessionManager sessionManager, RedisService redisService, Broadcasting broadcasting, IngameSessionHandler ingameSessionHandler) {
+    public RequestHandler(TeamCodeGenerator teamCodeGenerator, SessionManager sessionManager, RedisService redisService, Broadcasting broadcasting, Multicasting multicasting, Unicasting unicasting) {
         this.teamCodeGenerator = teamCodeGenerator;
         this.sessionManager = sessionManager;
         this.redisService = redisService;
         this.broadcasting = broadcasting;
-        this.ingameSessionHandler = ingameSessionHandler;
+        this.multicasting = multicasting;
+        this.unicasting = unicasting;
     }
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
@@ -49,37 +52,50 @@ public class RequestHandler {
 
                         switch(type) {
                                 case "waitingRoomSession" :
+
                                     log.info("waiting room");
+                                    String uid = json.getString("uid");
+
                                     switch(event) {
                                         case "createWaitingRoom":
                                             log.info("create Waiting Room");
 
                                             String teamCode = "abcde";
-                                            String uid = json.getString("uid");
 
                                             inbound.withConnection(connection -> {
                                                 sessionManager.setConnection(uid, connection);
                                                 redisService.saveUidToTeamCode(teamCode, uid, "waitingRoom").subscribe();
                                                 log.info("uid: {}, connection: {}", sessionManager.getUid(connection), sessionManager.getConnection(uid));
                                             });
-                                    }
-                                    break;
+                                            break;
 
+                                        case "joinWaitingRoom":
+                                            log.info("join Waiting Room");
+                                            String teamCode_ = json.getString("teamCode");
+                                            unicasting.unicasting(teamCode_, uid, json).subscribe();
+                                            break;
+                                    }
 
                             case "ingameSession" :
+
                                 log.info("start game");
+                                String teamCode = json.getString("teamCode");
+
                                 switch (event) {
-                                    case "gameStart":
-                                        log.info("gameStart");
-                                        String teamCode = json.getString("teamCode");
-                                        broadcasting.broadcasting(teamCode).subscribe();
+                                    case "startGame":
+                                        log.info("start game");
+                                        broadcasting.broadcasting(teamCode, json).subscribe();
+                                        break;
+
+                                    case "restartGame":
+                                        log.info("restart game");
+                                        String uid_ = json.getString("uid");
+                                        multicasting.multicasting(teamCode, uid_, json).subscribe();
                                         break;
                                 }
-                                ingameSessionHandler.ingameHandler(json);
-                                break;
                         }
 
-                        return outbound.sendString(Mono.just("success"));   // echoing
+                        return Mono.empty();
 
                     } catch (JSONException e) {
                         log.error("ERROR : {}", e.getMessage());
