@@ -75,6 +75,7 @@ public class RequestHandler {
                                             unicasting.unicasting(teamCode_, uid, json).subscribe();
                                             break;
                                     }
+                                    break;
 
                             case "ingameSession" :
 
@@ -93,6 +94,7 @@ public class RequestHandler {
                                         multicasting.multicasting(teamCode, uid_, json).subscribe();
                                         break;
                                 }
+                                break;
                         }
 
                         return Mono.empty();
