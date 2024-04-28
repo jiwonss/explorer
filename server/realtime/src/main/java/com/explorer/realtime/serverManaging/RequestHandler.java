@@ -60,19 +60,25 @@ public class RequestHandler {
                                         case "createWaitingRoom":
                                             log.info("create Waiting Room");
 
-                                            String teamCode = "abcde";
-
-                                            inbound.withConnection(connection -> {
-                                                sessionManager.setConnection(uid, connection);
-                                                redisService.saveUidToTeamCode(teamCode, uid, "waitingRoom").subscribe();
-                                                log.info("uid: {}, connection: {}", sessionManager.getUid(connection), sessionManager.getConnection(uid));
-                                            });
-                                            break;
+                                            return teamCodeGenerator.getCode()
+                                                    .flatMap(teamCode -> {
+                                                        inbound.withConnection(connection -> {
+                                                            sessionManager.setConnection(uid, connection);
+                                                            redisService.saveUidToTeamCode(teamCode, uid, "waitingRoom").subscribe();
+                                                            log.info("uid: {}, teamCode: {}, connection: {}", sessionManager.getUid(connection), teamCode, sessionManager.getConnection(uid));
+                                                        });
+                                                        return Mono.empty();
+                                                    });
 
                                         case "joinWaitingRoom":
                                             log.info("join Waiting Room");
                                             String teamCode_ = json.getString("teamCode");
-                                            unicasting.unicasting(teamCode_, uid, json).subscribe();
+                                            inbound.withConnection(connection -> {
+                                                sessionManager.setConnection(uid, connection);
+                                                redisService.saveUidToTeamCode(teamCode_,uid,"waitingRoom").subscribe();
+                                                log.info("uid: {}, teamCode: {}, connection: {}", sessionManager.getUid(connection), sessionManager.getConnection(uid), teamCode_);
+                                                unicasting.unicasting(teamCode_, uid, json).subscribe();
+                                            });
                                             break;
                                     }
                                     break;
