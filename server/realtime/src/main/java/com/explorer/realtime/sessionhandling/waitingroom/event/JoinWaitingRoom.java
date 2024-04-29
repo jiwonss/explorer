@@ -24,11 +24,7 @@ public class JoinWaitingRoom {
 
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
         check(teamCode)
-                .onErrorResume(
-                        throwable -> {
-                            throwable.printStackTrace();
-                            return null;
-                        })
+                .doOnError(Throwable::printStackTrace)
                 .subscribe(
                         value -> {
                             createConnectionInfo(teamCode, String.valueOf(userInfo.getUserId()), connection);
@@ -45,15 +41,14 @@ public class JoinWaitingRoom {
         redisService.saveUidToTeamCode(teamCode, userId, "waitingRoom").subscribe();
     }
 
-    private Mono<Void> check(String teamCode) {
+    private Mono<Long> check(String teamCode) {
         return channelRepository.count(teamCode).flatMap(
                 count -> {
                     if (count >= 6) {
                         return Mono.error(new ExceedingCapacityException());
                     }
                     return Mono.just(count);
-                }
-        ).then();
+                });
     }
 
 }
