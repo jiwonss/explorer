@@ -10,7 +10,7 @@ import reactor.netty.tcp.TcpServer;
 public class ServerInitializer {
 
     @Value("${chat.server.port}")
-    private static int PORT;
+    private int PORT;
 
     public Mono<? extends DisposableServer> initializeServer() {
 
