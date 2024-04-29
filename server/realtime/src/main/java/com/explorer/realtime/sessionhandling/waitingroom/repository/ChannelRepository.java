@@ -20,4 +20,8 @@ public class ChannelRepository {
         return reactiveRedisTemplate.opsForList().rightPush(KEY_PREFIX + teamCode, String.valueOf(userId));
     }
 
+    public Mono<Long> count(String teamCode) {
+        return reactiveRedisTemplate.opsForList().size(KEY_PREFIX + teamCode);
+    }
+
 }
