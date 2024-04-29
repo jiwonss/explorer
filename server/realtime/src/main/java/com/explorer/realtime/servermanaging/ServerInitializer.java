@@ -1,4 +1,4 @@
-package com.explorer.realtime.serverManaging;
+package com.explorer.realtime.servermanaging;
 
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

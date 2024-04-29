@@ -47,3 +47,13 @@
   - 원소연구소 UI 구현
   - 원소연구소 페이지 전환 구현
     - ElementLabRender.cs
+
+## 24.04.29
+
+- 플레이어 이동 정보 TCP 통신 구현
+  - 서버 연결 정보 config 파일 작성 및 연결
+    - ServerConfigLoader.cs
+  - TCP 연결 및 연결 확인 스크립트 작성
+    - TCPClientManager.cs
+  - 이동 시 TCP 서버로 전송 기능 적용
+    - Charactermove.cs 수정
