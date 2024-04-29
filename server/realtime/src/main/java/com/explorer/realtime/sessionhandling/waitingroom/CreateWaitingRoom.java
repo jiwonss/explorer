@@ -1,6 +1,6 @@
 package com.explorer.realtime.sessionhandling.waitingroom;
 
-import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
+import com.explorer.realtime.global.teamcode.TeamCodeGenerator;
 import com.explorer.realtime.sessionhandling.repository.ChannelRepository;
 import com.explorer.realtime.sessionhandling.repository.UserRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;

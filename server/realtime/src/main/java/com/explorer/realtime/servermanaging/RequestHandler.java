@@ -1,4 +1,4 @@
-package com.explorer.realtime.serverManaging;
+package com.explorer.realtime.servermanaging;
 
 import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
