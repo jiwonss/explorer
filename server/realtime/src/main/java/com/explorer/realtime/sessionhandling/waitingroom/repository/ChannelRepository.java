@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.repository;
+package com.explorer.realtime.sessionhandling.waitingroom.repository;
 
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;

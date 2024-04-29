@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.repository;
+package com.explorer.realtime.sessionhandling.waitingroom.repository;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import org.springframework.data.redis.core.HashOperations;
