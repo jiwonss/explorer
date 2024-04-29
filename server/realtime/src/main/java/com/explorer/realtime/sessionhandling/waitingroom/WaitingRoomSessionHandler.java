@@ -40,7 +40,7 @@ public class WaitingRoomSessionHandler {
             case "leaveWaitingRoom":
                 log.info("leave waiting room");
                 String leaveTeamCode = json.getString("teamCode");
-                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json), connection);
+                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json));
                 break;
         }
 

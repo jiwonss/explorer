@@ -25,4 +25,12 @@ public class RedisService {
         return redisOperations.opsForHash().entries(teamCode).collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
+    public Mono<Boolean> deleteFromTeamCode(String teamCode) {
+        return redisOperations.opsForHash().delete(teamCode);
+    }
+
+    public Mono<Long> deleteUidFromTeamCode(String teamCode, String userId) {
+        return redisOperations.opsForHash().remove(teamCode, userId);
+    }
+
 }

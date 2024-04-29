@@ -26,8 +26,8 @@ public class UserRepository {
         ).then();
     }
 
-    public void delete(Long userId) {
-        redisTemplate.delete(KEY_PREFIX + userId);
+    public Mono<Boolean> delete(Long userId) {
+        return reactiveHashOperations.delete(KEY_PREFIX + userId);
     }
 
 }
