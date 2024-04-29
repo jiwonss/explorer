@@ -1,7 +1,7 @@
-package com.explorer.realtime.sessionhandling.waitingroom;
+package com.explorer.realtime.sessionhandling.waitingroom.event;
 
-import com.explorer.realtime.sessionhandling.repository.ChannelRepository;
-import com.explorer.realtime.sessionhandling.repository.UserRepository;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,9 @@
 package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import com.explorer.realtime.sessionhandling.waitingroom.event.CreateWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.JoinWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.LeaveWaitingRoom;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.slf4j.Logger;
