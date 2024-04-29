@@ -1,6 +1,6 @@
-package com.explorer.realtime.serverManaging;
+package com.explorer.realtime.servermanaging;
 
-import com.explorer.realtime.global.teamCode.TeamCodeGenerator;
+import com.explorer.realtime.global.teamcode.TeamCodeGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
