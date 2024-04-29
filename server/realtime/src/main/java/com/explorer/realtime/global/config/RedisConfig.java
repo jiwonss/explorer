@@ -30,7 +30,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public ReactiveRedisOperations<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
         return new ReactiveRedisTemplate<>(
                 factory,
                 RedisSerializationContext.<String, Object>newSerializationContext()
@@ -40,6 +40,7 @@ public class RedisConfig {
                         .hashValue(new GenericJackson2JsonRedisSerializer())
                         .build());
     }
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(host, port);

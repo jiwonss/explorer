@@ -1,29 +1,63 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
+import com.explorer.realtime.global.broadcasting.Unicasting;
+import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.redis.RedisService;
+import com.explorer.realtime.global.session.SessionManager;
 import com.explorer.realtime.global.teamcode.TeamCodeGenerator;
+import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
-import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
 public class CreateWaitingRoom {
 
+    private final RedisService redisService;
+    private final SessionManager sessionManager;
     private final TeamCodeGenerator teamCodeGenerator;
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
+    private final Unicasting unicasting;
 
-    public void process(UserInfo userInfo, Connection connection) {
+    public Mono<Void> process(UserInfo userInfo, Connection connection) {
         String teamCode = createTeamCode();
-        channelRepository.save(teamCode, userInfo.getUserId(), connection);
-        userRepository.save(userInfo);
+        createConnectionInfo(teamCode, String.valueOf(userInfo.getUserId()), connection);
+        channelRepository.save(teamCode, userInfo.getUserId()).subscribe();
+        userRepository.save(userInfo).subscribe();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String result = null;
+        Map<String, String> map = new HashMap<>();
+        map.put("teamCode", teamCode);
+        try {
+            result = objectMapper.writeValueAsString(Message.success(map));
+
+        } catch (JsonProcessingException ex) {
+            ex.printStackTrace();
+        }
+
+        unicasting.unicasting(teamCode, String.valueOf(userInfo.getUserId()), new JSONObject(result)).subscribe();
+        return Mono.empty();
+    }
+
+    private void createConnectionInfo(String teamCode, String userId, Connection connection) {
+        sessionManager.setConnection(userId, connection);
+        redisService.saveUidToTeamCode(teamCode, userId, "waitingRoom").subscribe();
     }
 
     private String createTeamCode() {
