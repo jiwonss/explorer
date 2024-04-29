@@ -1,7 +1,9 @@
 package com.explorer.realtime.servermanaging;
 
-import com.explorer.realtime.sessionhandling.ingame.IngameSessionHandler;
+import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
+//import com.explorer.realtime.sessionhandling.ingame.StartGamebackup;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
+import lombok.RequiredArgsConstructor;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -12,18 +14,13 @@ import reactor.netty.NettyInbound;
 import reactor.netty.NettyOutbound;
 
 @Component
+@RequiredArgsConstructor
 public class RequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private final WaitingRoomSessionHandler waitingRoomSessionHandler;
-    private final IngameSessionHandler ingameSessionHandler;
-
-    public RequestHandler(WaitingRoomSessionHandler waitingRoomSessionHandler,
-                          IngameSessionHandler ingameSessionHandler) {
-        this.waitingRoomSessionHandler = waitingRoomSessionHandler;
-        this.ingameSessionHandler = ingameSessionHandler;
-    }
+    private final InGameSessionHandler inGameSessionHandler;
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
@@ -45,8 +42,8 @@ public class RequestHandler {
                                     break;
 
                                 case "ingameSession" :
-                                    log.info("start game");
-                                    ingameSessionHandler.ingameHandler(json);
+                                    log.info("in game");
+                                    inGameSessionHandler.inGameHandler(json);
                                     break;
                             }
                         });
