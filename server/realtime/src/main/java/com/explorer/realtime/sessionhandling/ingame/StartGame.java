@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -22,17 +23,25 @@ public class StartGame {
 
 
     public void process(String teamCode, String channelName) {
+        log.info("Processing game start for teamCode: {}", teamCode);
         String channelId = createChannelId();
-        List<String> memberIds = redisListTemplate.opsForList().range("channel:" + teamCode, 0, -1);
+        Set<String> memberIds = redisListTemplate.opsForSet().members("channel:" + teamCode);
+
+        log.info("Redis teamCode {}: {}", teamCode, memberIds);
 
         List<Long> memberIdsLong = new ArrayList<>();
-        for (Object memberId : memberIds) {
-            memberIdsLong.add(Long.parseLong((String) memberId));
+        try{
+            for (Object memberId : memberIds) {
+                memberIdsLong.add(Long.parseLong((String) memberId));
+        }
+        } catch (NumberFormatException e) {
+            log.error("error", e);
+            return;
         }
         Channel channel = new Channel(channelId, channelName, memberIdsLong);
         Channel channel1 = channelMongoRepository.save(channel);
         log.info("channel : {}", channel1.getId());
-        updateRedis(channelId, memberIds, teamCode);
+        updateRedis(channelId, new ArrayList<>(memberIds), teamCode);
     }
 
     private String createChannelId() {
