@@ -1,68 +1,82 @@
 package com.explorer.realtime.global.common.dto;
 
+import com.explorer.realtime.global.common.enums.CastingType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
 public class Message<T> {
+
     private final DataHeader dataHeader;
     private final T dataBody;
 
     @Getter
     @Builder
+    @AllArgsConstructor
     private static class DataHeader {
-        private final int successCode;
+
+        private final String msg;
+        private final String event;
+        private final String castingType;
         private final String resultCode;
         private final String resultMessage;
 
-        private static DataHeader success() {
+        private static DataHeader success(String event, String castingType) {
             return DataHeader.builder()
-                    .successCode(0)
+                    .msg("success")
+                    .event(event)
+                    .castingType(castingType)
                     .build();
         }
 
-        private static DataHeader success(String code, String resultMessage) {
+        private static DataHeader success(String event, String castingType, String resultCode, String resultMessage) {
             return DataHeader.builder()
-                    .successCode(0)
-                    .resultCode(code)
+                    .msg("success")
+                    .event(event)
+                    .castingType(castingType)
+                    .resultCode(resultCode)
                     .resultMessage(resultMessage)
                     .build();
         }
 
-        private static DataHeader fail(String resultCode, String resultMessage) {
+        private static DataHeader fail(String event, String castingType, String resultCode, String resultMessage) {
             return DataHeader.builder()
-                    .successCode(1)
+                    .msg("fail")
+                    .event(event)
+                    .castingType(castingType)
                     .resultCode(resultCode)
                     .resultMessage(resultMessage)
                     .build();
         }
     }
 
-    public static <T> Message<T> success(T dataBody) {
+    public static <T> Message<T> success(String event, CastingType castingType, T dataBody) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.success())
+                .dataHeader(DataHeader.success(event, castingType.name()))
                 .dataBody(dataBody)
                 .build();
     }
 
-    public static <T> Message<T> success(T dataBody, String code, String resultMessage) {
+    public static <T> Message<T> success(String event, CastingType castingType, String resultCode, String resultMessage, T dataBody) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.success(code, resultMessage))
+                .dataHeader(DataHeader.success(event, castingType.name(), resultCode, resultMessage))
                 .dataBody(dataBody)
                 .build();
     }
 
-    public static Message<Void> success() {
-        return Message.<Void>builder()
-                .dataHeader(DataHeader.success())
+    public static <T> Message<T> success(String event, CastingType castingType) {
+        return Message.<T>builder()
+                .dataHeader(DataHeader.success(event, castingType.name()))
                 .build();
     }
 
-    public static <T> Message<T> fail(String resultCode, String resultMessage) {
+    public static <T> Message<T> fail(String event, CastingType castingType, String resultCode, String resultMessage) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.fail(resultCode, resultMessage))
+                .dataHeader(DataHeader.fail(event, castingType.name(), resultCode, resultMessage))
                 .dataBody(null)
                 .build();
     }
+
 }

@@ -1,7 +1,11 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
+import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.redis.RedisService;
 import com.explorer.realtime.global.component.session.SessionManager;
+import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;
@@ -21,6 +25,7 @@ public class JoinWaitingRoom {
     private final SessionManager sessionManager;
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
+    private final Unicasting unicasting;
 
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
         check(teamCode)
@@ -30,6 +35,11 @@ public class JoinWaitingRoom {
                             createConnectionInfo(teamCode, String.valueOf(userInfo.getUserId()), connection);
                             channelRepository.save(teamCode, userInfo.getUserId()).subscribe();
                             userRepository.save(userInfo).subscribe();
+                            unicasting.unicasting(
+                                    teamCode,
+                                    String.valueOf(userInfo.getUserId()),
+                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.UNICASTING))
+                            );
                         },
                         error -> {}
         );
