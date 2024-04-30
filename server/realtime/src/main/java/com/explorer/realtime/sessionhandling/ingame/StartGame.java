@@ -1,7 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
 import com.explorer.realtime.sessionhandling.ingame.entity.Channel;
-import com.explorer.realtime.sessionhandling.repository.ChannelMongoRepository;
+import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -23,7 +23,7 @@ public class StartGame {
 
     public void process(String teamCode, String channelName) {
         String channelId = createChannelId();
-        List<String> memberIds = redisListTemplate.opsForList().range("teamCode:" + teamCode, 0, -1);
+        List<String> memberIds = redisListTemplate.opsForList().range("channel:" + teamCode, 0, -1);
 
         List<Long> memberIdsLong = new ArrayList<>();
         for (Object memberId : memberIds) {
@@ -44,7 +44,7 @@ public class StartGame {
         String newKey = "channel:" + channelId;
 
         redisListTemplate.opsForList().rightPushAll(newKey, memberIds.toArray(new String[0]));
-        redisListTemplate.delete("teamCode:" + teamCode);
+        redisListTemplate.delete("channel:" + teamCode);
     }
 
 }
