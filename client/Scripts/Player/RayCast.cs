@@ -5,6 +5,12 @@ using UnityEngine;
 public class RayCast : MonoBehaviour
 {
     public float maxDistance = 15f;
+    private GetMapItem mapItem;
+
+    void Start()
+    {
+        mapItem = new GetMapItem();
+    }
 
     void Update()
     {
@@ -30,12 +36,12 @@ public class RayCast : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, maxDistance))
         {
-            Debug.Log("hit!!");
             if (Input.GetKeyDown(KeyCode.Z) && hit.collider.CompareTag("Item"))
             {
-                Debug.Log("complete");
+                Debug.Log("z clicked, Item");
                 // Item일 경우 Item 관련 요청
-                
+                mapItem.Awake();
+                mapItem.GetItem(hit.transform.position, hit.transform.rotation);
             }
         }
     }
