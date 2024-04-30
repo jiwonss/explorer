@@ -26,6 +26,15 @@ public class RequestHandler {
                     try {
 
                         JSONObject json = new JSONObject(msg);
+                        String type = json.getString("type");
+
+                        switch (type) {
+                            case "session":
+                                break;
+
+                            case "chat":
+                                break;
+                        }
 
                         return outbound.sendString(Mono.just(msg));
 
