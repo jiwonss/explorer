@@ -1,6 +1,6 @@
-package com.explorer.realtime.global.broadcasting;
+package com.explorer.realtime.global.component.broadcasting;
 
-import com.explorer.realtime.global.session.SessionManager;
+import com.explorer.realtime.global.component.session.SessionManager;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package com.explorer.realtime.global.teamcode;
+package com.explorer.realtime.global.component.teamcode;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;

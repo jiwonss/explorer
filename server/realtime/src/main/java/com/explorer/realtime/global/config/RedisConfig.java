@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
@@ -30,7 +29,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public ReactiveRedisOperations<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
         return new ReactiveRedisTemplate<>(
                 factory,
                 RedisSerializationContext.<String, Object>newSerializationContext()
@@ -40,6 +39,7 @@ public class RedisConfig {
                         .hashValue(new GenericJackson2JsonRedisSerializer())
                         .build());
     }
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(host, port);

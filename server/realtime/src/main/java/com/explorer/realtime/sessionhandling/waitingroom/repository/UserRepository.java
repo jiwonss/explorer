@@ -1,33 +1,33 @@
 package com.explorer.realtime.sessionhandling.waitingroom.repository;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.core.ReactiveHashOperations;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 @Repository
 public class UserRepository {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final HashOperations<String, String, Object> hashOperations;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
+    private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
     private static final String KEY_PREFIX = "user:";
 
-    public UserRepository(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.hashOperations = redisTemplate.opsForHash();
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
+    public UserRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+        this.reactiveRedisTemplate = reactiveRedisTemplate;
+        this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
-    public void save(UserInfo userInfo) {
-        hashOperations.put(KEY_PREFIX + userInfo.getUserId(), "nickname", userInfo.getNickname());
-        hashOperations.put(KEY_PREFIX + userInfo.getUserId(), "avatar", String.valueOf(userInfo.getAvatar()));
+    public Mono<Void> save(UserInfo userInfo) {
+        return Mono.when(
+                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "nickname", userInfo.getNickname()),
+                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "avatar", String.valueOf(userInfo.getAvatar()))
+        ).then();
     }
 
-    public void delete(Long userId) {
-        redisTemplate.delete(KEY_PREFIX + userId);
+    public Mono<Boolean> delete(Long userId) {
+        return reactiveHashOperations.delete(KEY_PREFIX + userId);
     }
 
 }

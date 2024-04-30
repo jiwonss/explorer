@@ -1,4 +1,4 @@
-package com.explorer.realtime.global.session;
+package com.explorer.realtime.global.component.session;
 
 import org.springframework.stereotype.Component;
 import reactor.netty.Connection;
