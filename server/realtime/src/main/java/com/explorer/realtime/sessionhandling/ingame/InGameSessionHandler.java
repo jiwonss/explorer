@@ -1,6 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
+import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -15,7 +16,8 @@ public class InGameSessionHandler {
     private static final Logger log = LoggerFactory.getLogger(WaitingRoomSessionHandler.class);
 
     private final StartGame startGame;
-//    private final RestartGame restartGame;
+    private final RestartGame restartGame;
+    private final EndGame endGame;
 
     public Mono<Void> inGameHandler(JSONObject json) {
         String event = json.getString("event");
@@ -30,6 +32,14 @@ public class InGameSessionHandler {
 
             case "restartGame":
                 log.info("restart game");
+                String channel = json.getString("channel");
+                restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
+                break;
+
+            case "endGame":
+                log.info("end game");
+                channel = json.getString("channel");
+                endGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
                 break;
         }
 
