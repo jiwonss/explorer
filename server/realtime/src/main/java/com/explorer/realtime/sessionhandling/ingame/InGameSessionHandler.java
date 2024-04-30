@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
 
 @Component
 @RequiredArgsConstructor
@@ -19,13 +20,13 @@ public class InGameSessionHandler {
     private final RestartGame restartGame;
     private final EndGame endGame;
 
-    public Mono<Void> inGameHandler(JSONObject json) {
+    public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
         String event = json.getString("event");
 
         switch (event) {
             case "startGame" :
                 log.info("start game");
-                String teamCode = json.getString("teamCode");
+                String teamCode = json.getString("channel");
                 String channelName = json.getString("channelName");
                 startGame.process(teamCode, channelName);
                 break;
@@ -33,7 +34,7 @@ public class InGameSessionHandler {
             case "restartGame":
                 log.info("restart game");
                 String channel = json.getString("channel");
-                restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
+                restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
                 break;
 
             case "endGame":
