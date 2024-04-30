@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
+import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.redis.RedisService;
@@ -51,7 +52,10 @@ public class LeaveWaitingRoom {
         Map<String, String> map = new HashMap<>();
         map.put("message", "방이 삭제되었습니다.");
 
-        broadcasting.broadcasting(teamCode, MessageConverter.convert(Message.success(map))).subscribe();
+        broadcasting.broadcasting(
+                teamCode,
+                MessageConverter.convert(Message.success("leaveWaitingRoom", CastingType.BROADCASTING, map))
+        ).subscribe();
 
         redisService.deleteFromTeamCode(teamCode).subscribe();
     }
@@ -65,7 +69,10 @@ public class LeaveWaitingRoom {
         Map<String, String> map = new HashMap<>();
         map.put("userId", String.valueOf(userId));
 
-        broadcasting.broadcasting(teamCode, MessageConverter.convert(Message.success(map))).subscribe();
+        broadcasting.broadcasting(
+                teamCode,
+                MessageConverter.convert(Message.success("leaveWaitingRoom", CastingType.BROADCASTING, map))
+        ).subscribe();
     }
 
 }

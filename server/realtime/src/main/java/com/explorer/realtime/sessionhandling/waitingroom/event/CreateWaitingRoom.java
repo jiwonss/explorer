@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
+import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.redis.RedisService;
@@ -40,7 +41,12 @@ public class CreateWaitingRoom {
         Map<String, String> map = new HashMap<>();
         map.put("teamCode", teamCode);
 
-        unicasting.unicasting(teamCode, String.valueOf(userInfo.getUserId()), MessageConverter.convert(Message.success(map))).subscribe();
+        unicasting.unicasting(
+                teamCode,
+                String.valueOf(userInfo.getUserId()),
+                MessageConverter.convert(Message.success("createWaitingRoom", CastingType.UNICASTING, map))
+        ).subscribe();
+
         return Mono.empty();
     }
 
