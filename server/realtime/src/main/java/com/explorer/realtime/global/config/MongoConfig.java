@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "com.explorer.realtime.sessionhandling.repository")
+@EnableMongoRepositories(basePackages = "com.explorer.realtime.sessionhandling.ingame.repository")
 public class MongoConfig {
 
     @Bean
