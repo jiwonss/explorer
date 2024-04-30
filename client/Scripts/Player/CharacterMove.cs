@@ -1,56 +1,108 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
 using System.Net.Sockets;
-using System.Net;
-using System.Text;
+using System.IO; 
 
 public class CharacterMove : MonoBehaviour
 {
     private TCPClientManager tcpClientManager;
 
-    private TcpClient client;
-    private NetworkStream stream;
+    void OnCollisionEnter(Collision collision)
+    {
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
+        if (collision.contacts[0].normal.y > 0.5)  // ï¿½æµ¹ Ç¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ì¸¸
+        {
+            isGrounded = true;
+        }
+    }
 
-    private IPAddress serverIp;
-    private int serverPort;
+    private bool isGrounded;
 
-    public Transform cameraTransform;
-    public CharacterController characterController;
+    void OnCollisionExit(Collision collision)
+    {
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½î³²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        isGrounded = false;
+    }
+    //private TCPClientManager tcpClientManager;
 
-    public float moveSpeed = 3f;
-    public float jumpSpeed = 3f;
-    public float gravity = -10f;
-    public float yVelocity = 0;
+    //private TcpClient client;
+    //private NetworkStream stream;
+
+    //private IPAddress serverIp;
+    //private int serverPort;
+
+    //public Transform cameraTransform;
+    public Rigidbody rb;
+
+    public float moveSpeed = 1f;
+    public float jumpSpeed = 1f;
 
     private bool isMoving = false;
-    private float sendTimer = 0f;
-    private float sendInterval = 0.5f; // 0.5ÃÊ¿¡ ÇÑ ¹ø¾¿ º¸³»±â
+    void NonDash()
+    {
+        moveSpeed -= 2f;
+    }
+    private float sendInterval = 0.5f; // 0.5
+
+    void SendPlayerPosition()
+    {
+        if (tcpClientManager == null)
+        {
+            Debug.LogError("TCPClientManager ì—†ìŒ.");
+            return;
+        }
+
+        NetworkStream stream = tcpClientManager.GetStream();
+
+        if (stream == null)
+        {
+            Debug.LogError("TCPClientManager stream ì—†ìŒ.");
+            return;
+        }
+
+        string playerPosition = transform.position.ToString();
+        string playerRotation = cameraTransform.rotation.ToString();
+        //Debug.Log(playerPosition);
+        //Debug.Log(playerRotation);
+
+        string json = "{\"type\":\"ingame\",\"event\":\"moving\",\"mapId\":0,\"channelId\":1,\"userId\":1," +
+            "\"posX\":" + transform.position.x + ",\"posY\":" + transform.position.y + ",\"posZ\":" + transform.position.z +
+            ",\"rotX\":" + transform.rotation.eulerAngles.x + ",\"rotY\":" + transform.rotation.eulerAngles.y +
+            ",\"rotZ\":" + transform.rotation.eulerAngles.z + "}";
+
+
+        tcpClientManager.SendTCPRequest(json);
+    }
+
 
     void Start()
     {
-        serverIp = IPAddress.Parse(ServerConfigLoader.serverIp);
-        serverPort = int.Parse(ServerConfigLoader.serverPort);
+        // ìºë¦­í„° ì´ë™ ì´ˆê¸°í™”
+        cameraTransform = GetComponentInChildren<Camera>().transform;
+        characterController = GetComponent<CharacterController>();
 
-        // TCP Å¬¶óÀÌ¾ğÆ® ¸Å´ÏÀú ÃÊ±âÈ­
-        tcpClientManager = new TCPClientManager(ServerConfigLoader.serverIp, int.Parse(ServerConfigLoader.serverPort));
-        if (tcpClientManager.Connect())
+        // TCPClientManager ì¸ìŠ¤í„´ìŠ¤ ê°€ì ¸ì˜¤ê¸°
+        tcpClientManager = TCPClientManager.Instance;
+        if (tcpClientManager == null)
         {
-            Debug.Log("TCP ¿¬°á ¼º°ø!");
+            Debug.LogError("TCPClientManager ");
         }
         else
         {
-            Debug.LogError("TCP ¿¬°á ½ÇÆĞ!");
+            // TCPClientManager ì¸ìŠ¤í„´ìŠ¤
+            SetTCPClientManager(tcpClientManager);
         }
+    }
 
-        client = new TcpClient();
-        client.Connect(serverIp, serverPort);
-        stream = client.GetStream();
+    void Dash()
+    {
+        moveSpeed += 2f;
+    }
 
-        // ÇÃ·¹ÀÌ¾î ÀÌµ¿ °ü·Ã º¯¼ö ÃÊ±âÈ­
-        cameraTransform = GetComponentInChildren<Camera>().transform;
-        characterController = GetComponent<CharacterController>();
+    public void SetTCPClientManager(TCPClientManager clientManager)
+    {
+        tcpClientManager = clientManager;
     }
 
     void Update()
@@ -58,77 +110,71 @@ public class CharacterMove : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        Vector3 moveDirection = new Vector3(h, 0, v);
-        moveDirection = cameraTransform.TransformDirection(moveDirection);
-        moveDirection *= moveSpeed;
+        Vector3 moveDirection = new Vector3(h, 0.0f, v);
 
-        if (characterController.isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space)&& isGrounded)
         {
-            yVelocity = 0;
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                yVelocity = jumpSpeed;
-                SendPlayerPosition();
-            }
+            rb.AddForce(Vector3.up * jumpSpeed , ForceMode.Impulse);
+
+            //SendPlayerPosition();
         }
 
-        yVelocity += (gravity * Time.deltaTime);
-        moveDirection.y = yVelocity;
-        characterController.Move(moveDirection * Time.deltaTime);
 
-        Dash();
-
-        // ÀÌµ¿ Å°°¡ ´­¸± ¶§¸¶´Ù isMoving °ªÀ» true·Î ¼³Á¤
-        isMoving = (h != 0 || v != 0);
-
-        // 0.5ÃÊ¿¡ ÇÑ ¹ø¾¿ ÇÃ·¹ÀÌ¾î À§Ä¡¸¦ º¸³¿
-        sendTimer += Time.deltaTime;
-        if (sendTimer >= sendInterval && isMoving)
-        {
-            SendPlayerPosition();
-            sendTimer = 0f; // Å¸ÀÌ¸Ó ÃÊ±âÈ­
-        }
-    }
-
-    void Dash()
-    {
         if (!Input.GetKeyDown(KeyCode.S))
         {
             if (Input.GetKeyDown(KeyCode.LeftShift))
             {
-                moveSpeed += 10f;
+                Dash();
             }
 
             if (Input.GetKeyUp(KeyCode.LeftShift))
             {
-                moveSpeed -= 10f;
+                NonDash();
             }
+        }
+
+
+        isMoving = (h != 0 || v != 0);
+
+        //// 0.5ï¿½Ê¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //sendTimer += Time.deltaTime;
+        //if (sendTimer >= sendInterval && isMoving)
+        //{
+        //SendPlayerPosition();
+        //sendTimer = 0f; // Å¸ï¿½Ì¸ï¿½ ï¿½Ê±ï¿½È­
+        //}
+
+        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+        sendTimer += Time.deltaTime;
+        if (sendTimer >= sendInterval && isMoving)
+        {
+            SendPlayerPosition();
+            sendTimer = 0f; // Å¸ï¿½Ì¸ï¿½ ï¿½Ê±ï¿½È­
         }
     }
 
-    void SendPlayerPosition()
-    {
-        string playerPosition = transform.position.ToString();
-        string playerRotation = cameraTransform.rotation.ToString();
-        //Debug.Log(playerPosition);
-        //Debug.Log(playerRotation);
+    //void SendPlayerPosition()
+    //{
+    //    string playerPosition = transform.position.ToString();
+    //    string playerRotation = cameraTransform.rotation.ToString();
+    //    //Debug.Log(playerPosition);
+    //    //Debug.Log(playerRotation);
 
-        // ÇÃ·¹ÀÌ¾îÀÇ ÇöÀç À§Ä¡ ¹× È¸Àü Á¤º¸¸¦ JSONÀ¸·Î º¯È¯
-        string json = "{\"type\":\"ingame\",\"event\":\"moving\",\"mapId\":0,\"channelId\":1,\"userId\":1," +
-            "\"posX\":" + transform.position.x + ",\"posY\":" + transform.position.y + ",\"posZ\":" + transform.position.z +
-            ",\"rotX\":" + transform.rotation.eulerAngles.x + ",\"rotY\":" + transform.rotation.eulerAngles.y +
-            ",\"rotZ\":" + transform.rotation.eulerAngles.z + "}";
+    //    // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ JSONï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
+    //    string json = "{\"type\":\"ingame\",\"event\":\"moving\",\"mapId\":0,\"channelId\":1,\"userId\":1," +
+    //        "\"posX\":" + transform.position.x + ",\"posY\":" + transform.position.y + ",\"posZ\":" + transform.position.z +
+    //        ",\"rotX\":" + transform.rotation.eulerAngles.x + ",\"rotY\":" + transform.rotation.eulerAngles.y +
+    //        ",\"rotZ\":" + transform.rotation.eulerAngles.z + "}";
 
-        // JSONÀ» ¼­¹ö·Î Àü¼Û
-        byte[] data = Encoding.UTF8.GetBytes(json);
-        stream.Write(data, 0, data.Length);
-    }
+    //    // JSONï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    //    byte[] data = Encoding.UTF8.GetBytes(json);
+    //    stream.Write(data, 0, data.Length);
+    //}
 
-    // ¿¬°áÁ¾·á
-    private void OnDestroy()
-    {
-        tcpClientManager.Disconnect();
-    }
+    //// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //private void OnDestroy()
+    //{
+    //    tcpClientManager.Disconnect();
+    //}
 
 }
-

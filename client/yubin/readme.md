@@ -57,3 +57,12 @@
     - TCPClientManager.cs
   - 이동 시 TCP 서버로 전송 기능 적용
     - Charactermove.cs 수정
+
+## 24.04.30
+
+- 레이캐스트 방식 수정
+  - RayCast.cs
+- TCP 연결 방식 수정
+  - TCPClientManager.cs
+- 플레이어 인게임 이동 TCP 통신 구현
+  - CharacterMove.cs
