@@ -68,3 +68,5 @@
   - CharacterMove.cs
 - 플레이어 인게임 드롭 아이템 획득 TCP 통신 구현
   - GetMapItem.cs
+- 원소 추출, 합성, 분해 TCP 통신 구현
+  - ElementLabRender.cs

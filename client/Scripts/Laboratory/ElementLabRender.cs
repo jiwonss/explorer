@@ -2,9 +2,69 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Net.Sockets;
+using System.IO; 
+using Newtonsoft.Json;
+
+public class ExtractTCPRequest
+{
+    public string type;
+    public string eventType;
+    public int cid;
+    public int itemId;
+    public int itemCnt;
+
+    public ExtractTCPRequest(string type, string eventType, int cid, int itemId, int itemCnt)
+    {
+        this.type = type;
+        this.eventType = eventType;
+        this.cid = cid;
+        this.itemId = itemId;
+        this.itemCnt = itemCnt;
+    }
+}
+
+public class SynthesisTCPRequest
+{
+    public string type;
+    public string eventType;
+    public int cid;
+    public int itemId;
+    public int itemCnt;
+
+    public SynthesisTCPRequest(string type, string eventType, int cid, int itemId, int itemCnt)
+    {
+        this.type = type;
+        this.eventType = eventType;
+        this.cid = cid;
+        this.itemId = itemId;
+        this.itemCnt = itemCnt;
+    }
+}
+
+public class DecompositionTCPRequest
+{
+    public string type;
+    public string eventType;
+    public int cid;
+    public int itemId;
+    public int itemCnt;
+
+    public DecompositionTCPRequest(string type, string eventType, int cid, int itemId, int itemCnt)
+    {
+        this.type = type;
+        this.eventType = eventType;
+        this.cid = cid;
+        this.itemId = itemId;
+        this.itemCnt = itemCnt;
+    }
+}
 
 public class ElementLabRender : MonoBehaviour
 {
+
+    private TCPClientManager tcpClientManager;
+
     [Header ("Pages")]
     public GameObject elementLabPage;
     public GameObject labFacPage;
@@ -25,6 +85,18 @@ public class ElementLabRender : MonoBehaviour
     public Button extractionButton; // 추출하기
     public Button storePageButton;
     public Button backButton;
+
+    
+
+    public void Awake()
+    {
+        tcpClientManager = TCPClientManager.Instance;
+        if (tcpClientManager == null)
+        {
+            Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
+            return;
+        }
+    }
 
     void Start()
     {
@@ -71,11 +143,45 @@ public class ElementLabRender : MonoBehaviour
     public void synthesize()
     {
         Debug.Log("합성하기");
+        // TCPClientManager가 설정되지 않았으면 오류 출력
+        if (tcpClientManager == null)
+        {
+            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
+            return;
+        }
+          // TCPClientManager의 GetStream 메서드를 사용하여 NetworkStream 가져오기
+        NetworkStream stream = tcpClientManager.GetStream();
+        if (stream == null)
+        {
+            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
+            return;
+        }
+        SynthesisTCPRequest synthesizeData = new SynthesisTCPRequest("ingame", "synthesis", 0, 0, 1);
+        string json = JsonConvert.SerializeObject(synthesizeData);
+
+        tcpClientManager.SendTCPRequest(json);
     }
     // 분해하기
     public void disassemble()
     {
         Debug.Log("분해하기");
+        // TCPClientManager가 설정되지 않았으면 오류 출력
+        if (tcpClientManager == null)
+        {
+            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
+            return;
+        }
+          // TCPClientManager의 GetStream 메서드를 사용하여 NetworkStream 가져오기
+        NetworkStream stream = tcpClientManager.GetStream();
+        if (stream == null)
+        {
+            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
+            return;
+        }
+        DecompositionTCPRequest decompositionData = new DecompositionTCPRequest("ingame", "decomposition", 0, 0, 1);
+        string json = JsonConvert.SerializeObject(decompositionData);
+
+        tcpClientManager.SendTCPRequest(json);
     }
     // 원소추출실
     public void renderExtractionPage()
@@ -90,6 +196,27 @@ public class ElementLabRender : MonoBehaviour
     public void extract()
     {
         Debug.Log("추출하기");
+        // TCPClientManager가 설정되지 않았으면 오류 출력
+        if (tcpClientManager == null)
+        {
+            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
+            return;
+        }
+          // TCPClientManager의 GetStream 메서드를 사용하여 NetworkStream 가져오기
+        NetworkStream stream = tcpClientManager.GetStream();
+        if (stream == null)
+        {
+            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
+            return;
+        }
+
+        // JSON 생성
+        ExtractTCPRequest extractionData = new ExtractTCPRequest("ingame", "extraction", 123, 456, 789);
+        string json = JsonConvert.SerializeObject(extractionData);
+
+        tcpClientManager.SendTCPRequest(json);
+
+
     }
     // 저장실
     public void renderStorePage()
@@ -105,11 +232,5 @@ public class ElementLabRender : MonoBehaviour
     {
         elementLabPage.SetActive(false);
     }
-
-
-
-
-
-
 
 }
