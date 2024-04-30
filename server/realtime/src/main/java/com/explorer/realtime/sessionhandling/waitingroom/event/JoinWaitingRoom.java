@@ -1,7 +1,7 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
 import com.explorer.realtime.global.redis.RedisService;
-import com.explorer.realtime.global.session.SessionManager;
+import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;

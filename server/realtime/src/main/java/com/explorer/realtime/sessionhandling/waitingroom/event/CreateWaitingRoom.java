@@ -1,10 +1,10 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
-import com.explorer.realtime.global.broadcasting.Unicasting;
+import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.redis.RedisService;
-import com.explorer.realtime.global.session.SessionManager;
-import com.explorer.realtime.global.teamcode.TeamCodeGenerator;
+import com.explorer.realtime.global.component.session.SessionManager;
+import com.explorer.realtime.global.component.teamcode.TeamCodeGenerator;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;
