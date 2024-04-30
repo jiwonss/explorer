@@ -25,6 +25,8 @@ public class RequestHandler {
 
                     try {
 
+                        JSONObject json = new JSONObject(msg);
+
                         return outbound.sendString(Mono.just(msg));
 
                     } catch (JSONException e) {
