@@ -1,6 +1,9 @@
 package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import com.explorer.realtime.sessionhandling.waitingroom.event.CreateWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.JoinWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.LeaveWaitingRoom;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -37,7 +40,7 @@ public class WaitingRoomSessionHandler {
             case "leaveWaitingRoom":
                 log.info("leave waiting room");
                 String leaveTeamCode = json.getString("teamCode");
-                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json), connection);
+                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json));
                 break;
         }
 

@@ -1,6 +1,6 @@
 package com.explorer.realtime.servermanaging;
 
-import com.explorer.realtime.global.teamcode.TeamCodeGenerator;
+import com.explorer.realtime.global.component.teamcode.TeamCodeGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -10,11 +10,9 @@ import org.springframework.stereotype.Service;
 public class ServerImpl implements CommandLineRunner {
 
     private final ServerInitializer serverInitializer;
-    private final TeamCodeGenerator teamCodeGenerator;
 
-    public ServerImpl(ServerInitializer serverInitializer, TeamCodeGenerator teamCodeGenerator) {
+    public ServerImpl(ServerInitializer serverInitializer) {
         this.serverInitializer = serverInitializer;
-        this.teamCodeGenerator = teamCodeGenerator;
     }
 
     private static final Logger log = LoggerFactory.getLogger(ServerImpl.class);
