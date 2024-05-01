@@ -43,6 +43,21 @@ public class RayCast : MonoBehaviour
                 mapItem.Awake();
                 mapItem.GetItem(hit.transform.position, hit.transform.rotation);
             }
+            if (Input.GetMouseButtonDown(0) && hit.collider.CompareTag("Rocket"))
+            {
+                Debug.Log("It's Rocket!");
+                // 로켓 탑승(모달 렌더)
+                SpaceShipPageStart rocketScript = hit.collider.GetComponent<SpaceShipPageStart>();
+                if (rocketScript != null)
+                {   
+                    // TCP로 탑승 통신 필요.
+                    rocketScript.Onclick();
+                }
+                else
+                {
+                    Debug.Log("rocketScript == null");
+                }
+            }
         }
     }
 }
