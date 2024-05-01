@@ -22,6 +22,7 @@ public class InGameSessionHandler {
 
     public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
         String event = json.getString("event");
+        String channel = json.optString("channel");
 
         switch (event) {
             case "startGame" :
@@ -33,15 +34,11 @@ public class InGameSessionHandler {
 
             case "restartGame":
                 log.info("restart game");
-                String channel = json.getString("channel");
-                restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
-                break;
+                return restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
 
             case "endGame":
                 log.info("end game");
-                channel = json.getString("channel");
-                endGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
-                break;
+                return endGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
         }
 
         return Mono.empty();
