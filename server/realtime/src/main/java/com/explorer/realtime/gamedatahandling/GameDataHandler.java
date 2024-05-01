@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling;
 
-import com.explorer.realtime.gamedatahandling.item.event.GetItemFromMap;
+import com.explorer.realtime.gamedatahandling.item.ItemDataHandler;
+import com.explorer.realtime.gamedatahandling.item.dto.ItemInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -12,12 +13,16 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GameDataHandler {
 
-    private final GetItemFromMap getItemFromMap;
+    private final ItemDataHandler itemDataHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
-        String event = json.getString("event");
+        String category = json.getString("item");
 
-        switch (event) {
+        switch (category) {
+            case "item":
+                log.info("category : {}", category);
+                itemDataHandler.itemDataHandler(json);
+                break;
         }
 
         return Mono.empty();
