@@ -7,6 +7,7 @@ import com.explorer.realtime.sessionhandling.waitingroom.repository.UserReposito
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
 
@@ -20,17 +21,26 @@ public class RestartGame {
     private final SessionManager sessionManager;
     private final RedisService redisService;
 
-    public void process(String channel, UserInfo userInfo, Connection connection) {
-        // 클라이언트 측에서 받아온 avatar와 nickname으로 redis userId value 업데이트
-        userRepository.save(userInfo);
+    public Mono<Void> process(String channel, UserInfo userInfo, Connection connection) {
+        // 사용자 정보를 Redis에 저장
+        Mono<Void> saveUser = userRepository.save(userInfo);
+//                .doOnSuccess(aVoid -> log.info("User info saved successfully."))
+//                .doOnError(error -> log.error("Error saving user info: {}", error.getMessage()));
 
-        // channelId값은 클라이언트가 가지고 있으니까 redis에 검색 key로 있으면 추가 없으면 생성
-        createConnectionInfo(channel, String.valueOf(userInfo.getUserId()), connection);
+        // 새로운 연결 정보 생성 및 Redis 업데이트
+        Mono<Void> saveConnectionInfo = createConnectionInfo(channel, String.valueOf(userInfo.getUserId()), connection);
+
+        // 모든 작업 완료 후 Mono<Void> 반환
+        return Mono.when(saveUser, saveConnectionInfo)
+                .then();
     }
 
-    private void createConnectionInfo(String channel, String userId, Connection connection) {
+    private Mono<Void> createConnectionInfo(String channel, String userId, Connection connection) {
         sessionManager.setConnection(userId, connection);
-        redisService.saveUidToTeamCode(channel, userId, "restart game").subscribe();
+        return redisService.saveUidToTeamCode(channel, userId, "Connected in restart game")
+                .then();
+//                .doOnSuccess(aVoid -> log.info("Connection info saved successfully."))
+//                .doOnError(error -> log.error("Error saving connection info: {}", error.getMessage()));
     }
 
 
