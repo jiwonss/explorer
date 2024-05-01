@@ -70,3 +70,9 @@
   - GetMapItem.cs
 - 원소 추출, 합성, 분해 TCP 통신 구현
   - ElementLabRender.cs
+
+## 24.05.01
+
+- 우주선 페이지 연결 구현
+  - SpaceShipPageRender.cs
+    -SpaceShipPageStart.cs
