@@ -1,6 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
 import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.redis.RedisService;
@@ -64,7 +65,7 @@ public class EndGame {
         Map<String, String> map = new HashMap<>();
         map.put("userId", String.valueOf(userId));
 
-        broadcasting.broadcasting(channel, MessageConverter.convert(Message.success(map))).subscribe();
+        broadcasting.broadcasting(channel, MessageConverter.convert(Message.success("endGame", CastingType.BROADCASTING, map))).subscribe();
     }
 
     private Mono<Long> check(String channel) {
