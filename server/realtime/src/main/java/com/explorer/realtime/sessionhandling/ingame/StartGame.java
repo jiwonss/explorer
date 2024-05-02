@@ -43,7 +43,7 @@ public class StartGame {
             return;
         }
         Channel channel = new Channel(channelId, channelName, memberIdsLong);
-        Channel channel1 = channelMongoRepository.save(channel);
+        Channel channel1 = channelMongoRepository.save(channel).block();
         log.info("channel : {}", channel1.getId());
         updateConnection(teamCode, channelId).subscribe();
         updateRedis(channelId, new HashSet<>(userIds), teamCode);
