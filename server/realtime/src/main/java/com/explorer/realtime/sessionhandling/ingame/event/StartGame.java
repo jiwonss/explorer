@@ -1,18 +1,20 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
+import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.redis.ChannelRepository;
+import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.ingame.entity.Channel;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
-import org.springframework.data.redis.core.ReactiveHashOperations;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,33 +22,20 @@ import java.util.stream.Collectors;
 public class StartGame {
 
     private final ChannelMongoRepository channelMongoRepository;
+    private final ChannelRepository channelRepository;
+    private final Broadcasting broadcasting;
 
-    private final RedisTemplate<String, String > redisTemplate;
-
-    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
-
-
-    public void process(String teamCode, String channelName) {
+    public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
         String channelId = createChannelId();
-        Set<String> userIds = redisTemplate.opsForSet().members("channel:" + teamCode);
+        transferAndInitializeChannel(teamCode, channelId, channelName).subscribe();
+        SaveChannel(channelId, channelName);
+        Map<String, String> map = new HashMap<>();
+        map.put("channelId", channelId);
 
-        log.info("Redis teamCode {}: {}", teamCode, userIds);
+        broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map))).subscribe();
 
-        Set<Long> memberIdsLong = new HashSet<>();
-        try{
-            for (Object memberId : userIds) {
-                memberIdsLong.add(Long.parseLong((String) memberId));
-        }
-        } catch (NumberFormatException e) {
-            log.error("error", e);
-            return;
-        }
-        Channel channel = new Channel(channelId, channelName, memberIdsLong);
-        Channel channel1 = channelMongoRepository.save(channel);
-        log.info("channel : {}", channel1.getId());
-        updateConnection(teamCode, channelId).subscribe();
-        updateRedis(channelId, new HashSet<>(userIds), teamCode);
+        return Mono.empty();
     }
 
     private String createChannelId() {
@@ -54,27 +43,18 @@ public class StartGame {
         return newChannelId.toHexString();
     }
 
-    private void updateRedis(String channelId, Set<String> memberIds, String teamCode) {
-        String newKey = "channel:" + channelId;
-
-        redisTemplate.opsForSet().add(newKey, memberIds.toArray(new String[0]));
-        redisTemplate.delete("channel:" + teamCode);
+    private void SaveChannel(String channelId, String channelName) {
+        Channel channel = new Channel(channelId, channelName, new HashSet<>());
+        channelMongoRepository.save(channel);
+        log.info("Channel created: {}", channel.getId());
     }
 
-    private Mono<Void> updateConnection(String teamCode, String channel) {
-        log.info("updateconnection", teamCode);
-        ReactiveHashOperations<String, String, String> hashOps = reactiveRedisTemplate.opsForHash();
-        return hashOps.entries(teamCode)
-                .collectList()
-                .flatMap(userId -> {
-                    if (userId.isEmpty()) {
-                        return Mono.error(new RuntimeException("Key not found or no entries in hash"));
-                    }
-                    return hashOps.putAll(channel, userId.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                            .then(Mono.defer(() -> reactiveRedisTemplate.delete(teamCode)))
-                                    .then();
-                });
+    private Mono<Void> transferAndInitializeChannel(String teamCode, String channelId, String channelName) {
+        return channelRepository.findAll(teamCode)
+                .flatMapMany(entries -> Flux.fromIterable(entries.entrySet()))
+                .flatMap(entry -> channelRepository.save(channelId, Long.parseLong((String) entry.getKey()), Integer.parseInt((String) entry.getValue())))
+                .then(channelRepository.deleteAll(teamCode))
+                .then()
+                .doOnSuccess(unused -> SaveChannel(channelId, channelName));
     }
 }
-
-
