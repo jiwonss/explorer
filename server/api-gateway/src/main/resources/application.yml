@@ -4,18 +4,13 @@ server:
 spring:
   application:
     name: api-gateway
+  config:
+    name: api-gateway
 
   profiles:
-    active: dev
-
-  config:
-    import: "optional:configserver:"
+    active: prod
 
   cloud:
-    config:
-      uri: http://127.0.0.1:8888
-      name: api-gateway
-
     gateway:
       httpclient:
         ssl:
@@ -44,11 +39,27 @@ management:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
-    hostname: localhost
-    ip-address: localhost
+    ip-address: ${BASIC}
+    hostname: api-gateway
     prefer-ip-address: true
   client:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://${BASIC}:8761/eureka
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "optional:configserver:http://3.36.60.98:8888"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configserver:http://localhost:8888"

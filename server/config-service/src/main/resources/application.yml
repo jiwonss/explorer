@@ -6,7 +6,7 @@ spring:
     name: config-service
 
   profiles:
-    active: dev
+    active: prod
 
   cloud:
     config:
@@ -17,42 +17,11 @@ spring:
           ignore-local-ssh-settings: true
           private-key: |
             -----BEGIN OPENSSH PRIVATE KEY-----
-            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
+            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
             -----END OPENSSH PRIVATE KEY-----
 
 passphrase:
@@ -63,4 +32,42 @@ management:
   endpoints:
     web:
       exposure:
-        include: refresh, refresh, beans
+        include: refresh, health, beans
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: 3.36.60.98
+    hostname: config-service
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://3.36.60.98:8761/eureka
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: localhost
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
