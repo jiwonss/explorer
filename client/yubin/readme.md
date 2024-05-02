@@ -88,8 +88,17 @@
   - RayCase.cs 수정
   - ObjectFarming.cs
   - ProgressBar.cs 수정
+    [컴포넌트정의서](https://daily-polo-dee.notion.site/4a68a54ad2614bd3b6985c9415c5a624?v=b414b68538f6438e944f98921aa3daeb&pvs=74)
 - 연구소 오브젝트 구현
   - 원소연구소 lv1, lv2, lv3
   - 에너지 연구소 lv1, lv2, lv3
   - 생존 연구소 lv1, lv2, lv3
   - 연구소 토대
+- 원소, 화합물 아이콘 제작
+- 재배모듈 오브젝트 구현
+  - 재배모듈(초기)
+  - 재배모듈(배양토)
+  - 재배모듈(묘목)
+  - 재배모듈(나무)
+  - 재배모듈(감자하나)
+  - 재배모듈(감자들)
