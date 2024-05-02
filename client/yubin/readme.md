@@ -84,3 +84,7 @@
   - 카운트 다운 기능 적용
   - SpaceshipPageRender.cs 수정
   - Countdown.cs 수정
+- 오브젝트 파밍 기능 구현
+  - RayCase.cs 수정
+  - ObjectFarming.cs
+  - ProgressBar.cs 수정
