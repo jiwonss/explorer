@@ -1,8 +1,8 @@
-package com.explorer.realtime.gamedatahandling.item.event;
+package com.explorer.realtime.gamedatahandling.farming.event;
 
-import com.explorer.realtime.gamedatahandling.item.dto.ConnectionInfo;
-import com.explorer.realtime.gamedatahandling.item.dto.ItemInfo;
-import com.explorer.realtime.gamedatahandling.item.repository.InventoryRepository;
+import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
+import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
+import com.explorer.realtime.gamedatahandling.farming.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

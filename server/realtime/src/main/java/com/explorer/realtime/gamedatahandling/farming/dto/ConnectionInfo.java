@@ -1,4 +1,4 @@
-package com.explorer.realtime.gamedatahandling.item.dto;
+package com.explorer.realtime.gamedatahandling.farming.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

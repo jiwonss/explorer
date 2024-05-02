@@ -1,6 +1,6 @@
-package com.explorer.realtime.gamedatahandling.item.repository;
+package com.explorer.realtime.gamedatahandling.farming.repository;
 
-import com.explorer.realtime.gamedatahandling.item.dto.ItemInfo;
+import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
