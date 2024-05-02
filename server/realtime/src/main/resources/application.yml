@@ -12,3 +12,24 @@ spring:
       host: localhost
       port: 27017
       database: explorer
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    hostname: localhost
+    ip-address: localhost
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+client:
+  api-gateway:
+    url: http://localhost:8000
+
+#logging:
+#  level:
+#    org.springframework.cloud.openfeign: debug
+#    com.explorer.realtime.channeldatahandling.client.UserClient: debug
