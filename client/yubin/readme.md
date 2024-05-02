@@ -75,4 +75,12 @@
 
 - 우주선 페이지 연결 구현
   - SpaceShipPageRender.cs
-    -SpaceShipPageStart.cs
+  - SpaceShipPageStart.cs
+  - RayCast.cs 기능 추가
+
+## 24.05.02
+
+- 우주선 탐사 이벤트 기능 구현
+  - 카운트 다운 기능 적용
+  - SpaceshipPageRender.cs 수정
+  - Countdown.cs 수정

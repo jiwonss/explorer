@@ -114,7 +114,7 @@ public class CharacterMove : MonoBehaviour
         string playerRotation = cameraTransform.rotation.ToString();
         //Debug.Log(playerPosition);
         //Debug.Log(playerRotation);
-
+ 
         string json = "{\"type\":\"ingame\",\"event\":\"moving\",\"mapId\":0,\"channelId\":1,\"userId\":1," +
             "\"posX\":" + transform.position.x + ",\"posY\":" + transform.position.y + ",\"posZ\":" + transform.position.z +
             ",\"rotX\":" + transform.rotation.eulerAngles.x + ",\"rotY\":" + transform.rotation.eulerAngles.y +

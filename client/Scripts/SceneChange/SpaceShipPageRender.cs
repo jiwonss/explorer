@@ -15,7 +15,12 @@ public class SpaceShipPageRender : MonoBehaviour
     [Header("Page")]
     public GameObject choosePlanet;
 
-    [Header("Buttons")]
+    [Header("Object")]
+    public GameObject rocket;
+    public GameObject countdown;
+    public Countdown countdownScript;
+
+   [Header("Buttons")]
     public Button mercury;
     public Button venus;
     public Button asteroid;
@@ -31,6 +36,7 @@ public class SpaceShipPageRender : MonoBehaviour
         Instance = this;
         choosePlanet.SetActive(false); // 초기에 비활성화
         players = GameObject.FindGameObjectsWithTag("Player");
+
     }
 
     void Start()
@@ -71,6 +77,21 @@ public class SpaceShipPageRender : MonoBehaviour
         Debug.Log("탐사 출발!!");
         // 새로운 맵으로 연결하는 로직 구현
         // SceneManager.LoadScene("TempScene2"); 
+
+        if(countdown == null)
+        {
+            Debug.Log("countdown null");
+        }
+        if(rocket == null)
+        {
+            Debug.Log("rocket null");
+        }
+
+        rocket.SetActive(false);
+        choosePlanet.SetActive(false); 
+        countdown.SetActive(true);
+        // 서버에서 탐사 시간 받아와 넣음
+        countdownScript.SetExploreTime(5);
     }
 
     public void closeExplorerPage() 
