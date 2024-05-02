@@ -41,6 +41,14 @@ public class Message<T> {
                     .build();
         }
 
+        private static DataHeader fail(String event, String castingType) {
+            return DataHeader.builder()
+                    .msg("fail")
+                    .event(event)
+                    .castingType(castingType)
+                    .build();
+        }
+
         private static DataHeader fail(String event, String castingType, String resultCode, String resultMessage) {
             return DataHeader.builder()
                     .msg("fail")
@@ -71,6 +79,14 @@ public class Message<T> {
                 .dataHeader(DataHeader.success(event, castingType.name()))
                 .build();
     }
+
+    public static <T> Message<T> fail(String event, CastingType castingType) {
+        return Message.<T>builder()
+                .dataHeader(DataHeader.fail(event, castingType.name()))
+                .dataBody(null)
+                .build();
+    }
+
 
     public static <T> Message<T> fail(String event, CastingType castingType, String resultCode, String resultMessage) {
         return Message.<T>builder()
