@@ -45,7 +45,7 @@ public class RequestHandler {
 
                                 case "ingameSession" :
                                     log.info("in game");
-                                    inGameSessionHandler.inGameHandler(json);
+                                    inGameSessionHandler.inGameHandler(json, connection);
                                     break;
 
                                 case "ingame":
