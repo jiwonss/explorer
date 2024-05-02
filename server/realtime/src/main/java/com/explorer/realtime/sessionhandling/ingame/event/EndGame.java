@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.ingame;
+package com.explorer.realtime.sessionhandling.ingame.event;
 
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
@@ -7,7 +7,6 @@ import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import com.explorer.realtime.sessionhandling.waitingroom.repository.TempRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ public class EndGame {
 
     private final SessionManager sessionManager;
     private final ChannelRepository channelRepository;
-    private final TempRepository tempRepository;
     private final UserRepository userRepository;
     private final Broadcasting broadcasting;
 
@@ -49,17 +47,15 @@ public class EndGame {
 
 
     private void delete(String channel) {
-        tempRepository.find(channel).subscribe(
-                userId -> userRepository.delete(Long.valueOf(userId)).subscribe()
-                );
-        tempRepository.delete(String.valueOf(channel)).subscribe();
-        channelRepository.deleteAll(channel).subscribe();
+        channelRepository.findAll(channel).subscribe(
+                value -> {
+                    userRepository.delete((Long) value.get(0)).subscribe();
+                });
     }
 
     private void leave(String channel, Long userId) {
-        tempRepository.leave(channel, userId).subscribe();
-        userRepository.delete(userId).subscribe();
         channelRepository.deleteByUserId(channel, userId).subscribe();
+        userRepository.delete(userId).subscribe();
         sessionManager.removeConnection(String.valueOf(userId));
 
         Map<String, String> map = new HashMap<>();
@@ -69,7 +65,7 @@ public class EndGame {
     }
 
     private Mono<Long> check(String channel) {
-        return tempRepository.count(channel).flatMap(
+        return channelRepository.count(channel).flatMap(
                 count -> {
                     return Mono.just(count);
                 }

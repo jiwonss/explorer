@@ -8,7 +8,6 @@ import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.component.teamcode.TeamCodeGenerator;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import com.explorer.realtime.sessionhandling.waitingroom.repository.TempRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
