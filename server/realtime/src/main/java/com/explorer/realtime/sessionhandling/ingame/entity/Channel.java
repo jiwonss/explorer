@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -14,9 +14,9 @@ public class Channel {
     @Id
     private String id;
     private String name;
-    private List<Long> memberIds;
+    private Set<Long> memberIds;
 
-    public Channel(String id, String name, List<Long> memberIds) {
+    public Channel(String id, String name, Set<Long> memberIds) {
         this.id = id;
         this.name = name;
         this.memberIds = memberIds;
