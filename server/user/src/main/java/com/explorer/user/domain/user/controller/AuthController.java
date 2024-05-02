@@ -1,5 +1,6 @@
 package com.explorer.user.domain.user.controller;
 
+import com.explorer.user.domain.user.dto.ChangePasswordRequest;
 import com.explorer.user.domain.user.dto.LoginRequest;
 import com.explorer.user.domain.user.dto.SignupRequest;
 import com.explorer.user.domain.user.dto.TokenRequest;
@@ -41,6 +42,12 @@ public class AuthController {
     @PostMapping("/reissue")
     public ResponseEntity<?> reissue(@RequestBody TokenRequest tokenRequest) {
         return ResponseEntity.ok(Message.success(authService.reissue(tokenRequest.accessToken(), tokenRequest.refreshToken())));
+    }
+
+    @PatchMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
+        authService.changePassword(changePasswordRequest.loginId(), changePasswordRequest.newPassword(), changePasswordRequest.confirmNewPassword());
+        return ResponseEntity.ok(Message.success());
     }
 
 }

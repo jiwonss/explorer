@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: user
+
   config:
     name: user
 

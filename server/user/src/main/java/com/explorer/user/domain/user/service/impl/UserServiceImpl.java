@@ -1,6 +1,5 @@
 package com.explorer.user.domain.user.service.impl;
 
-import com.explorer.user.domain.user.dto.ProfileRequest;
 import com.explorer.user.domain.user.dto.ProfileResponse;
 import com.explorer.user.domain.user.entity.User;
 import com.explorer.user.domain.user.exception.UserErrorCode;
@@ -10,7 +9,7 @@ import com.explorer.user.domain.user.service.UserService;
 import com.explorer.user.global.component.jwt.JwtProvider;
 import com.explorer.user.global.component.jwt.exception.JwtErrorCode;
 import com.explorer.user.global.component.jwt.exception.JwtException;
-import com.explorer.user.global.component.jwt.repository.BlackListRepository;
+import com.explorer.user.global.component.jwt.producer.BlackListProducer;
 import com.explorer.user.global.component.jwt.repository.RefreshTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final BlackListRepository blackListRepository;
+    private final BlackListProducer blackListProducer;
 
     @Transactional
     @Override
@@ -39,7 +38,7 @@ public class UserServiceImpl implements UserService {
             throw new JwtException(JwtErrorCode.INVALID_TOKEN);
         }
 
-        blackListRepository.save(accessToken, jwtProvider.getAccessTokenExpirationDate(accessToken));
+        blackListProducer.sendAccessToken(accessToken);
         refreshTokenRepository.delete(String.valueOf(userId));
     }
 

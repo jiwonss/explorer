@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: api-gateway
+
   config:
     name: api-gateway
 

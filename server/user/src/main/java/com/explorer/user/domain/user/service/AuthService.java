@@ -10,5 +10,6 @@ public interface AuthService {
     boolean checkNicknameDuplicates(String nickname);
     LoginResponse login(String loginId, String password);
     TokenInfo reissue(String accessToken, String refreshToken);
+    void changePassword(String loginId, String newPassword, String confirmNewPassword);
 
 }

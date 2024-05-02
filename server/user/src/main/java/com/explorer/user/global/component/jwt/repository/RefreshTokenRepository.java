@@ -14,7 +14,7 @@ public class RefreshTokenRepository {
     private final RedisTemplate<String, String> redisTemplate;
     private final JwtProps jwtProps;
 
-    private static final String KEY_PREFIX = "refreshToken::";
+    private static final String KEY_PREFIX = "refreshToken:";
 
     public void save(String userId, String refreshToken) {
         redisTemplate.opsForValue()
