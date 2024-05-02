@@ -88,3 +88,8 @@
   - RayCase.cs 수정
   - ObjectFarming.cs
   - ProgressBar.cs 수정
+- 연구소 오브젝트 구현
+  - 원소연구소 lv1, lv2, lv3
+  - 에너지 연구소 lv1, lv2, lv3
+  - 생존 연구소 lv1, lv2, lv3
+  - 연구소 토대
