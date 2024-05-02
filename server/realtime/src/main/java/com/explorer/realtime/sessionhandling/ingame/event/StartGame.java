@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.ingame;
+package com.explorer.realtime.sessionhandling.ingame.event;
 
 import com.explorer.realtime.sessionhandling.ingame.entity.Channel;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;

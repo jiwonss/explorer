@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.ingame;
+package com.explorer.realtime.sessionhandling.ingame.event;
 
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
