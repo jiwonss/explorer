@@ -1,6 +1,6 @@
 package com.explorer.realtime.global.component.broadcasting;
 
-import com.explorer.realtime.global.redis.RedisService;
+import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.component.session.SessionManager;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -14,16 +14,16 @@ import reactor.netty.Connection;
 public class Broadcasting {
 
     private static final Logger log = LoggerFactory.getLogger(Broadcasting.class);
-    private final RedisService redisService;
+    private final ChannelRepository channelRepository;
     private final SessionManager sessionManager;
 
-    public Broadcasting(RedisService redisService, SessionManager sessionManager) {
-        this.redisService = redisService;
+    public Broadcasting(ChannelRepository channelRepository, SessionManager sessionManager) {
+        this.channelRepository = channelRepository;
         this.sessionManager = sessionManager;
     }
     public Mono<Void> broadcasting(String teamCode, JSONObject msg) {
         log.info("start broadcasting to {}", teamCode);
-        return redisService.readUidsFromTeamCode(teamCode)
+        return channelRepository.findAll(teamCode)
                 .flatMapMany(hashTable -> {
                     return Flux.fromIterable(hashTable.keySet())
                             .flatMap(key -> {

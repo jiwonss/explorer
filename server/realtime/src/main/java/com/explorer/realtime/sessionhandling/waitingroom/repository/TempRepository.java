@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class ChannelRepository {
+public class TempRepository {
 
 
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
