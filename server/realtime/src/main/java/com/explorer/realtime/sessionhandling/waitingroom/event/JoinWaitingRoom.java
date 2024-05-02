@@ -3,12 +3,12 @@ package com.explorer.realtime.sessionhandling.waitingroom.event;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
-import com.explorer.realtime.global.redis.RedisService;
+import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
-import com.explorer.realtime.sessionhandling.waitingroom.repository.ChannelRepository;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.TempRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +21,8 @@ import reactor.netty.Connection;
 @RequiredArgsConstructor
 public class JoinWaitingRoom {
 
-    private final RedisService redisService;
-    private final SessionManager sessionManager;
     private final ChannelRepository channelRepository;
+    private final SessionManager sessionManager;
     private final UserRepository userRepository;
     private final Unicasting unicasting;
 
@@ -32,8 +31,7 @@ public class JoinWaitingRoom {
                 .doOnError(Throwable::printStackTrace)
                 .subscribe(
                         value -> {
-                            createConnectionInfo(teamCode, String.valueOf(userInfo.getUserId()), connection);
-                            channelRepository.save(teamCode, userInfo.getUserId()).subscribe();
+                            createConnectionInfo(teamCode, userInfo.getUserId(), connection);
                             userRepository.save(userInfo).subscribe();
                             unicasting.unicasting(
                                     teamCode,
@@ -46,9 +44,9 @@ public class JoinWaitingRoom {
         return Mono.empty();
     }
 
-    private void createConnectionInfo(String teamCode, String userId, Connection connection) {
-        sessionManager.setConnection(userId, connection);
-        redisService.saveUidToTeamCode(teamCode, userId, "waitingRoom").subscribe();
+    private void createConnectionInfo(String teamCode, Long userId, Connection connection) {
+        sessionManager.setConnection(String.valueOf(userId), connection);
+        channelRepository.save(teamCode, userId, 0).subscribe();
     }
 
     private Mono<Long> check(String teamCode) {
