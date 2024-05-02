@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.repository;
+package com.explorer.realtime.sessionhandling.ingame.repository;
 
 import com.explorer.realtime.sessionhandling.ingame.entity.Channel;
 import org.springframework.data.mongodb.repository.MongoRepository;
