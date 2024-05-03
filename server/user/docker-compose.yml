@@ -1,0 +1,84 @@
+services:
+  redis-user:
+    build:
+      context: ./redis
+      dockerfile: ./Dockerfile
+    container_name: redis-user
+    ports:
+      - "6380:6380"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+    networks:
+      explorer:
+        ipv4_address: 172.20.0.4
+
+  redis-gateway:
+    build:
+      context: ../api-gateway/redis
+      dockerfile: ./Dockerfile
+    container_name: redis-gateway
+    ports:
+      - "6381:6381"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+    networks:
+      explorer:
+        ipv4_address: 172.20.0.5
+
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+      dockerfile: ./Dockerfile
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      explorer:
+        ipv4_address: 172.20.0.6
+
+  springboot-user:
+    image: vlwli99/user
+    container_name: user
+    depends_on:
+      - redis-user
+      - rabbitmq
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "9000:9000"
+    networks:
+      explorer:
+        ipv4_address: 172.20.0.7
+
+  springboot-gateway:
+    image: vlwli99/api-gateway
+    container_name: api-gateway
+    depends_on:
+      - redis-gateway
+      - rabbitmq
+    build:
+      context: ../api-gateway
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      explorer:
+        ipv4_address: 172.20.0.8
+
+networks:
+  explorer:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.20.0.0/16"
