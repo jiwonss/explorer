@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.json.JSONObject;
 
+import java.util.StringJoiner;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -26,6 +28,13 @@ public class PositionInfo {
                 .rotY(json.getFloat("rotY"))
                 .rotZ(json.getFloat("rotZ"))
                 .build();
+    }
+
+    public String toString() {
+        StringJoiner stringJoiner = new StringJoiner(":");
+        stringJoiner.add(String.valueOf(posX)).add(String.valueOf(posY)).add(String.valueOf(posZ))
+                .add(String.valueOf(rotX)).add(String.valueOf(rotY)).add(String.valueOf(rotZ));
+        return stringJoiner.toString();
     }
 
 }
