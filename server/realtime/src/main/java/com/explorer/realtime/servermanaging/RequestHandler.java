@@ -1,5 +1,6 @@
 package com.explorer.realtime.servermanaging;
 
+import com.explorer.realtime.channeldatahandling.ChannelDataHandler;
 import com.explorer.realtime.gamedatahandling.GameDataHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
 //import com.explorer.realtime.sessionhandling.ingame.StartGamebackup;
@@ -23,6 +24,7 @@ public class RequestHandler {
     private final WaitingRoomSessionHandler waitingRoomSessionHandler;
     private final InGameSessionHandler inGameSessionHandler;
     private final GameDataHandler gameDataHandler;
+    private final ChannelDataHandler channelDataHandler;
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
@@ -52,6 +54,10 @@ public class RequestHandler {
                                     log.info("game data");
                                     gameDataHandler.gameDataHandler(json);
                                     break;
+
+                                case "channel":
+                                    log.info("channel list");
+                                    channelDataHandler.channelDataHandler(json);
                             }
                         });
 
