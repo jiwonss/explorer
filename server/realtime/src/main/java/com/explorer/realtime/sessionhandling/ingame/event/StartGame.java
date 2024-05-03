@@ -30,7 +30,7 @@ public class StartGame {
         log.info("Processing game start for teamCode: {}", teamCode);
         String channelId = createChannelId();
         transferAndInitializeChannel(teamCode, channelId, channelName).subscribe();
-        SaveChannel(teamCode, channelId, channelName).subscribe();
+        SaveChannel(teamCode, channelId, channelName);
         Map<String, String> map = new HashMap<>();
         map.put("channelId", channelId);
 
@@ -66,7 +66,7 @@ public class StartGame {
                             .map(entry -> Long.parseLong((String) entry.getKey())) // 각 entry의 Key를 Long으로 변환
                             .collect(Collectors.toSet()); // Set으로 변환하여 중복 제거
                     Channel channel = new Channel(channelId, channelName, memberIds); // MongoDB에 저장할 Channel 객체 생성
-                    channelMongoRepository.save(channel);
+                    channelMongoRepository.save(channel).subscribe();
                     return Mono.empty();
                 }
             );
