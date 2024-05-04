@@ -17,11 +17,11 @@ public class FarmingHandler {
     private final GetItemFromMap getItemFromMap;
 
     public Mono<Void> farmingHandler(JSONObject json) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
 
-        switch (event) {
+        switch (eventName) {
             case "getItemFromMap":
-                log.info("event : {}", event);
+                log.info("eventName : {}", eventName);
                 getItemFromMap.process(ConnectionInfo.of(json), ItemInfo.of(json));
                 break;
         }

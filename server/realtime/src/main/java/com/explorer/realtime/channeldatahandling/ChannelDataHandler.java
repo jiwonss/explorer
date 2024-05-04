@@ -15,11 +15,11 @@ public class ChannelDataHandler {
     private final GetChannelList getChannelList;
 
     public Mono<Void> channelDataHandler(JSONObject json) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
 
-        switch (event) {
+        switch (eventName) {
             case "getChannelList":
-                log.info("event : {}", event);
+                log.info("event : {}", eventName);
                 String accessToken = json.getString("accessToken");
                 getChannelList.process(accessToken);
                 break;
