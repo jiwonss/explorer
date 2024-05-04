@@ -30,7 +30,7 @@ public class StartGame {
         log.info("Processing game start for teamCode: {}", teamCode);
         String channelId = createChannelId();
         transferAndInitializeChannel(teamCode, channelId, channelName).subscribe();
-        SaveChannel(teamCode, channelId, channelName);
+        SaveChannel(teamCode, channelId, channelName).subscribe();
         Map<String, String> map = new HashMap<>();
         map.put("channelId", channelId);
 
