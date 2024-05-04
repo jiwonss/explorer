@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
+
 
 @Slf4j
 @Component
@@ -14,14 +16,14 @@ public class ChannelDataHandler {
 
     private final GetChannelList getChannelList;
 
-    public Mono<Void> channelDataHandler(JSONObject json) {
+    public Mono<Void> channelDataHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
 
         switch (eventName) {
             case "getChannelList":
                 log.info("event : {}", eventName);
-                String accessToken = json.getString("accessToken");
-                getChannelList.process(accessToken);
+                Long userId = json.getLong("userId");
+                getChannelList.process(userId, connection);
                 break;
         }
 

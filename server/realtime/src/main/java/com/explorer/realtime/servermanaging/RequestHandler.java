@@ -4,7 +4,6 @@ import com.explorer.realtime.channeldatahandling.ChannelDataHandler;
 import com.explorer.realtime.gamedatahandling.GameDataHandler;
 import com.explorer.realtime.initializing.InitializeHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
-//import com.explorer.realtime.sessionhandling.ingame.StartGamebackup;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONException;
@@ -59,7 +58,7 @@ public class RequestHandler {
 
                                 case "channel":
                                     log.info("channel list");
-                                    channelDataHandler.channelDataHandler(json);
+                                    channelDataHandler.channelDataHandler(json, connection);
 
                                 case "initialize":
                                     log.info("initialize map");
