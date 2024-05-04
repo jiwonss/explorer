@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,20 +29,25 @@ public class JoinWaitingRoom {
     private final Unicasting unicasting;
 
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
+        log.info("joinWaitingRoom teamCode : {}", teamCode);
         check(teamCode)
                 .doOnError(Throwable::printStackTrace)
-                .subscribe(
+                .flatMap(
                         value -> {
                             createConnectionInfo(teamCode, userInfo.getUserId(), connection);
-                            userRepository.save(userInfo).subscribe();
+                            return userRepository.save(userInfo);
+                        }
+                )
+                .doOnSuccess(
+                        value -> {
                             unicasting.unicasting(
                                     teamCode,
                                     String.valueOf(userInfo.getUserId()),
                                     MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.UNICASTING))
-                            );
-                        },
-                        error -> {}
-        );
+                            ).subscribe();
+                        }
+                )
+                .subscribe();
         return Mono.empty();
     }
 
