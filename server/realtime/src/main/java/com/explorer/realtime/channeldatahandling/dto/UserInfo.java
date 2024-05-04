@@ -1,4 +1,4 @@
-package com.explorer.user.global.common.dto;
+package com.explorer.realtime.channeldatahandling.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

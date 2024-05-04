@@ -24,10 +24,10 @@ public class InGameSessionHandler {
     private final EndGame endGame;
 
     public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
         String channel = json.optString("channel");
 
-        switch (event) {
+        switch (eventName) {
             case "startGame" :
                 log.info("start game");
                 String teamCode = json.getString("channel");

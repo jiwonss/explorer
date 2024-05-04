@@ -1,5 +1,6 @@
 package com.explorer.apigateway.global.error;
 
+import com.explorer.apigateway.global.common.dto.Message;
 import com.explorer.apigateway.global.error.exception.AuthenticationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +11,6 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -24,20 +24,19 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
-        ErrorResponse errorResponse = null;
+        Message errorResponse = null;
         DataBuffer dataBuffer = null;
 
         DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
 
         exchange.getResponse().getHeaders().setContentType(APPLICATION_JSON);
 
-
         if (ex instanceof AuthenticationException) {
-            errorResponse = ErrorResponse.create(ex, HttpStatus.UNAUTHORIZED,
-                    ex.getMessage());
+//            errorResponse = ErrorResponse.create(ex, HttpStatus.UNAUTHORIZED, ex.getMessage());
+            errorResponse = Message.fail(String.valueOf(((AuthenticationException) ex).getErrorCode()), ex.getMessage());
         } else {
-            errorResponse = ErrorResponse.create(ex, HttpStatus.INTERNAL_SERVER_ERROR,
-                    ex.getMessage());
+//            errorResponse = ErrorResponse.create(ex, HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+            errorResponse = Message.fail("INTERNAL_SERVER_ERROR", "");
         }
 
         try {
@@ -47,7 +46,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             bufferFactory.wrap("".getBytes());
         }
 
-        exchange.getResponse().setStatusCode(errorResponse.getStatusCode());
+        exchange.getResponse().setStatusCode(HttpStatus.OK);
 
         return exchange.getResponse().writeWith(Mono.just(dataBuffer));
     }

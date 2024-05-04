@@ -18,33 +18,41 @@ public class Message<T> {
     private static class DataHeader {
 
         private final String msg;
-        private final String event;
+        private final String eventName;
         private final String castingType;
         private final String resultCode;
         private final String resultMessage;
 
-        private static DataHeader success(String event, String castingType) {
+        private static DataHeader success(String eventName, String castingType) {
             return DataHeader.builder()
                     .msg("success")
-                    .event(event)
+                    .eventName(eventName)
                     .castingType(castingType)
                     .build();
         }
 
-        private static DataHeader success(String event, String castingType, String resultCode, String resultMessage) {
+        private static DataHeader success(String eventName, String castingType, String resultCode, String resultMessage) {
             return DataHeader.builder()
                     .msg("success")
-                    .event(event)
+                    .eventName(eventName)
                     .castingType(castingType)
                     .resultCode(resultCode)
                     .resultMessage(resultMessage)
                     .build();
         }
 
-        private static DataHeader fail(String event, String castingType, String resultCode, String resultMessage) {
+        private static DataHeader fail(String eventName, String castingType) {
             return DataHeader.builder()
                     .msg("fail")
-                    .event(event)
+                    .eventName(eventName)
+                    .castingType(castingType)
+                    .build();
+        }
+
+        private static DataHeader fail(String eventName, String castingType, String resultCode, String resultMessage) {
+            return DataHeader.builder()
+                    .msg("fail")
+                    .eventName(eventName)
                     .castingType(castingType)
                     .resultCode(resultCode)
                     .resultMessage(resultMessage)
@@ -52,29 +60,37 @@ public class Message<T> {
         }
     }
 
-    public static <T> Message<T> success(String event, CastingType castingType, T dataBody) {
+    public static <T> Message<T> success(String eventName, CastingType castingType, T dataBody) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.success(event, castingType.name()))
+                .dataHeader(DataHeader.success(eventName, castingType.name()))
                 .dataBody(dataBody)
                 .build();
     }
 
-    public static <T> Message<T> success(String event, CastingType castingType, String resultCode, String resultMessage, T dataBody) {
+    public static <T> Message<T> success(String eventName, CastingType castingType, String resultCode, String resultMessage, T dataBody) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.success(event, castingType.name(), resultCode, resultMessage))
+                .dataHeader(DataHeader.success(eventName, castingType.name(), resultCode, resultMessage))
                 .dataBody(dataBody)
                 .build();
     }
 
-    public static <T> Message<T> success(String event, CastingType castingType) {
+    public static <T> Message<T> success(String eventName, CastingType castingType) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.success(event, castingType.name()))
+                .dataHeader(DataHeader.success(eventName, castingType.name()))
                 .build();
     }
 
-    public static <T> Message<T> fail(String event, CastingType castingType, String resultCode, String resultMessage) {
+    public static <T> Message<T> fail(String eventName, CastingType castingType) {
         return Message.<T>builder()
-                .dataHeader(DataHeader.fail(event, castingType.name(), resultCode, resultMessage))
+                .dataHeader(DataHeader.fail(eventName, castingType.name()))
+                .dataBody(null)
+                .build();
+    }
+
+
+    public static <T> Message<T> fail(String eventName, CastingType castingType, String resultCode, String resultMessage) {
+        return Message.<T>builder()
+                .dataHeader(DataHeader.fail(eventName, castingType.name(), resultCode, resultMessage))
                 .dataBody(null)
                 .build();
     }
