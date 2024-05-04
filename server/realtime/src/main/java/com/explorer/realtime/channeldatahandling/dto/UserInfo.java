@@ -9,8 +9,9 @@ import lombok.ToString;
 @Builder
 @ToString
 @AllArgsConstructor
-public class ProfileInfo {
+public class UserInfo {
 
+    private Long userId;
     private String nickname;
     private int avatar;
 
