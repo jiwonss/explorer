@@ -1,4 +1,4 @@
-package com.explorer.realtime.sessionhandling.ingame.entity;
+package com.explorer.realtime.sessionhandling.ingame.document;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
