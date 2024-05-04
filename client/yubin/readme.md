@@ -102,3 +102,21 @@
   - 재배모듈(나무)
   - 재배모듈(감자하나)
   - 재배모듈(감자들)
+
+## 24.05.03
+
+- 브로드캐스팅 기능 구현 중
+  - NetworkDataReveiver.cs
+
+## 24.05.04
+
+- 로그인 시 TCP 연결 구현
+  - AuthControl.cs 수정
+  - TCPClientManager.cs 수정
+- 유저 정보 저장 기능 구현
+  - UserInfoManager.cs
+- TCP 메시지 수신 기능 구현
+  - NetworkDataReceiver.cs
+  - TCPMessageHandler.cs
+- 방 생성 기능 구현
+  - GameScenePlayerLoader.cs 수정
