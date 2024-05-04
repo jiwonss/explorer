@@ -6,6 +6,7 @@ import com.explorer.user.domain.user.exception.UserErrorCode;
 import com.explorer.user.domain.user.exception.UserException;
 import com.explorer.user.domain.user.repository.UserRepository;
 import com.explorer.user.domain.user.service.UserService;
+import com.explorer.user.global.common.dto.UserInfo;
 import com.explorer.user.global.component.jwt.JwtProvider;
 import com.explorer.user.global.component.jwt.exception.JwtErrorCode;
 import com.explorer.user.global.component.jwt.exception.JwtException;
@@ -43,16 +44,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ProfileResponse selectDetailUserInfo(Long userId) {
+    public ProfileResponse getProfileInfo(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
         return ProfileResponse.fromUser(user);
     }
 
     @Transactional
     @Override
-    public void updateUserInfo(Long userId, User user) {
+    public void updateProfileInfo(Long userId, User user) {
         User target = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.NOT_EXIST_USER));
         target.updateProfile(user);
+    }
+
+    @Override
+    public UserInfo getUserInfo(String accessToken) {
+        return jwtProvider.parseAccessTokenByBase64(accessToken);
     }
 
 }
