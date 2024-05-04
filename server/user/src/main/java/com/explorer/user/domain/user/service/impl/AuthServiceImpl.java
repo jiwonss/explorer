@@ -25,7 +25,6 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private final JwtProps jwtProps;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -77,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
                                 .refreshToken(refreshToken)
                                 .build()
                 )
+                .userInfo(jwtProvider.parseAccessTokenByBase64(accessToken))
                 .build();
     }
 
