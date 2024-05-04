@@ -23,9 +23,9 @@ public class WaitingRoomSessionHandler {
     private final LeaveWaitingRoom leaveWaitingRoom;
 
     public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
 
-        switch(event) {
+        switch(eventName) {
             case "createWaitingRoom" :
                 log.info("create waiting room");
                 createWaitingRoom.process(UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
