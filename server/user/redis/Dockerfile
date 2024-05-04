@@ -6,4 +6,4 @@ ENV TZ Asia/Seoul
 
 EXPOSE 6380
 
-CMD ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "${REDIS_PASSWORD}"]
+CMD redis-server /usr/local/etc/redis/redis.conf --requirepass $REDIS_PASSWORD

@@ -1,7 +1,7 @@
 services:
   redis-user:
     build:
-      context: ./redis
+      context: ../user/redis
       dockerfile: ./Dockerfile
     container_name: redis-user
     ports:
@@ -12,11 +12,11 @@ services:
       - ./redis_data:/data
     networks:
       explorer:
-        ipv4_address: 172.17.0.4
+        ipv4_address: 172.20.0.4
 
   redis-gateway:
     build:
-      context: ../api-gateway/redis
+      context: ./redis
       dockerfile: ./Dockerfile
     container_name: redis-gateway
     ports:
@@ -27,11 +27,11 @@ services:
       - ./redis_data:/data
     networks:
       explorer:
-        ipv4_address: 172.17.0.5
+        ipv4_address: 172.20.0.5
 
   rabbitmq:
     build:
-      context: ./rabbitmq
+      context: ../user/rabbitmq
       dockerfile: ./Dockerfile
     container_name: rabbitmq
     ports:
@@ -44,7 +44,7 @@ services:
       - ./rabbitmq_data:/var/lib/rabbitmq
     networks:
       explorer:
-        ipv4_address: 172.17.0.6
+        ipv4_address: 172.20.0.6
 
   springboot-user:
     image: vlwli99/user
@@ -53,13 +53,13 @@ services:
       - redis-user
       - rabbitmq
     build:
-      context: ./
+      context: ../user
       dockerfile: ./Dockerfile
     ports:
       - "9000:9000"
     networks:
       explorer:
-        ipv4_address: 172.17.0.7
+        ipv4_address: 172.20.0.7
 
   springboot-gateway:
     image: vlwli99/api-gateway
@@ -68,17 +68,17 @@ services:
       - redis-gateway
       - rabbitmq
     build:
-      context: ../api-gateway
+      context: ./
       dockerfile: ./Dockerfile
     ports:
       - "8000:8000"
     networks:
       explorer:
-        ipv4_address: 172.17.0.8
+        ipv4_address: 172.20.0.8
 
 networks:
   explorer:
     ipam:
       driver: default
       config:
-        - subnet: "172.17.0.0/16"
+        - subnet: "172.20.0.0/16"
