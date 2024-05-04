@@ -1,6 +1,7 @@
 package com.explorer.apigateway.global.filter;
 
 import com.explorer.apigateway.global.common.dto.TokenInfo;
+import com.explorer.apigateway.global.error.exception.AuthenticationErrorCode;
 import com.explorer.apigateway.global.error.exception.AuthenticationException;
 import com.explorer.apigateway.global.jwt.JwtUtils;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -35,19 +36,20 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             try {
                 String accessToken = exchange.getRequest().getHeaders().get(AUTHORIZATION).get(0).substring(7);
+
                 if (jwtUtils.isBlackListed(accessToken)) {
-                    throw new AuthenticationException("사용할 수 없는 토큰입니다.");
+                    throw new AuthenticationException(AuthenticationErrorCode.INVALID_TOKEN);
                 }
 
                 TokenInfo token = jwtUtils.parseToken(accessToken);
                 addAuthorizationHeaders(exchange.getRequest(), token);
             } catch (ExpiredJwtException ex) {
-                throw new AuthenticationException("토큰이 만료되었습니다.");
-            } catch (MalformedJwtException | SignatureException | IllegalArgumentException |
-                     NullPointerException ex) {
-                throw new AuthenticationException("인증에 실패하였습니다.");
+                throw new AuthenticationException(AuthenticationErrorCode.EXPIRED_TOKEN);
+            } catch (Exception ex) {
+                throw new AuthenticationException(AuthenticationErrorCode.FAILED_AUTHENTICATION);
             }
 
+            log.info("accessToken : {}", exchange.getRequest().getHeaders().get(AUTHORIZATION).get(0).substring(7));
             return chain.filter(exchange);
         };
     }
