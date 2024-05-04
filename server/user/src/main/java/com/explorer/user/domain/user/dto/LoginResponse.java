@@ -1,5 +1,6 @@
 package com.explorer.user.domain.user.dto;
 
+import com.explorer.user.global.common.dto.UserInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,5 +11,6 @@ import lombok.Getter;
 public class LoginResponse {
 
     private TokenInfo tokenInfo;
+    private UserInfo userInfo;
 
 }
