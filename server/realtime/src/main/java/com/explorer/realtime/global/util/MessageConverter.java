@@ -10,12 +10,12 @@ import org.json.JSONObject;
 public class MessageConverter {
 
     private final static ObjectMapper objectMapper = new ObjectMapper();
+    private final static JavaTimeModule javaTimeModule = new JavaTimeModule();
 
     public static JSONObject convert(Object o) {
-        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.registerModule(javaTimeModule);
         try {
             String result = objectMapper.writeValueAsString(o);
-            log.info("object mapper result : {}", result);
             return new JSONObject(result);
         } catch (JsonProcessingException ex) {
             ex.printStackTrace();
