@@ -2,7 +2,8 @@ package com.explorer.realtime.servermanaging;
 
 import com.explorer.realtime.channeldatahandling.ChannelDataHandler;
 import com.explorer.realtime.gamedatahandling.GameDataHandler;
-import com.explorer.realtime.initializing.InitializeHandler;
+import com.explorer.realtime.initializing.event.InitialMapRedis;
+import com.explorer.realtime.initializing.event.InitializeHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class RequestHandler {
     private final GameDataHandler gameDataHandler;
     private final ChannelDataHandler channelDataHandler;
     private final InitializeHandler initializeHandler;
+    private final InitialMapRedis initialMapRedis;
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
@@ -63,6 +65,11 @@ public class RequestHandler {
                                 case "initialize":
                                     log.info("initialize map");
                                     initializeHandler.initializeHandler(json).subscribe();
+                                    break;
+
+                                case "redisMap":
+                                    log.info("redis random position map");
+                                    initialMapRedis.initialMapRedis().subscribe();
                                     break;
                             }
                         });
