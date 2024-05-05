@@ -11,7 +11,6 @@ import java.util.Map;
 @Repository
 public class ChannelRepository {
 
-
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
@@ -44,6 +43,10 @@ public class ChannelRepository {
 
     public Mono<Long> count(String channelId) {
         return reactiveHashOperations.size(KEY_PREFIX + channelId);
+    }
+
+    public Mono<Boolean> existByUserId(String teamCode, Long userId) {
+        return reactiveHashOperations.hasKey(KEY_PREFIX + teamCode, String.valueOf(userId));
     }
 
 }
