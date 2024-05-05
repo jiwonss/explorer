@@ -2,7 +2,6 @@ package com.explorer.realtime.gamedatahandling.farming.event;
 
 import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
 import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
-import com.explorer.realtime.gamedatahandling.farming.dto.PositionInfo;
 import com.explorer.realtime.gamedatahandling.farming.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,20 +19,20 @@ public class GetItemFromMap {
     private final MapInfoRepository mapInfoRepository;
     private final InventoryRepository inventoryRepository;
 
-    public Mono<Void> process(ConnectionInfo connectionInfo, PositionInfo positionInfo) {
+    public Mono<Void> process(ConnectionInfo connectionInfo, String position) {
         log.info("getItemFromMap process");
 
         String channelId = connectionInfo.getChannelId();
         Long userId = connectionInfo.getUserId();
         int mapId = connectionInfo.getMapId();
 
-        mapInfoRepository.save(channelId, mapId, positionInfo, "category", 10, 1).subscribe();
+        mapInfoRepository.save(channelId, mapId, position, "category", 10, 1).subscribe();
 
         AtomicReference<ItemInfo> itemInfo = new AtomicReference<>();;
-        mapInfoRepository.find(channelId, mapId, positionInfo).subscribe(
+        mapInfoRepository.find(channelId, mapId, position).subscribe(
                 value -> {
                     log.info("map : {}", value);
-                    itemInfo.set(ItemInfo.of((String) value, positionInfo));
+                    itemInfo.set(ItemInfo.of((String) value, position));
                     log.info("itemInfo : {}", itemInfo.get().toString());
 
                     int idx = 0;

@@ -1,6 +1,5 @@
 package com.explorer.realtime.gamedatahandling.farming.repository;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.PositionInfo;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -21,17 +20,15 @@ public class MapInfoRepository {
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
-    public Mono<Boolean> save(String channelId, int mapId, PositionInfo positionInfo, String category, int itemId, int itemCnt) {
-        String key = channelId + ":" + String.valueOf(mapId);
-        String field = positionInfo.toString();
-        String value = category + ":" + String.valueOf(itemId) + ":" + String.valueOf(itemCnt);
-        return reactiveHashOperations.put(KEY_PREFIX + key + KEY_SUFFIX, field, value);
+    public Mono<Boolean> save(String channelId, int mapId, String position, String category, int itemId, int itemCnt) {
+        String key = channelId + ":" + mapId;
+        String value = category + ":" + itemId + ":" + itemCnt;
+        return reactiveHashOperations.put(KEY_PREFIX + key + KEY_SUFFIX, position, value);
     }
 
-    public Mono<Object> find(String channelId, int mapId, PositionInfo positionInfo) {
-        String key = channelId + ":" + String.valueOf(mapId);
-        String field = positionInfo.toString();
-        return reactiveHashOperations.get(KEY_PREFIX + key + KEY_SUFFIX, field);
+    public Mono<Object> find(String channelId, int mapId, String position) {
+        String key = channelId + ":" + mapId;
+        return reactiveHashOperations.get(KEY_PREFIX + key + KEY_SUFFIX, position);
     }
 
 }
