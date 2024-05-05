@@ -2,10 +2,13 @@ package com.explorer.realtime.sessionhandling.waitingroom.event;
 
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
-import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.component.session.SessionManager;
+import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
+import com.explorer.realtime.sessionhandling.waitingroom.dto.JoinWaitingRoomResponse;
+import com.explorer.realtime.sessionhandling.waitingroom.dto.PositionInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
@@ -14,9 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -27,6 +27,7 @@ public class JoinWaitingRoom {
     private final SessionManager sessionManager;
     private final UserRepository userRepository;
     private final Unicasting unicasting;
+    private final Broadcasting broadcasting;
 
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
         log.info("joinWaitingRoom teamCode : {}", teamCode);
@@ -40,10 +41,13 @@ public class JoinWaitingRoom {
                 )
                 .doOnSuccess(
                         value -> {
-                            unicasting.unicasting(
+                            PositionInfo positionInfo = PositionInfo.of(0, 1, 0, 0, 0, 0);
+                            JoinWaitingRoomResponse joinWaitingRoomRespons = JoinWaitingRoomResponse
+                                    .of(userInfo.getNickname(), userInfo.getAvatar(), positionInfo);
+
+                            broadcasting.broadcasting(
                                     teamCode,
-                                    String.valueOf(userInfo.getUserId()),
-                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.UNICASTING))
+                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.BROADCASTING, joinWaitingRoomRespons))
                             ).subscribe();
                         }
                 )
