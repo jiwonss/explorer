@@ -1,4 +1,4 @@
-package com.explorer.realtime.initializing;
+package com.explorer.realtime.initializing.event;
 
 import com.explorer.realtime.initializing.entity.Map;
 import com.explorer.realtime.initializing.repository.MapMongoRepository;
