@@ -2,6 +2,7 @@ package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.event.CreateWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.BroadcastPosition;
 import com.explorer.realtime.sessionhandling.waitingroom.event.JoinWaitingRoom;
 import com.explorer.realtime.sessionhandling.waitingroom.event.LeaveWaitingRoom;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class WaitingRoomSessionHandler {
     private final CreateWaitingRoom createWaitingRoom;
     private final JoinWaitingRoom joinWaitingRoom;
     private final LeaveWaitingRoom leaveWaitingRoom;
+    private final BroadcastPosition broadcastPosition;
 
     public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -42,6 +44,14 @@ public class WaitingRoomSessionHandler {
                 String leaveTeamCode = json.getString("teamCode");
                 boolean isLeader = json.getBoolean("isLeader");
                 leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofJson(json), isLeader);
+                break;
+
+            case "broadcastPosition":
+                log.info("broadcast position");
+                String teamCode = json.getString("teamCode");
+                Long userId = json.getLong("userId");
+                String position = json.getString("position");
+                broadcastPosition.process(teamCode, userId, position);
                 break;
         }
 
