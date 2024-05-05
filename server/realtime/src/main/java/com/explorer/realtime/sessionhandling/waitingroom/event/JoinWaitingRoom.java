@@ -9,6 +9,8 @@ import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomErrorCode;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,40 +31,44 @@ public class JoinWaitingRoom {
     private final Unicasting unicasting;
     private final Multicasting multicasting;
 
+    private static final String eventName = "joinWaitingRoom";
+
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
         log.info("joinWaitingRoom teamCode : {}", teamCode);
         check(teamCode)
-                .doOnError(Throwable::printStackTrace)
-                .flatMap(
-                        value -> {
+                .doOnError(WaitingRoomException.class, error -> {
+                    unicasting.unicasting(
+                            teamCode,
+                            String.valueOf(userInfo.getUserId()),
+                            MessageConverter.convert(
+                                    Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
+                    ).subscribe();
+                })
+                .flatMap(value -> {
                             createConnectionInfo(teamCode, userInfo.getUserId(), connection);
                             return userRepository.save(userInfo);
                         }
                 )
-                .doOnSuccess(
-                        value -> {
-                            // 참가한 유저 정보
-                            multicasting.multicasting(
-                                    teamCode,
-                                    String.valueOf(userInfo.getUserId()),
-                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.MULTICASTING, userInfo))
-                            ).subscribe();
+                .doOnSuccess(value -> {
+                    // 참가한 유저 정보
+                    multicasting.multicasting(
+                            teamCode,
+                            String.valueOf(userInfo.getUserId()),
+                            MessageConverter.convert(Message.success(eventName, CastingType.MULTICASTING, userInfo))
+                    ).subscribe();
 
-                            // 이미 참가 중인 유저 정보
-                            findAllUserInfoByTeamcode(teamCode, userInfo.getUserId())
-                                    .subscribe(
-                                            userInfoList -> {
-                                                log.info("userInfoList : {}", userInfoList);
-                                                unicasting.unicasting(
-                                                        teamCode,
-                                                        String.valueOf(userInfo.getUserId()),
-                                                        MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.UNICASTING, userInfoList))
-                                                ).subscribe();
-                                            }
-                                    );
-                        }
-                )
-                .subscribe();
+                    // 이미 참가 중인 유저 정보
+                    findAllUserInfoByTeamcode(teamCode, userInfo.getUserId())
+                            .subscribe(
+                                    userInfoList -> {
+                                        log.info("userInfoList : {}", userInfoList);
+                                        unicasting.unicasting(
+                                                teamCode,
+                                                String.valueOf(userInfo.getUserId()),
+                                                MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, userInfoList))
+                                        ).subscribe();
+                                    });
+                }).subscribe();
         return Mono.empty();
     }
 
@@ -72,13 +78,12 @@ public class JoinWaitingRoom {
     }
 
     private Mono<Long> check(String teamCode) {
-        return channelRepository.count(teamCode).flatMap(
-                count -> {
-                    if (count >= 6) {
-                        return Mono.error(new ExceedingCapacityException());
-                    }
-                    return Mono.just(count);
-                });
+        return channelRepository.count(teamCode).flatMap(count -> {
+            if (count >= 6) {
+                return Mono.error(new WaitingRoomException(WaitingRoomErrorCode.EXCEEDING_CAPACITY));
+            }
+            return Mono.just(count);
+        });
     }
 
     private Mono<List<UserInfo>> findAllUserInfoByTeamcode(String teamcode, Long userId) {
