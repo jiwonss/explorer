@@ -20,21 +20,29 @@ public class BroadcastPosition {
 
     private final Broadcasting broadcasting;
 
-    public Mono<Void> process(String teamCode, Long userId, boolean isNewUser, JSONObject json) {
+    private final static String eventName = "broadcastPosition";
+
+    public Mono<Void> process(JSONObject json) {
+        String teamCode = json.getString("teamCode");
+        Long userId = json.getLong("userId");
+        boolean isNewUser = json.getBoolean("isNewUser");
+
         Map<String, Object> map = new HashMap<>();
         map.put("userId", userId);
         if (isNewUser) {
+            log.info("[process] teamCode : {}, userId : {}, isNewUser : {}", teamCode, userId, isNewUser);
             map.put("position", "0:0:0:0:0:0");
         } else {
             String position = json.getString("position");
+            log.info("[process] teamCode : {}, userId : {}, isNewUser : {}, position : {}", teamCode, userId, isNewUser, position);
             map.put("position", position);
         }
+        log.info("[process] map : {}", map);
 
-        broadcasting.broadcasting(
+        return broadcasting.broadcasting(
                 teamCode,
-                MessageConverter.convert(Message.success("broadcastPosition", CastingType.BROADCASTING, map))
-        ).subscribe();
-        return Mono.empty();
+                MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
+        ).then();
     }
 
 }

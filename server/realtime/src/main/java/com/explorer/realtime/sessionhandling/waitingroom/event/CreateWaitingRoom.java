@@ -1,23 +1,25 @@
 package com.explorer.realtime.sessionhandling.waitingroom.event;
 
+import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
-import com.explorer.realtime.global.common.dto.Message;
-import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.component.teamcode.TeamCodeGenerator;
+import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomErrorCode;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -30,40 +32,51 @@ public class CreateWaitingRoom {
     private final UserRepository userRepository;
     private final Unicasting unicasting;
 
-    public Mono<Void> process(UserInfo userInfo, Connection connection) {
-        String teamCode = createTeamCode();
-        createConnectionInfo(teamCode, userInfo.getUserId(), connection);
-        userRepository.save(userInfo).subscribe();
+    private final static String eventName = "createWaitingRoom";
 
-        Map<String, String> map = new HashMap<>();
-        map.put("teamCode", teamCode);
+    public Mono<Void> process(JSONObject json, Connection connection) {
+        UserInfo userInfo = UserInfo.ofJson(json);
+        log.info("[process] userInfo : {}, connection : {}", userInfo, connection);
 
-        unicasting.unicasting(
-                teamCode,
-                String.valueOf(userInfo.getUserId()),
-                MessageConverter.convert(Message.success("createWaitingRoom", CastingType.UNICASTING, map))
-        ).subscribe();
-
-        return Mono.empty();
+        return createTeamCode()
+                .flatMap(teamCode -> {
+                    log.info("[process] teamCode : {}", teamCode);
+                    return createConnectionInfo(teamCode, userInfo.getUserId(), connection)
+                            .then(userRepository.save(userInfo))
+                            .then(Mono.fromRunnable(() -> {
+                                Map<String, String> map = new HashMap<>();
+                                map.put("teamCode", teamCode);
+                                unicasting.unicasting(
+                                        teamCode,
+                                        String.valueOf(userInfo.getUserId()),
+                                        MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, map))
+                                ).subscribe();
+                            }));
+                })
+                .doOnError(WaitingRoomException.class, error -> {
+                    log.info("[createTeamCode] code : {}, message : {}", error.getErrorCode(), error.getMessage());
+                })
+                .then();
     }
 
-    private void createConnectionInfo(String teamCode, Long userId, Connection connection) {
+    private Mono<Void> createConnectionInfo(String teamCode, Long userId, Connection connection) {
+        log.info("[createConnectionInfo] teamCode : {}, userId : {}", teamCode, userId);
+
         sessionManager.setConnection(String.valueOf(userId), connection);
-        channelRepository.save(teamCode, userId, 0).subscribe();
+        return channelRepository.save(teamCode, userId, 0).then();
     }
 
-    private String createTeamCode() {
-        AtomicReference<String> teamCode = new AtomicReference<>();
-        teamCodeGenerator.getCode().subscribe(
-                code -> {
-                    teamCode.set(code);
-                    log.info("teamCode : {}", teamCode);
-                },
-                error -> {
-                    log.info("error fetching team code");
-                }
-        );
-        return teamCode.toString();
+    private Mono<String> createTeamCode() {
+        log.info("[createTeamCode] message : createTeamCode");
+
+        return teamCodeGenerator.getCode()
+                .switchIfEmpty(Mono.error(new WaitingRoomException(WaitingRoomErrorCode.FAILED_GENERATE_TEAMCODE)))
+                .doOnSuccess(code -> {
+                    log.info("[createTeamCode] message : success, teamCode : {}", code);
+                })
+                .doOnError(error -> {
+                    log.info("[createTeamCode] message : failed generate teamCode");
+                });
     }
 
 }
