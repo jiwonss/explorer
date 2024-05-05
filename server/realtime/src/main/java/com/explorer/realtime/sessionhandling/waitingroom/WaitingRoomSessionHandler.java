@@ -24,34 +24,28 @@ public class WaitingRoomSessionHandler {
     private final LeaveWaitingRoom leaveWaitingRoom;
     private final BroadcastPosition broadcastPosition;
 
-    public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
+    public Mono<Void> waitingRoomSessionHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
 
         switch(eventName) {
             case "createWaitingRoom" :
-                log.info("create waiting room");
-                createWaitingRoom.process(UserInfo.ofJson(json), connection);
+                log.info("event : {}", eventName);
+                createWaitingRoom.process(json, connection).subscribe();
                 break;
 
             case "joinWaitingRoom":
-                log.info("join waiting room");
-                String joinTeamCode = json.getString("teamCode");
-                joinWaitingRoom.process(joinTeamCode, UserInfo.ofJson(json), connection);
+                log.info("event : {}", eventName);
+                joinWaitingRoom.process(json, connection).subscribe();
                 break;
 
             case "leaveWaitingRoom":
-                log.info("leave waiting room");
-                String leaveTeamCode = json.getString("teamCode");
-                boolean isLeader = json.getBoolean("isLeader");
-                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofJson(json), isLeader);
+                log.info("event : {}", eventName);
+                leaveWaitingRoom.process(json).subscribe();
                 break;
 
             case "broadcastPosition":
-                log.info("broadcast position");
-                String teamCode = json.getString("teamCode");
-                Long userId = json.getLong("userId");
-                String position = json.getString("position");
-                broadcastPosition.process(teamCode, userId, position);
+                log.info("event : {}", eventName);
+                broadcastPosition.process(json).subscribe();
                 break;
         }
 
