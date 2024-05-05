@@ -50,8 +50,8 @@ public class WaitingRoomSessionHandler {
                 log.info("broadcast position");
                 String teamCode = json.getString("teamCode");
                 Long userId = json.getLong("userId");
-                String position = json.getString("position");
-                broadcastPosition.process(teamCode, userId, position);
+                boolean isNewUser = json.getBoolean("isNewUser");
+                broadcastPosition.process(teamCode, userId, isNewUser, json);
                 break;
         }
 
