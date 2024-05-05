@@ -6,10 +6,11 @@ import com.explorer.user.domain.user.service.UserService;
 import com.explorer.user.global.common.dto.Message;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.env.Environment;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -36,15 +37,21 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<?> selectDetailUserInfo(@RequestHeader("X-Authorization-Id") Long userId) {
-        return ResponseEntity.ok(Message.success(userService.selectDetailUserInfo(userId)));
+    public ResponseEntity<?> getProfileInfo(@RequestHeader("X-Authorization-Id") Long userId) {
+        return ResponseEntity.ok(Message.success(userService.getProfileInfo(userId)));
     }
 
     @PatchMapping("/profile")
-    public ResponseEntity<?> updateUserInfo(@RequestHeader("X-Authorization-Id") Long userId,
+    public ResponseEntity<?> updateProfileInfo(@RequestHeader("X-Authorization-Id") Long userId,
                                             @RequestBody @Valid ProfileRequest profileRequest) {
-        userService.updateUserInfo(userId, profileRequest.toEntity());
+        userService.updateProfileInfo(userId, profileRequest.toEntity());
         return ResponseEntity.ok(Message.success());
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(@RequestHeader("Authorization") String accessToken) {
+        log.info("getUserInfo : {}", userService.getUserInfo(accessToken));
+        return ResponseEntity.ok(Message.success(userService.getUserInfo(accessToken)));
     }
 
 }

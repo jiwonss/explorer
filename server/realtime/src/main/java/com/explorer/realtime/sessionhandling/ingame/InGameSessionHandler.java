@@ -24,10 +24,10 @@ public class InGameSessionHandler {
     private final EndGame endGame;
 
     public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
         String channel = json.optString("channel");
 
-        switch (event) {
+        switch (eventName) {
             case "startGame" :
                 log.info("start game");
                 String teamCode = json.getString("channel");
@@ -37,11 +37,11 @@ public class InGameSessionHandler {
 
             case "restartGame":
                 log.info("restart game");
-                return restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                return restartGame.process(channel, UserInfo.ofJson(json), connection);
 
             case "endGame":
                 log.info("end game");
-                return endGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
+                return endGame.process(channel, UserInfo.ofJson(json));
         }
 
         return Mono.empty();

@@ -1,7 +1,7 @@
 package com.explorer.realtime.gamedatahandling.farming;
 
 import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
-import com.explorer.realtime.gamedatahandling.farming.dto.PositionInfo;
+import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
 import com.explorer.realtime.gamedatahandling.farming.event.GetItemFromMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +17,12 @@ public class FarmingHandler {
     private final GetItemFromMap getItemFromMap;
 
     public Mono<Void> farmingHandler(JSONObject json) {
-        String event = json.getString("event");
+        String eventName = json.getString("eventName");
 
-        switch (event) {
+        switch (eventName) {
             case "getItemFromMap":
-                log.info("event : {}", event);
-                getItemFromMap.process(ConnectionInfo.of(json), PositionInfo.of(json));
+                log.info("eventName : {}", eventName);
+                getItemFromMap.process(ConnectionInfo.of(json), ItemInfo.of(json));
                 break;
         }
 
