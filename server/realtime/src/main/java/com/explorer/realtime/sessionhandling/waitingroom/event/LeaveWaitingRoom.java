@@ -27,8 +27,8 @@ public class LeaveWaitingRoom {
     private final UserRepository userRepository;
     private final Broadcasting broadcasting;
 
-    public Mono<Void> process(String teamCode, UserInfo userInfo) {
-        if (userInfo.isLeader()) {
+    public Mono<Void> process(String teamCode, UserInfo userInfo, boolean isLeader) {
+        if (isLeader) {
             delete(teamCode);
             channelRepository.findAll(teamCode)
                     .flatMapMany(map -> Flux.fromIterable(map.keySet()))

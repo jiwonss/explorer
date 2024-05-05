@@ -28,19 +28,20 @@ public class WaitingRoomSessionHandler {
         switch(eventName) {
             case "createWaitingRoom" :
                 log.info("create waiting room");
-                createWaitingRoom.process(UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                createWaitingRoom.process(UserInfo.ofJson(json), connection);
                 break;
 
             case "joinWaitingRoom":
                 log.info("join waiting room");
                 String joinTeamCode = json.getString("teamCode");
-                joinWaitingRoom.process(joinTeamCode, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                joinWaitingRoom.process(joinTeamCode, UserInfo.ofJson(json), connection);
                 break;
 
             case "leaveWaitingRoom":
                 log.info("leave waiting room");
                 String leaveTeamCode = json.getString("teamCode");
-                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json));
+                boolean isLeader = json.getBoolean("isLeader");
+                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofJson(json), isLeader);
                 break;
         }
 
