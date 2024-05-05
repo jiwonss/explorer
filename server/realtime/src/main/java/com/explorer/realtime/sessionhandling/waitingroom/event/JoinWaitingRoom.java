@@ -2,13 +2,11 @@ package com.explorer.realtime.sessionhandling.waitingroom.event;
 
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
-import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.component.broadcasting.Multicasting;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
-import com.explorer.realtime.sessionhandling.waitingroom.dto.JoinWaitingRoomResponse;
-import com.explorer.realtime.sessionhandling.waitingroom.dto.PositionInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
@@ -17,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -27,7 +27,7 @@ public class JoinWaitingRoom {
     private final SessionManager sessionManager;
     private final UserRepository userRepository;
     private final Unicasting unicasting;
-    private final Broadcasting broadcasting;
+    private final Multicasting multicasting;
 
     public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
         log.info("joinWaitingRoom teamCode : {}", teamCode);
@@ -41,14 +41,25 @@ public class JoinWaitingRoom {
                 )
                 .doOnSuccess(
                         value -> {
-                            PositionInfo positionInfo = PositionInfo.of(0, 1, 0, 0, 0, 0);
-                            JoinWaitingRoomResponse joinWaitingRoomRespons = JoinWaitingRoomResponse
-                                    .of(userInfo.getNickname(), userInfo.getAvatar(), positionInfo);
-
-                            broadcasting.broadcasting(
+                            // 참가한 유저 정보
+                            multicasting.multicasting(
                                     teamCode,
-                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.BROADCASTING, joinWaitingRoomRespons))
+                                    String.valueOf(userInfo.getUserId()),
+                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.MULTICASTING, userInfo))
                             ).subscribe();
+
+                            // 이미 참가 중인 유저 정보
+                            findAllUserInfoByTeamcode(teamCode, userInfo.getUserId())
+                                    .subscribe(
+                                            userInfoList -> {
+                                                log.info("userInfoList : {}", userInfoList);
+                                                unicasting.unicasting(
+                                                        teamCode,
+                                                        String.valueOf(userInfo.getUserId()),
+                                                        MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.UNICASTING, userInfoList))
+                                                ).subscribe();
+                                            }
+                                    );
                         }
                 )
                 .subscribe();
@@ -68,6 +79,25 @@ public class JoinWaitingRoom {
                     }
                     return Mono.just(count);
                 });
+    }
+
+    private Mono<List<UserInfo>> findAllUserInfoByTeamcode(String teamcode, Long userId) {
+        return channelRepository.findAllFields(teamcode)
+                .flatMap(id -> {
+                    if (!Long.valueOf(String.valueOf(id)).equals(userId)) {
+                        log.info("teamcode : {} , userId : {}", teamcode, id);
+                        return userRepository.findAll(Long.valueOf(String.valueOf(id)))
+                                .map(userInfo ->
+                                        UserInfo.of(
+                                                Long.valueOf(String.valueOf(id)),
+                                                (String) userInfo.get("nickname"),
+                                                Integer.parseInt(String.valueOf(userInfo.get("avatar")))
+                                        ));
+                    } else {
+                        return Mono.empty();
+                    }
+                })
+                .collectList();
     }
 
 }

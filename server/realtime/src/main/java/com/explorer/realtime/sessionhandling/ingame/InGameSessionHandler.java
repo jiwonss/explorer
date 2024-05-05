@@ -37,11 +37,11 @@ public class InGameSessionHandler {
 
             case "restartGame":
                 log.info("restart game");
-                return restartGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                return restartGame.process(channel, UserInfo.ofJson(json), connection);
 
             case "endGame":
                 log.info("end game");
-                return endGame.process(channel, UserInfo.ofUserIdAndNicknameAndAvatar(json));
+                return endGame.process(channel, UserInfo.ofJson(json));
         }
 
         return Mono.empty();

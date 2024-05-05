@@ -6,6 +6,8 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Repository
 public class UserRepository {
 
@@ -30,4 +32,7 @@ public class UserRepository {
         return reactiveHashOperations.delete(KEY_PREFIX + userId);
     }
 
+    public Mono<Map<Object, Object>> findAll(Long userId) {
+        return reactiveHashOperations.entries(KEY_PREFIX + userId).collectMap(Map.Entry::getKey, Map.Entry::getValue);
+    }
 }
