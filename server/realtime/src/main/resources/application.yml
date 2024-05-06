@@ -29,6 +29,10 @@ client:
   api-gateway:
     url: http://localhost:8000
 
+logic:
+  laboratory:
+    extract-url: http://localhost:1379/lab/extract
+
 #logging:
 #  level:
 #    org.springframework.cloud.openfeign: debug
