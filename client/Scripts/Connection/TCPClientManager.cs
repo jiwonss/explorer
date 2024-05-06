@@ -12,6 +12,8 @@ public class TCPClientManager : MonoBehaviour
     private string serverIp;
     private int serverPort;
 
+    private JoinRoomManager joinRoomManager;
+
     public bool isConnected { get; private set; } = false;
 
     public bool IsConnected
@@ -46,6 +48,19 @@ public class TCPClientManager : MonoBehaviour
         {
             Debug.LogError("AuthControl instance not found.");
         }
+        // JoinRoomManager 인스턴스를 찾거나 생성하여 TCPMessageHandler에 설정
+        joinRoomManager = FindObjectOfType<JoinRoomManager>();
+        if (joinRoomManager != null)
+        {
+            TCPMessageHandler.SetJoinRoomManagerInstance(joinRoomManager);
+        }
+        else
+        {
+            Debug.LogError("JoinRoomManager instance not found.");
+        }
+
+    
+
     }
 
     public static TCPClientManager Instance
@@ -75,7 +90,7 @@ public class TCPClientManager : MonoBehaviour
             client = new TcpClient(serverIp, serverPort);
             stream = client.GetStream();
             isConnected = true;
-            Debug.Log("TCP 연결됨");
+            // Debug.Log("TCP 연결됨");
             return true;
         }
         catch (Exception e)
@@ -103,7 +118,7 @@ public class TCPClientManager : MonoBehaviour
     // TCP 서버 메시지 수신 작업 시작
     public void StartReceiving()
     {
-        Debug.Log("StartReceiving");
+        // Debug.Log("StartReceiving");
         if (!receiving)
         {
             receiving = true;
@@ -113,7 +128,7 @@ public class TCPClientManager : MonoBehaviour
 
     private IEnumerator WaitForTCPRequest()
     {   
-        Debug.Log("WaitForTCPRequest");
+        // Debug.Log("WaitForTCPRequest");
         while (true)
         {
             yield return StartCoroutine(ReceiveData());
@@ -133,6 +148,7 @@ public class TCPClientManager : MonoBehaviour
                 byte[] buffer = new byte[client.Available];
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
                 responseData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Debug.Log("Received data: " + responseData);
                 TCPMessageHandler.HandleReceivedData(responseData);
             }
         }
@@ -154,7 +170,7 @@ public class TCPClientManager : MonoBehaviour
                 byte[] buffer = new byte[client.Available];
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
                 string responseData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Debug.Log("Received message from server: " + responseData);
+                // Debug.Log("Received message from server: " + responseData);
                 return responseData;
             }
             else

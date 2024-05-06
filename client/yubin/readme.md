@@ -120,3 +120,16 @@
   - TCPMessageHandler.cs
 - 방 생성 기능 구현
   - GameScenePlayerLoader.cs 수정
+
+## 24.05.06
+
+- 대기방 생성 기능 수정
+- 대기방 참가 기능 구현
+  - AuthControl.cs 수정
+  - TCPClientManager.cs 수정
+  - TCPMessageHandler.cs 수정
+  - CharacterMove.cs 수정
+  - NetworkDataReceiver.cs 수정
+  - MakeRoomPlayerRenderer.cs
+  - JoinRoomManager.cs
+  - PlayerInfo.cs
