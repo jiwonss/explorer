@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling;
 
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
+import com.explorer.realtime.gamedatahandling.moving.MovingHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GameDataHandler {
 
+    private final MovingHandler movingHandler;
     private final FarmingHandler farmingHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
@@ -21,6 +23,10 @@ public class GameDataHandler {
             case "farming":
                 log.info("category : {}", category);
                 farmingHandler.farmingHandler(json);
+                break;
+            case "moving":
+                log.info("category : {}", category);
+                movingHandler.movingHandler(json);
                 break;
         }
 

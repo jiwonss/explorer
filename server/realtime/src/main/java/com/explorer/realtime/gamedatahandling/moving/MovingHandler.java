@@ -1,7 +1,7 @@
-package com.explorer.realtime.gamedatahandling.farming;
+package com.explorer.realtime.gamedatahandling.moving;
 
 import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
-import com.explorer.realtime.gamedatahandling.farming.event.GetItemFromMap;
+import com.explorer.realtime.gamedatahandling.moving.event.Moving;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -11,18 +11,17 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FarmingHandler {
+public class MovingHandler {
 
-    private final GetItemFromMap getItemFromMap;
+    private final Moving moving;
 
-    public Mono<Void> farmingHandler(JSONObject json) {
+    public Mono<Void> movingHandler(JSONObject json) {
         String eventName = json.getString("eventName");
 
         switch (eventName) {
-            case "getItemFromMap":
+            case "moving":
                 log.info("eventName : {}", eventName);
-                String position = json.getString("position");
-                getItemFromMap.process(ConnectionInfo.of(json), position);
+                moving.process(json);
                 break;
         }
 

@@ -4,23 +4,26 @@ package com.explorer.realtime.gamedatahandling.farming.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.json.JSONObject;
+import lombok.ToString;
 
 @Getter
 @Builder
+@ToString
 @AllArgsConstructor
 public class ItemInfo {
 
-    private int itemIdx;
+    private String category;
+    private int itemId;
     private int itemCnt;
-    private PositionInfo positionInfo;
+    private String position;
 
-    public static ItemInfo of(JSONObject json) {
-        PositionInfo positionInfo = PositionInfo.of(json);
+    public static ItemInfo of(String itemInfo, String position) {
+        String[] result = itemInfo.split(":");
         return ItemInfo.builder()
-                .itemIdx(json.getInt("itemIdx"))
-                .itemCnt(json.getInt("itemCnt"))
-                .positionInfo(positionInfo)
+                .category(result[0])
+                .itemId(Integer.parseInt(result[1]))
+                .itemCnt(Integer.parseInt(result[2]))
+                .position(position)
                 .build();
     }
 
