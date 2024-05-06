@@ -66,7 +66,7 @@ public class LeaveWaitingRoom {
                 )
                 .then(userRepository.delete(userId))
                 .then(channelRepository.deleteByUserId(teamCode, userId))
-                .then(Mono.fromRunnable(() -> sessionManager.removeConnection(String.valueOf(userId))));
+                .then(Mono.fromRunnable(() -> sessionManager.removeConnection(userId)));
     }
 
 }

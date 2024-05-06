@@ -51,7 +51,7 @@ public class JoinWaitingRoom {
                     log.info("[process] userInfoList : {}", userInfoList);
                     return unicasting.unicasting(
                             teamCode,
-                            String.valueOf(userInfo.getUserId()),
+                            userInfo.getUserId(),
                             MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, userInfoList))
                     );
                 })
@@ -67,7 +67,7 @@ public class JoinWaitingRoom {
                         case EXCEEDING_CAPACITY:
                             unicasting.unicasting(
                                     teamCode,
-                                    String.valueOf(userInfo.getUserId()),
+                                    userInfo.getUserId(),
                                     MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
                             ).subscribe();
                             return Mono.empty();
@@ -85,7 +85,7 @@ public class JoinWaitingRoom {
                     if (exists) {
                         return Mono.error(new WaitingRoomException(WaitingRoomErrorCode.EXIST_USER));
                     } else {
-                        sessionManager.setConnection(String.valueOf(userId), connection);
+                        sessionManager.setConnection(userId, connection);
                         return channelRepository.save(teamCode, userId, 0).then();
                     }
                 });

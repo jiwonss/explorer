@@ -34,7 +34,7 @@ public class Multicasting {
                                     return Mono.empty();
                                 }
 
-                                Connection connection = sessionManager.getConnection(key.toString());
+                                Connection connection = sessionManager.getConnection(Long.valueOf(key.toString()));
 
                                 if (connection != null) {
                                     log.info("sending message to {}, msg: {}", key, msg);

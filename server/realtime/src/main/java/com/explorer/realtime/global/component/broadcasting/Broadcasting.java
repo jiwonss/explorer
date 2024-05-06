@@ -27,7 +27,7 @@ public class Broadcasting {
                 .flatMapMany(hashTable -> {
                     return Flux.fromIterable(hashTable.keySet())
                             .flatMap(key -> {
-                                Connection connection = sessionManager.getConnection(key.toString());
+                                Connection connection = sessionManager.getConnection(Long.valueOf(key.toString()));
                                 if (connection != null) {
                                     log.info("sending message to {}", key);
                                     return connection.outbound().sendString(Mono.just(msg.toString()+'\n')).then();

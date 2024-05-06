@@ -56,7 +56,7 @@ public class EndGame {
     private void leave(String channel, Long userId) {
         channelRepository.deleteByUserId(channel, userId).subscribe();
         userRepository.delete(userId).subscribe();
-        sessionManager.removeConnection(String.valueOf(userId));
+        sessionManager.removeConnection(userId);
 
         Map<String, String> map = new HashMap<>();
         map.put("userId", String.valueOf(userId));
