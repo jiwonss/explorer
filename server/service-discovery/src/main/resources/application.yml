@@ -6,7 +6,7 @@ spring:
     name: service-discovery
 
   profiles:
-    active: prod
+    active: dev
 
 management: # Actuator 설정 (애플리케이션의 상태 및 정보를 모니터링 및 관리하기 위한 기능을 제공)
   endpoints:

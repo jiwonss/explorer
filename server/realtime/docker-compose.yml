@@ -1,0 +1,86 @@
+services:
+  redis-channel:
+    build:
+      context: ./redis-channel
+      dockerfile: ./Dockerfile
+    container_name: redis-channel
+    ports:
+      - "6380:6380"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.4
+
+  redis-game:
+    build:
+      context: ./redis-game
+      dockerfile: ./Dockerfile
+    container_name: redis-game
+    ports:
+      - "6381:6381"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.5
+
+  rabbitmq:
+    build:
+      context: ../chat/rabbitmq
+      dockerfile: ./Dockerfile
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.6
+
+  springboot-realtime:
+    image: vlwli99/realtime
+    container_name: realtime
+    depends_on:
+      - redis-channel
+      - redis-game
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "9001:9001"
+      - "1370:1370"
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.7
+
+  springboot-chat:
+    image: vlwli99/chat
+    container_name: chat
+    depends_on:
+      - rabbitmq
+      - redis-channel
+    build:
+      context: ../chat
+      dockerfile: ./Dockerfile
+    ports:
+      - "9002:9002"
+      - "1371:1371"
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.8
+
+networks:
+  explorer:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.21.0.0/16"

@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.farming.repository;
 
 import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ public class InventoryRepository {
     private static final String KEY_PREFIX = "data:";
     private static final String KEY_SUFFIX = ":inventory";
 
-    public InventoryRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public InventoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
