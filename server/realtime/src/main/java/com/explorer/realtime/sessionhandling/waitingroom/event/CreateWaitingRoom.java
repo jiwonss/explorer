@@ -48,7 +48,7 @@ public class CreateWaitingRoom {
                                 map.put("teamCode", teamCode);
                                 unicasting.unicasting(
                                         teamCode,
-                                        String.valueOf(userInfo.getUserId()),
+                                        userInfo.getUserId(),
                                         MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, map))
                                 ).subscribe();
                             }));
@@ -62,7 +62,7 @@ public class CreateWaitingRoom {
     private Mono<Void> createConnectionInfo(String teamCode, Long userId, Connection connection) {
         log.info("[createConnectionInfo] teamCode : {}, userId : {}", teamCode, userId);
 
-        sessionManager.setConnection(String.valueOf(userId), connection);
+        sessionManager.setConnection(userId, connection);
         return channelRepository.save(teamCode, userId, 0).then();
     }
 

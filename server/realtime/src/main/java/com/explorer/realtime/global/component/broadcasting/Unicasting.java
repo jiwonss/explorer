@@ -18,14 +18,14 @@ public class Unicasting {
         this.sessionManager = sessionManager;
     }
 
-    public Mono<Void> unicasting(String teamCode, String uid, JSONObject msg) {
+    public Mono<Void> unicasting(String teamCode, Long userId, JSONObject msg) {
 
-        log.info("start unicasting to {} from {}", uid, teamCode);
+        log.info("start unicasting to {} from {}", userId, teamCode);
 
-        Connection connection = sessionManager.getConnection(uid);
+        Connection connection = sessionManager.getConnection(userId);
 
         if (connection == null) {
-            log.warn("No connection found for {}", uid);
+            log.warn("No connection found for {}", userId);
             return Mono.empty();
         }
 
