@@ -121,18 +121,4 @@ public class JoinWaitingRoom {
                 }).collectList();
     }
 
-    private Mono<Void> unicasting(Connection connection, Long userId, JSONObject msg) {
-        log.info("[unicasting] connection : {}, userId : {}", connection, userId);
-
-        if (connection == null) {
-            log.warn("No connection found for {}", userId);
-            return Mono.empty();
-        }
-
-        return connection.outbound().sendString(Mono.just(msg.toString()+'\n'))
-                .then()
-                .doOnSuccess(aVoid -> log.info("Unicast completed : {}", userId))
-                .doOnError(error -> log.error("Unicast failed for userId: {}, error: {}", userId, error.getMessage()));
-    }
-
 }
