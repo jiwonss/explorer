@@ -19,7 +19,7 @@ public class MovingHandler {
         String eventName = json.getString("eventName");
 
         switch (eventName) {
-            case "moving":
+            case "move":
                 log.info("eventName : {}", eventName);
                 moving.process(json);
                 break;
