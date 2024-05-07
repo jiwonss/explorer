@@ -38,6 +38,7 @@ public class GameDataHandler {
                 log.info("category : {}", category);
                 movingHandler.movingHandler(json);
                 break;
+
             case "laboratory":
                 log.info("category : {}", category);
                 laboratoryHandler.laboratoryHandler(json);
