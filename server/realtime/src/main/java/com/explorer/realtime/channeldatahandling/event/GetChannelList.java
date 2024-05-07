@@ -8,6 +8,7 @@ import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.util.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
@@ -23,13 +24,8 @@ public class GetChannelList {
 
     private static final String TOKEN_PREFIX = "Bearer ";
 
-    public Mono<Void> process(String accessToken) {
-        log.info("[process] accessToken : {}" ,accessToken);
-
-        return Mono.empty();
-    }
-
-    public Mono<Void> process(Long userId, Connection connection) {
+    public Mono<Void> process(JSONObject json, Connection connection) {
+        Long userId = json.getLong("userId");
         log.info("[process] userId : {}, connection : {}", userId, connection);
 
         return channelService.findAllChannelInfoByUserId(userId)

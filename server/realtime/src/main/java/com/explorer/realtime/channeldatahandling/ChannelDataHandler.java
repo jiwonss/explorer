@@ -22,8 +22,7 @@ public class ChannelDataHandler {
         switch (eventName) {
             case "getChannelList":
                 log.info("event : {}", eventName);
-                Long userId = json.getLong("userId");
-                getChannelList.process(userId, connection).subscribe();
+                getChannelList.process(json, connection).subscribe();
                 break;
         }
 
