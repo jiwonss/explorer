@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
 import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepositoryForLab;
 import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
@@ -26,8 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Extract {
 
     private final InventoryRepositoryForLab inventoryRepositoryForLab;
+    private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final Unicasting unicasting;
     private final ToLogicServer toLogicServer;
+
     @Value("${logic.laboratory.extract-url}")
     private String extractUrl;
 
@@ -87,7 +90,10 @@ public class Extract {
                                         requestPayload.put("itemCnt", totalCnt.get());
 
                                         toLogicServer.sendRequestToHttpServer(requestPayload.toString(), extractUrl)
-                                                .subscribe(response -> log.info("Logic server response: {}", response));
+                                                .subscribe(response -> {
+                                                    log.info("Logic server response: {}", response);
+                                                    elementLaboratoryRepository.updateValueAtIndex(userInfo.getChannelId(), response).subscribe();
+                                                });
                                     }
                                         })
                                 );
