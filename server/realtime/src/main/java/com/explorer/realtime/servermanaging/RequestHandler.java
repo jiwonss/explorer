@@ -44,8 +44,8 @@ public class RequestHandler {
 
                             switch(type) {
                                 case "waitingRoomSession" :
-                                    log.info("waiting room");
-                                    waitingRoomSessionHandler.waitingRoomHandler(json, connection);
+                                    log.info("type : {}", type);
+                                    waitingRoomSessionHandler.waitingRoomSessionHandler(json, connection);
                                     break;
 
                                 case "ingameSession" :
@@ -54,12 +54,12 @@ public class RequestHandler {
                                     break;
 
                                 case "ingame":
-                                    log.info("game data");
+                                    log.info("type : {}", type);
                                     gameDataHandler.gameDataHandler(json);
                                     break;
 
                                 case "channel":
-                                    log.info("channel list");
+                                    log.info("type : {}", type);
                                     channelDataHandler.channelDataHandler(json, connection);
 
                                 case "initialize":

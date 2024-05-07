@@ -13,6 +13,9 @@ public class InventoryRepository {
 
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
+    private static final String KEY_PREFIX = "data:";
+    private static final String KEY_SUFFIX = ":inventory";
+
     public InventoryRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();

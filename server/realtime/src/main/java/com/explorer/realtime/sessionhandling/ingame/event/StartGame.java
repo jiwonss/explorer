@@ -50,14 +50,14 @@ public class StartGame {
     private Mono<Void> transferAndInitializeChannel(String teamCode, String channelId) {
         return channelRepository.findAll(teamCode)
                 .flatMapMany(entries -> Flux.fromIterable(entries.entrySet()))
-                .flatMap(entry -> channelRepository.save(channelId, Long.parseLong((String) entry.getKey()), Integer.parseInt((String) entry.getValue())))
+                .flatMap(entry -> channelRepository.save(channelId, Long.parseLong(entry.getKey().toString()), Integer.parseInt(entry.getValue().toString())))
                 .then(channelRepository.deleteAll(teamCode))
                 .then();
     }
 
     private Mono<String> saveChannel(String teamCode, String channelName) {
         return channelRepository.findAllFields(teamCode)
-                .map(field -> Long.valueOf(String.valueOf(field)))
+                .map(field -> Long.valueOf(field.toString()))
                 .collectList()
                 .flatMap(result -> {
                     log.info("playerList : {}", result);
@@ -69,5 +69,3 @@ public class StartGame {
     }
 
 }
-
-

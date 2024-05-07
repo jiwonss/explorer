@@ -131,7 +131,7 @@
 
     public void FuncExit()
     {
-        Debug.Log("나가기 들어옴");
+        // Debug.Log("나가기 들어옴");
         // accessToken과 refreshToken을 현재 클래스의 private 변수에서 가져옴
         StartCoroutine(SendLogoutRequest(TokenManager.Instance.GetAccessToken(), TokenManager.Instance.GetRefreshToken()));
         Application.Quit();
@@ -172,7 +172,7 @@
             {
                 // 성공적으로 로그아웃 요청을 보낸 경우
                 // 서버 응답 데이터 처리
-                Debug.Log("로그아웃 성공");
+                // Debug.Log("로그아웃 성공");
                 ChannelChoose.SetActive(false);
                 title.SetActive(true);
                 loginPage.SetActive(true);
@@ -311,9 +311,9 @@
                 
                     if (response.dataHeader.successCode == 0)
                     {
-                        Debug.Log("회원가입 성공");
+                        // Debug.Log("회원가입 성공");
                         Debug.Log("응답 데이터: " + request.downloadHandler.text);
-                        Debug.Log(request.responseCode);
+                        // Debug.Log(request.responseCode);
                         // 성공한 경우 처리
                         CancelSignUp();
                         signPage.SetActive(false);
@@ -374,7 +374,7 @@
             else
             {
                 // 유효하지 않은 비밀번호입니다.
-                Debug.Log("비밀번호는 알파벳, 숫자,@$!%*?&를 각각 1개 이상 포함해야합니다. ");
+                // Debug.Log("비밀번호는 알파벳, 숫자,@$!%*?&를 각각 1개 이상 포함해야합니다. ");
                 signUpInfoText.text = "비밀번호는 알파벳, 숫자, 특수문자(@$!%*?&)를 각각 1개 이상 포함해야합니다.";
             }
         }
@@ -382,7 +382,7 @@
         public void SignUpCancel()
         {
             CancelSignUp();
-            Debug.Log("이거 캔슬사인업 찍혔어");
+            // Debug.Log("이거 캔슬사인업 찍혔어");
             signPage.SetActive(false);
             loginPage.SetActive(true);
         }
@@ -430,7 +430,7 @@
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData));
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            Debug.Log("Request value" + request + "++++request.DownHandler" + request.downloadHandler.text);
+            // Debug.Log("Request value" + request + "++++request.DownHandler" + request.downloadHandler.text);
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
@@ -446,9 +446,10 @@
                     // 유저 정보 저장
                     int userId = response.dataBody.userInfo.userId;
                     string nickname = response.dataBody.userInfo.nickname;
-                    int avatar = response.dataBody.userInfo.avatar;;
+                    int avatar = response.dataBody.userInfo.avatar;
 
                     UserInfoManager.Instance.SetUserInfo(userId, nickname, avatar);
+                    Debug.Log("로그인 : userId : " + userId + " nickname : " + nickname + " avatar : " + avatar);
 
                     //TCP
                     string ip = ServerConfigLoader.serverIp;
@@ -459,7 +460,7 @@
 
                     if (TCPClientManager.Instance.Connect())
                     {
-                        Debug.Log("TCP 연결 성공 !!");
+                        // Debug.Log("TCP 연결 성공 !!");
 
                         // TCP 연결 시 채널 목록 조회
                         loginPage.SetActive(false);
@@ -487,19 +488,19 @@
         {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-            Debug.Log("Access Token Updated: " + accessToken);
-            Debug.Log("Refresh Token Updated: " + refreshToken);
+            // Debug.Log("Access Token Updated: " + accessToken);
+            // Debug.Log("Refresh Token Updated: " + refreshToken);
         }
 
         public void IfExistRoom()
         {
-            Debug.Log("ExistOK");
+            // Debug.Log("ExistOK");
             NoneRoomOBJ.SetActive(false);
             ExistRoomOBJ.SetActive(true);
         }
         public void IfNoneRoom()
         {
-            Debug.Log("NoneOk");
+            // Debug.Log("NoneOk");
             ExistRoomOBJ.SetActive(false);
             NoneRoomOBJ.SetActive(true);
         }
@@ -535,7 +536,7 @@
         {
             JoinNewChannel.SetActive(false);
             string teamCode = JoinRoomInput.text;
-            Debug.Log("teamCode input : " + teamCode);
+            // Debug.Log("teamCode input : " + teamCode);
 
             // TCP Check
             tcpClientManager = TCPClientManager.Instance;
@@ -560,12 +561,17 @@
             int userId = userInfoManager.GetUserId();
             string nickname = userInfoManager.GetNickname();
             int avatar = userInfoManager.GetAvatar();
-            
+            // 방 입장 요청 보냄
             JoinRoomRequest request = new JoinRoomRequest("waitingRoomSession", "joinWaitingRoom", teamCode, userId, nickname, avatar);
             string json = JsonConvert.SerializeObject(request);
             tcpClientManager.SendTCPRequest(json);
+        }
 
-            // SceneManager.LoadScene("GameRoom");
+        // 방 입장 성공 반환 시 씬 전환
+        public void EnterRoom()
+        {
+            SceneManager.LoadScene("TempScene2");
+            
         }
 
         public void JoinCancel()
@@ -627,12 +633,14 @@
             // 방 생성 메시지 발신
             MakeRoomRequest request = new MakeRoomRequest("waitingRoomSession", "createWaitingRoom", userId, nickname, avatar);
             string json = JsonConvert.SerializeObject(request);
+            // Debug.Log("json : " + json);
             tcpClientManager.SendTCPRequest(json);
         }
 
         public void MakeRoom()
         {   
             SceneManager.LoadScene("TempScene2");
+
         }
 
         public void MakeCancel()
@@ -670,7 +678,7 @@
             {
                 //if (id == passwordConfirm)
                 //{
-                    Debug.Log("아이디 조건만족");
+                    // Debug.Log("아이디 조건만족");
                     signUpInfoText.text = "";
                     nickNameCheckBTN.interactable = true;
                     signUpnickname.interactable = true;
@@ -685,7 +693,7 @@
             else
             {
                 // 유효하지 않은 id입니다.
-                Debug.Log("id는 영어,숫자가 각각 1개 이상 포함된 6 글자 이상 15 글자 이하입니다. ");
+                // Debug.Log("id는 영어,숫자가 각각 1개 이상 포함된 6 글자 이상 15 글자 이하입니다. ");
                 signUpInfoText.text = "id는 영어,숫자가 각각 1개 이상 포함된 6 글자 이상 15 글자 이하입니다. ";
             
             }
@@ -713,7 +721,7 @@
             {
                 //if (id == passwordConfirm)
                 //{
-                Debug.Log("닉네임 조건만족");
+                // Debug.Log("닉네임 조건만족");
                 signUpInfoText.text = "";
                 signUpPwChenk.interactable = true;
                 signUpPw.interactable = true;
@@ -730,7 +738,7 @@
             else
             {
                 // 유효하지 않은 id입니다.
-                Debug.Log("닉네임은 2-8 글자 사이의 영어, 숫자, 한글로만 이루어집니다.");
+                // Debug.Log("닉네임은 2-8 글자 사이의 영어, 숫자, 한글로만 이루어집니다.");
                 signUpInfoText.text = "닉네임은 2-8 글자 사이의 영어, 숫자, 한글로만 이루어집니다.";
                 signUpPwChenk.interactable = false;
                 signUpPw.interactable = false;

@@ -41,6 +41,17 @@ public class RedisConfig {
     }
 
     @Bean
+    public ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        RedisSerializationContext<String, Object> serializationContext =
+                RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
+                        .hashKey(new StringRedisSerializer())
+                        .hashValue(new StringRedisSerializer()) // 여기서 Object 대신 다른 클래스 지정 가능
+                        .build();
+
+        return new ReactiveRedisTemplate<>(factory, serializationContext);
+    }
+
+    @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(host, port);
     }

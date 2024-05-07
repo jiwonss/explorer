@@ -2,6 +2,7 @@ package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.event.CreateWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.BroadcastPosition;
 import com.explorer.realtime.sessionhandling.waitingroom.event.JoinWaitingRoom;
 import com.explorer.realtime.sessionhandling.waitingroom.event.LeaveWaitingRoom;
 import lombok.RequiredArgsConstructor;
@@ -21,26 +22,30 @@ public class WaitingRoomSessionHandler {
     private final CreateWaitingRoom createWaitingRoom;
     private final JoinWaitingRoom joinWaitingRoom;
     private final LeaveWaitingRoom leaveWaitingRoom;
+    private final BroadcastPosition broadcastPosition;
 
-    public Mono<Void> waitingRoomHandler(JSONObject json, Connection connection) {
+    public Mono<Void> waitingRoomSessionHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
 
         switch(eventName) {
             case "createWaitingRoom" :
-                log.info("create waiting room");
-                createWaitingRoom.process(UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                log.info("event : {}", eventName);
+                createWaitingRoom.process(json, connection).subscribe();
                 break;
 
             case "joinWaitingRoom":
-                log.info("join waiting room");
-                String joinTeamCode = json.getString("teamCode");
-                joinWaitingRoom.process(joinTeamCode, UserInfo.ofUserIdAndNicknameAndAvatar(json), connection);
+                log.info("event : {}", eventName);
+                joinWaitingRoom.process(json, connection).subscribe();
                 break;
 
             case "leaveWaitingRoom":
-                log.info("leave waiting room");
-                String leaveTeamCode = json.getString("teamCode");
-                leaveWaitingRoom.process(leaveTeamCode, UserInfo.ofUserIdAndIsLeader(json));
+                log.info("event : {}", eventName);
+                leaveWaitingRoom.process(json).subscribe();
+                break;
+
+            case "broadcastPosition":
+                log.info("event : {}", eventName);
+                broadcastPosition.process(json).subscribe();
                 break;
         }
 

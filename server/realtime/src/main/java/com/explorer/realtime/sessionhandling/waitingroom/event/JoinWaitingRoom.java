@@ -2,21 +2,23 @@ package com.explorer.realtime.sessionhandling.waitingroom.event;
 
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
-import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.component.broadcasting.Multicasting;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
-import com.explorer.realtime.sessionhandling.waitingroom.dto.JoinWaitingRoomResponse;
-import com.explorer.realtime.sessionhandling.waitingroom.dto.PositionInfo;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import com.explorer.realtime.sessionhandling.waitingroom.exception.ExceedingCapacityException;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomErrorCode;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -27,47 +29,110 @@ public class JoinWaitingRoom {
     private final SessionManager sessionManager;
     private final UserRepository userRepository;
     private final Unicasting unicasting;
-    private final Broadcasting broadcasting;
+    private final Multicasting multicasting;
 
-    public Mono<Void> process(String teamCode, UserInfo userInfo, Connection connection) {
-        log.info("joinWaitingRoom teamCode : {}", teamCode);
-        check(teamCode)
-                .doOnError(Throwable::printStackTrace)
-                .flatMap(
-                        value -> {
-                            createConnectionInfo(teamCode, userInfo.getUserId(), connection);
-                            return userRepository.save(userInfo);
-                        }
-                )
-                .doOnSuccess(
-                        value -> {
-                            PositionInfo positionInfo = PositionInfo.of(0, 1, 0, 0, 0, 0);
-                            JoinWaitingRoomResponse joinWaitingRoomRespons = JoinWaitingRoomResponse
-                                    .of(userInfo.getNickname(), userInfo.getAvatar(), positionInfo);
+    private static final String eventName = "joinWaitingRoom";
 
-                            broadcasting.broadcasting(
-                                    teamCode,
-                                    MessageConverter.convert(Message.success("joinWaitingRoom", CastingType.BROADCASTING, joinWaitingRoomRespons))
+    public Mono<Void> process(JSONObject json, Connection connection) {
+        String teamCode = json.getString("teamCode").replace("\\u200b", "");
+        UserInfo userInfo = UserInfo.ofJson(json);
+        log.info("[process] teamCode : {}, userInfo : {}", teamCode, userInfo);
+
+        return check(teamCode)
+                .flatMap(count -> createConnectionInfo(teamCode, userInfo.getUserId(), connection)
+                .then(userRepository.save(userInfo))
+                .then(Mono.defer(() -> multicasting.multicasting(
+                        teamCode,
+                        String.valueOf(userInfo.getUserId()),
+                        MessageConverter.convert(Message.success(eventName, CastingType.MULTICASTING, userInfo))
+                )))
+                .then(findAllUserInfoByTeamCode(teamCode, userInfo.getUserId()))
+                .flatMap(userInfoList -> {
+                    log.info("[process] userInfoList : {}", userInfoList);
+                    return unicasting.unicasting(
+                            teamCode,
+                            userInfo.getUserId(),
+                            MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, userInfoList))
+                    );
+                })
+                .onErrorResume(WaitingRoomException.class, error -> {
+                    switch (error.getErrorCode()) {
+                        case EXIST_USER:
+                            unicasting(
+                                    connection,
+                                    userInfo.getUserId(),
+                                    MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
                             ).subscribe();
-                        }
-                )
-                .subscribe();
-        return Mono.empty();
+                            return Mono.empty();
+                        case EXCEEDING_CAPACITY:
+                            unicasting.unicasting(
+                                    teamCode,
+                                    userInfo.getUserId(),
+                                    MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
+                            ).subscribe();
+                            return Mono.empty();
+                        default:
+                            return Mono.empty();
+                    }
+                }));
     }
 
-    private void createConnectionInfo(String teamCode, Long userId, Connection connection) {
-        sessionManager.setConnection(String.valueOf(userId), connection);
-        channelRepository.save(teamCode, userId, 0).subscribe();
+    private Mono<Void> createConnectionInfo(String teamCode, Long userId, Connection connection) {
+        log.info("[createConnectionInfo] teamCode : {}, userId : {}", teamCode, userId);
+
+        return channelRepository.existByUserId(teamCode, userId)
+                .flatMap(exists -> {
+                    if (exists) {
+                        return Mono.error(new WaitingRoomException(WaitingRoomErrorCode.EXIST_USER));
+                    } else {
+                        sessionManager.setConnection(userId, connection);
+                        return channelRepository.save(teamCode, userId, 0).then();
+                    }
+                });
     }
 
     private Mono<Long> check(String teamCode) {
-        return channelRepository.count(teamCode).flatMap(
-                count -> {
+        log.info("[check] teamCode : {}", teamCode);
+
+        return channelRepository.count(teamCode)
+                .flatMap(count -> {
                     if (count >= 6) {
-                        return Mono.error(new ExceedingCapacityException());
+                        return Mono.error(new WaitingRoomException(WaitingRoomErrorCode.EXCEEDING_CAPACITY));
                     }
                     return Mono.just(count);
                 });
+    }
+
+    private Mono<List<UserInfo>> findAllUserInfoByTeamCode(String teamCode, Long userId) {
+        log.info("[findAllUserInfoByTeamCode] teamCode : {}, userId : {}", teamCode, userId);
+
+        return channelRepository.findAllFields(teamCode)
+                .flatMap(id -> {
+                    if (!Long.valueOf(String.valueOf(id)).equals(userId)) {
+                        return userRepository.findAll(Long.valueOf(String.valueOf(id)))
+                                .map(userInfo -> UserInfo.of(
+                                        Long.valueOf(String.valueOf(id)),
+                                        (String) userInfo.get("nickname"),
+                                        Integer.parseInt(String.valueOf(userInfo.get("avatar")))
+                                ));
+                    } else {
+                        return Mono.empty();
+                    }
+                }).collectList();
+    }
+
+    private Mono<Void> unicasting(Connection connection, Long userId, JSONObject msg) {
+        log.info("[unicasting] connection : {}, userId : {}", connection, userId);
+
+        if (connection == null) {
+            log.warn("No connection found for {}", userId);
+            return Mono.empty();
+        }
+
+        return connection.outbound().sendString(Mono.just(msg.toString()+'\n'))
+                .then()
+                .doOnSuccess(aVoid -> log.info("Unicast completed : {}", userId))
+                .doOnError(error -> log.error("Unicast failed for userId: {}, error: {}", userId, error.getMessage()));
     }
 
 }

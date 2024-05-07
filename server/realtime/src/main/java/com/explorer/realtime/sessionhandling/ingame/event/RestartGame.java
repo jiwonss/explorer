@@ -32,14 +32,14 @@ public class RestartGame {
         userRepository.save(userInfo).subscribe();
         unicasting.unicasting(
                 channel,
-                String.valueOf(userInfo.getUserId()),
+                userInfo.getUserId(),
                 MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING))
         );
         return Mono.empty();
     }
 
     private void createConnectionInfo(String teamCode, Long userId, Connection connection) {
-        sessionManager.setConnection(String.valueOf(userId), connection);
+        sessionManager.setConnection(userId, connection);
         channelRepository.save(teamCode, userId, 0).subscribe();
     }
 }
