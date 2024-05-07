@@ -8,7 +8,6 @@ import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.util.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
@@ -33,9 +32,9 @@ public class GetChannelList {
     public Mono<Void> process(Long userId, Connection connection) {
         log.info("[process] userId : {}, connection : {}", userId, connection);
 
-        channelService.findAllChannelInfoByUserId(userId).subscribe(
-                channels -> {
-                    log.info("channels : {}", channels);
+        return channelService.findAllChannelInfoByUserId(userId)
+                .doOnNext(channels -> {
+                    log.info("[process] channels : {}", channels);
                     unicasting.unicasting(
                             connection,
                             userId,
@@ -43,13 +42,11 @@ public class GetChannelList {
                                     Message.success("getChannelList", CastingType.UNICASTING, channels)
                             )
                     ).subscribe();
-                },
-                error -> {
-                    log.info("error : findChannelsByUserId");
-                }
-        );
-
-        return Mono.empty();
+                })
+                .onErrorResume(error -> {
+                    return Mono.empty();
+                })
+                .then();
     }
 
 }
