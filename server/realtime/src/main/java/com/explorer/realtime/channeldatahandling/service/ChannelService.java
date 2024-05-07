@@ -21,6 +21,7 @@ public class ChannelService {
         ProjectionOperation project = Aggregation.project()
                 .andExpression("_id").as("channelId")
                 .andExpression("name").as("channelName")
+                .andExpression("size(playerList)").as("headcount")
                 .andExpression("createdAt").as("createdAt");
 
         Aggregation aggregation = Aggregation.newAggregation(
