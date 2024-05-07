@@ -45,8 +45,12 @@ public class ChannelRepository {
         return reactiveHashOperations.size(KEY_PREFIX + channelId);
     }
 
-    public Mono<Boolean> existByUserId(String teamCode, Long userId) {
-        return reactiveHashOperations.hasKey(KEY_PREFIX + teamCode, String.valueOf(userId));
+    public Mono<Boolean> exist(String channelId) {
+        return reactiveRedisTemplate.hasKey(KEY_PREFIX + channelId);
+    }
+
+    public Mono<Boolean> existByUserId(String channelId, Long userId) {
+        return reactiveHashOperations.hasKey(KEY_PREFIX + channelId, String.valueOf(userId));
     }
 
 }
