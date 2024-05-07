@@ -20,6 +20,8 @@ public class GetChannelList {
 
     private final UserClient userClient;
     private final ChannelService channelService;
+    private final Unicasting unicasting;
+
     private static final String TOKEN_PREFIX = "Bearer ";
 
     public Mono<Void> process(String accessToken) {
@@ -33,7 +35,7 @@ public class GetChannelList {
         channelService.findChannelInfoByUserId(userId).subscribe(
                 channels -> {
                     log.info("channels : {}", channels);
-                    unicasting(
+                    unicasting.unicasting(
                             connection,
                             userId,
                             MessageConverter.convert(
@@ -47,20 +49,6 @@ public class GetChannelList {
         );
 
         return Mono.empty();
-    }
-
-    private Mono<Void> unicasting(Connection connection, Long userId, JSONObject msg) {
-        log.info("getChannelList unicasting");
-
-        if (connection == null) {
-            log.warn("No connection found for {}", userId);
-            return Mono.empty();
-        }
-
-        return connection.outbound().sendString(Mono.just(msg.toString()+'\n'))
-                .then()
-                .doOnSuccess(aVoid -> log.info("Unicast completed : {}", userId))
-                .doOnError(error -> log.error("Unicast failed for userId: {}, error: {}", userId, error.getMessage()));
     }
 
 }
