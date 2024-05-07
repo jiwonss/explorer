@@ -25,14 +25,15 @@ public class GetChannelList {
     private static final String TOKEN_PREFIX = "Bearer ";
 
     public Mono<Void> process(String accessToken) {
-        log.info("getChannelList - accessToken : {}", accessToken);
+        log.info("[process] accessToken : {}" ,accessToken);
+
         return Mono.empty();
     }
 
     public Mono<Void> process(Long userId, Connection connection) {
-        log.info("getChannelList - userId : {}", userId);
+        log.info("[process] userId : {}, connection : {}", userId, connection);
 
-        channelService.findChannelInfoByUserId(userId).subscribe(
+        channelService.findAllChannelInfoByUserId(userId).subscribe(
                 channels -> {
                     log.info("channels : {}", channels);
                     unicasting.unicasting(
