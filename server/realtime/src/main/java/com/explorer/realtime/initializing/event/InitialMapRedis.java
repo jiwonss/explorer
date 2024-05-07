@@ -21,9 +21,13 @@ public class InitialMapRedis {
     private final MapMongoRepository mapMongoRepository;
     private final MapRepository mapRepository;
 
-    public Flux<Long> initialMapRedis(){
+    public Flux<Long> initializeMapRedis(){
         return mapMongoRepository.findAll()
-                .flatMap(this::saveMapToRedis);
+                .flatMap(this::saveMapToRedis)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("No maps found in MongoDB");
+                    return Mono.empty();
+                }));
     }
 
     private Mono<Long> saveMapToRedis(Map map) {
