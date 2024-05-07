@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json.Linq; // Newtonsoft.JsonÀÇ JObject¸¦ »ç¿ëÇÏ±â À§ÇØ Ãß°¡
+using Newtonsoft.Json.Linq; // Newtonsoft.Jsonï¿½ï¿½ JObjectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
 
 public class NetworkDataReceiver : MonoBehaviour
 {
@@ -13,7 +13,7 @@ public class NetworkDataReceiver : MonoBehaviour
         tcpClientManager = TCPClientManager.Instance;
         if (tcpClientManager == null)
         {
-            Debug.LogError("TCPClientManager ¾øÀ½");
+            Debug.LogError("TCPClientManager ï¿½ï¿½ï¿½ï¿½");
         }
     }
 
@@ -21,11 +21,11 @@ public class NetworkDataReceiver : MonoBehaviour
     {
         if (tcpClientManager == null || !tcpClientManager.isConnected)
         {
-            Debug.LogError("TCPClientManager ¿¬°áµÇÁö ¾Ê¾Ò°Å³ª À¯È¿ÇÏÁö ¾ÊÀ½");
+            Debug.LogError("TCPClientManager ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò°Å³ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
             return;
         }
 
-        // ¼­¹ö·ÎºÎÅÍ µ¥ÀÌÅÍ ¼ö½Å
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         string receivedData = tcpClientManager.ReceiveTCPResponse();
         if (receivedData != null)
         {
@@ -37,15 +37,15 @@ public class NetworkDataReceiver : MonoBehaviour
         Vector3 newPosition = ExtractPositionFromData(receivedData);
         Quaternion newRotation = ExtractRotationFromData(receivedData);
 
-        // ÇÃ·¹ÀÌ¾î ¾÷µ¥ÀÌÆ®
+        // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
         playerTransform.position = newPosition;
         playerTransform.rotation = newRotation;
     }
 
-    // À§Ä¡ Á¤º¸ ÃßÃâ
+    // ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private Vector3 ExtractPositionFromData(string jsonData)
     {
-        JObject data = JObject.Parse(jsonData); // Newtonsoft.JsonÀÇ JObject »ç¿ë
+        JObject data = JObject.Parse(jsonData); // Newtonsoft.Jsonï¿½ï¿½ JObject ï¿½ï¿½ï¿½
 
         float posX = (float)data["posX"];
         float posY = (float)data["posY"];
@@ -54,10 +54,10 @@ public class NetworkDataReceiver : MonoBehaviour
         return new Vector3(posX, posY, posZ);
     }
 
-    // È¸Àü Á¤º¸ ÃßÃâ
+    // È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private Quaternion ExtractRotationFromData(string jsonData)
     {
-        JObject data = JObject.Parse(jsonData); // Newtonsoft.JsonÀÇ JObject »ç¿ë
+        JObject data = JObject.Parse(jsonData); // Newtonsoft.Jsonï¿½ï¿½ JObject ï¿½ï¿½ï¿½
 
         float rotX = (float)data["rotX"];
         float rotY = (float)data["rotY"];
