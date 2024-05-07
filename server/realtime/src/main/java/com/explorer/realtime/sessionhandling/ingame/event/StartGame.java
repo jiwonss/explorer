@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -25,6 +26,7 @@ public class StartGame {
     private final ChannelMongoRepository channelMongoRepository;
     private final ChannelRepository channelRepository;
     private final Broadcasting broadcasting;
+    private final InitializeMapObject initializeMapObject;
 
     public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
@@ -36,6 +38,7 @@ public class StartGame {
                     .then(Mono.defer(() -> {
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);
+                        initializeMapObject.initializeMapObject(channelId).subscribe();
                         return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
                     }))
                     .subscribe();
