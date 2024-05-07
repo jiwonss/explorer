@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling;
 
-import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitialMapObject;
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 public class GameDataHandler {
 
     private final FarmingHandler farmingHandler;
-    private final InitialMapObject initialMapObject;
+    private final InitializeMapObject initializeMapObject;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
         String category = json.getString("category");
@@ -28,7 +28,7 @@ public class GameDataHandler {
             case "mapObject":
                 log.info("category : {}", category);
                 String channelId = json.getString("channel");
-                initialMapObject.initialMapObject(channelId).subscribe();
+                initializeMapObject.initializeMapObject(channelId).subscribe();
         }
 
         return Mono.empty();
