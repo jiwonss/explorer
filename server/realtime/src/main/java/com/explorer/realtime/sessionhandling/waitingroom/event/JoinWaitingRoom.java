@@ -34,7 +34,7 @@ public class JoinWaitingRoom {
     private static final String eventName = "joinWaitingRoom";
 
     public Mono<Void> process(JSONObject json, Connection connection) {
-        String teamCode = json.getString("teamCode");
+        String teamCode = json.getString("teamCode").replace("\\u200b", "");
         UserInfo userInfo = UserInfo.ofJson(json);
         log.info("[process] teamCode : {}, userInfo : {}", teamCode, userInfo);
 
