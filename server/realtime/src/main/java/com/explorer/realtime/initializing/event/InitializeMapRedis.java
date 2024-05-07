@@ -3,6 +3,7 @@ package com.explorer.realtime.initializing.event;
 import com.explorer.realtime.initializing.entity.Map;
 import com.explorer.realtime.initializing.repository.MapMongoRepository;
 import com.explorer.realtime.initializing.repository.MapRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,18 @@ import java.util.Set;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class InitialMapRedis {
+public class InitializeMapRedis {
 
     private final MapMongoRepository mapMongoRepository;
     private final MapRepository mapRepository;
 
-    public Flux<Long> initialMapRedis(){
+    @PostConstruct
+    public void initializeMap() {
+        log.info("InitializeMapInfo ...");
+        initializeMapRedis().subscribe();
+    }
+
+    public Flux<Long> initializeMapRedis(){
         return mapMongoRepository.findAll()
                 .flatMap(this::saveMapToRedis);
     }
