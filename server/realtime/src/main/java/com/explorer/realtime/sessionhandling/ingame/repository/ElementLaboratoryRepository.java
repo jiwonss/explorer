@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 
-@Repository
+@Repository("elementLaboratoryRepositoryInStartGame")
 public class ElementLaboratoryRepository {
 
     private final ReactiveListOperations<String, Object> listOperations;
