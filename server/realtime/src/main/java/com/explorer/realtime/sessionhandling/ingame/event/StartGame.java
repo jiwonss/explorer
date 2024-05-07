@@ -7,6 +7,7 @@ import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
+import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class StartGame {
     private final ChannelMongoRepository channelMongoRepository;
     private final ChannelRepository channelRepository;
     private final Broadcasting broadcasting;
+    private final ElementLaboratoryRepository elementLaboratoryRepository;
 
     public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
@@ -34,6 +36,7 @@ public class StartGame {
         saveChannelMono.subscribe(channelId -> {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
+                        elementLaboratoryRepository.initialize(channelId).subscribe();
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);
                         return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
