@@ -35,4 +35,18 @@ public class Unicasting {
                 .doOnError(error -> log.error("Unicast failed for teamCode: {}, error: {}", teamCode, error.getMessage()));
     }
 
+    public Mono<Void> unicasting(Connection connection, Long userId, JSONObject msg) {
+        log.info("start unicasting to {}", userId);
+
+        if (connection == null) {
+            log.warn("No connection found for {}", userId);
+            return Mono.empty();
+        }
+
+        return connection.outbound().sendString(Mono.just(msg.toString()+'\n'))
+                .then()
+                .doOnSuccess(aVoid -> log.info("Unicast completed for userId : {}", userId))
+                .doOnError(error -> log.error("Unicast failed for userId: {}, error: {}", userId, error.getMessage()));
+    }
+
 }
