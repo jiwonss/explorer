@@ -61,16 +61,13 @@ public class RequestHandler {
                                 case "channel":
                                     log.info("type : {}", type);
                                     channelDataHandler.channelDataHandler(json, connection);
+                                    break;
 
                                 case "initialize":
                                     log.info("initialize map");
                                     initializeHandler.initializeHandler(json).subscribe();
                                     break;
 
-                                case "redisMap":
-                                    log.info("redis random position map");
-                                    initialMapRedis.initialMapRedis().subscribe();
-                                    break;
                             }
                         });
 
