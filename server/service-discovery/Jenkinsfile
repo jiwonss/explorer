@@ -56,11 +56,15 @@ pipeline {
         stage("Garbage Collect") {
             steps {
                 script {
-                    sh "docker kill \$(docker ps -q --filter ancestor=\${repository}:service-discovery-\${BUILD_NUMBER})"
+                    def containers = sh(script: "docker ps -q --filter ancestor=\${repository}:service-discovery-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    if (containers) {
+                        sh "docker kill \${containers}"
+                    }
                     sh "docker system prune -af --volumes"
                 }
             }
         }
+
 
         stage("Deploy"){
             steps{
