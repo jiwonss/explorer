@@ -9,7 +9,7 @@ spring:
     name: api-gateway
 
   profiles:
-    active: dev
+    active: prod
 
   cloud:
     gateway:
