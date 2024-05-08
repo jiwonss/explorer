@@ -11,12 +11,12 @@ import java.util.*;
 @Repository
 public class MapObjectRepository {
 
-    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, String, String> hashOperations;
 
     private static final String KEY_PREFIX = "mapData";
 
-    public MapObjectRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
+    public MapObjectRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.hashOperations = reactiveRedisTemplate.opsForHash();
     }
