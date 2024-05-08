@@ -1,7 +1,10 @@
 package com.explorer.realtime.gamedatahandling.component.common.mapinfo.event;
 
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
+import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.initializing.repository.MapRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +31,6 @@ public class InitializeMapObject {
         log.info("Initializing Map Object for channelId: {}, mapId: {}", channelId, mapId);
 
         return mapRepository.findMapData(mapId)
-//                .map(data -> cleanData(data))  // 데이터에서 불필요한 문자 제거
                 .collectList()
                 .flatMap(data -> {
                     List<String> selectedData = selectRandomEntries(data, 50);
@@ -37,7 +39,8 @@ public class InitializeMapObject {
                 .flatMap(result -> {
                     if (result) {
                         return mapObjectRepository.findMapData(channelId, mapId)
-                                .flatMap(mapData -> broadcastMapData(channelId, mapData, mapId))
+                                .flatMap(mapData -> broadcasting.broadcasting(channelId,
+                                        MessageConverter.convert(Message.success("initializeMapObject", CastingType.BROADCASTING, mapData))))
                                 .doOnSuccess(avoid -> log.info("Map data broadcasted successfully for channelId: {}, mapId: {}", channelId, mapId))
                                 .doOnError(error -> log.error("Failed to broadcast map data for channelId: {}, mapId: {}", channelId, mapId));
                     } else {
@@ -51,27 +54,5 @@ public class InitializeMapObject {
         List<String> selectedEntries = new ArrayList<>(positions);
         Collections.shuffle(selectedEntries);  // 리스트를 무작위로 섞음
         return selectedEntries.subList(0, Math.min(selectedEntries.size(), count));  // 랜덤하게 count개의 요소를 선택
-    }
-
-    private Mono<Void> broadcastMapData(String channelId, Map<String, String> mapData, Integer mapId) {
-        JSONObject msg = new JSONObject();
-        JSONObject dataHeader = new JSONObject();
-        dataHeader.put("eventName", "initializeMap");
-        dataHeader.put("castingType", "BROADCASTING");
-        dataHeader.put("msg", "success");
-
-        JSONObject dataBody = new JSONObject();
-        dataBody.put("mapId", mapId);
-
-        JSONObject pos = new JSONObject();
-        for (Map.Entry<String, String> entry : mapData.entrySet()) {
-            pos.put(entry.getKey(), entry.getValue());
-        }
-        dataBody.put("pos", pos);
-
-        msg.put("dataHeader", dataHeader);
-        msg.put("dataBody", dataBody);
-
-        return broadcasting.broadcasting(channelId, msg);
     }
 }

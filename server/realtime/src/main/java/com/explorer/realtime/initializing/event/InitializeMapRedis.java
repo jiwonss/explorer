@@ -16,10 +16,16 @@ import java.util.Set;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class InitialMapRedis {
+public class InitializeMapRedis {
 
     private final MapMongoRepository mapMongoRepository;
     private final MapRepository mapRepository;
+
+    @PostConstruct
+    public void initializeMap() {
+        log.info("InitializeMapInfo ...");
+        initializeMapRedis().subscribe();
+    }
 
     public Flux<Long> initializeMapRedis(){
         return mapMongoRepository.findAll()
