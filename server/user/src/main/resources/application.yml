@@ -9,7 +9,7 @@ spring:
     name: user
 
   profiles:
-    active: dev
+    active: prod
 
 management:
   endpoints:

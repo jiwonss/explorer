@@ -6,7 +6,7 @@ spring:
     name: config-service
 
   profiles:
-    active: dev
+    active: prod
 
   cloud:
     config:
