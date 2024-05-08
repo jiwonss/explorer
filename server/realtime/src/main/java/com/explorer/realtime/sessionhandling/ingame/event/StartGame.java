@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -7,6 +8,7 @@ import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
+import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ public class StartGame {
     private final ChannelMongoRepository channelMongoRepository;
     private final ChannelRepository channelRepository;
     private final Broadcasting broadcasting;
+    private final ElementLaboratoryRepository elementLaboratoryRepository;
+    private final InitializeMapObject initializeMapObject;
 
     public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
@@ -34,8 +38,10 @@ public class StartGame {
         saveChannelMono.subscribe(channelId -> {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
+                        elementLaboratoryRepository.initialize(channelId).subscribe();
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);
+                        initializeMapObject.initializeMapObject(channelId).subscribe();
                         return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
                     }))
                     .subscribe();
@@ -47,14 +53,14 @@ public class StartGame {
     private Mono<Void> transferAndInitializeChannel(String teamCode, String channelId) {
         return channelRepository.findAll(teamCode)
                 .flatMapMany(entries -> Flux.fromIterable(entries.entrySet()))
-                .flatMap(entry -> channelRepository.save(channelId, Long.parseLong((String) entry.getKey()), Integer.parseInt((String) entry.getValue())))
+                .flatMap(entry -> channelRepository.save(channelId, Long.parseLong(entry.getKey().toString()), Integer.parseInt(entry.getValue().toString())))
                 .then(channelRepository.deleteAll(teamCode))
                 .then();
     }
 
     private Mono<String> saveChannel(String teamCode, String channelName) {
         return channelRepository.findAllFields(teamCode)
-                .map(field -> Long.valueOf(String.valueOf(field)))
+                .map(field -> Long.valueOf(field.toString()))
                 .collectList()
                 .flatMap(result -> {
                     log.info("playerList : {}", result);
@@ -66,5 +72,3 @@ public class StartGame {
     }
 
 }
-
-

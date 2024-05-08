@@ -37,6 +37,15 @@ public class RedisConfig {
     @Value("${spring.data.redis.game.password}")
     private String gamePassword;
 
+    @Value("${spring.data.redis.staticgame.host}")
+    private String staticgameHost;
+
+    @Value("${spring.data.redis.staticgame.port}")
+    private int staticgamePort;
+
+    @Value("${spring.data.redis.staticgame.password}")
+    private String staticgamePassword;
+
     private LettuceConnectionFactory createConnectionFactory(String host, int port, String password) {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
         config.setPassword(password);
@@ -73,6 +82,20 @@ public class RedisConfig {
                 gameReactiveRedisConnectionFactory(),
                 RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
                         .value(new GenericJackson2JsonRedisSerializer())
+                        .build());
+    }
+
+    @Bean(name = "staticgameReactiveRedisConnectionFactory")
+    public ReactiveRedisConnectionFactory staticgameReactiveRedisConnectionFactory() {
+        return createReactiveConnectionFactory(gameHost, gamePort, gamePassword);
+    }
+
+    @Bean(name = "staticgameReactiveRedisTemplate")
+    public ReactiveRedisTemplate<String, String> staticgameReactiveRedisTemplate() {
+        return new ReactiveRedisTemplate<>(
+                gameReactiveRedisConnectionFactory(),
+                RedisSerializationContext.<String, String>newSerializationContext(new StringRedisSerializer())
+                        .value(new StringRedisSerializer())
                         .build());
     }
 }

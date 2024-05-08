@@ -12,7 +12,7 @@ services:
       - ./redis_data:/data
     networks:
       explorer:
-        ipv4_address: 172.21.0.4
+        ipv4_address: 172.21.0.3
 
   redis-game:
     build:
@@ -21,6 +21,21 @@ services:
     container_name: redis-game
     ports:
       - "6381:6381"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - ./redis_data:/data
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.4
+
+  redis-staticgame:
+    build:
+      context: ../logic/redis-staticgame
+      dockerfile: ./Dockerfile
+    container_name: redis-staticgame
+    ports:
+      - "6382:6382"
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
@@ -52,6 +67,7 @@ services:
     depends_on:
       - redis-channel
       - redis-game
+      - redis-staticgame
     build:
       context: ./
       dockerfile: ./Dockerfile
@@ -77,6 +93,20 @@ services:
     networks:
       explorer:
         ipv4_address: 172.21.0.8
+
+  springboot-logic:
+    image: vlwli99/logic
+    container_name: logic
+    depends_on:
+      - redis-staticgame
+    build:
+      context: ../logic
+      dockerfile: ./Dockerfile
+    ports:
+      - "9003:9003"
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.9
 
 networks:
   explorer:

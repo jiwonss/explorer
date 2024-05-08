@@ -40,7 +40,7 @@ public class WaitingRoomSessionHandler {
 
             case "leaveWaitingRoom":
                 log.info("event : {}", eventName);
-                leaveWaitingRoom.process(json).subscribe();
+                leaveWaitingRoom.process(json, connection).subscribe();
                 break;
 
             case "broadcastPosition":

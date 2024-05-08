@@ -1,6 +1,5 @@
 package com.explorer.realtime.gamedatahandling.moving;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
 import com.explorer.realtime.gamedatahandling.moving.event.Moving;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,9 +18,9 @@ public class MovingHandler {
         String eventName = json.getString("eventName");
 
         switch (eventName) {
-            case "moving":
+            case "move":
                 log.info("eventName : {}", eventName);
-                moving.process(json);
+                moving.process(json).subscribe();
                 break;
         }
 

@@ -31,12 +31,10 @@ public class Moving {
         map.put("userId", userId);
         map.put("position", position);
 
-        broadcasting.broadcasting(
+        return broadcasting.broadcasting(
                 channelId,
-                MessageConverter.convert(Message.success("moving", CastingType.BROADCASTING, map))
-        ).subscribe();
-
-        return Mono.empty();
+                MessageConverter.convert(Message.success("move", CastingType.BROADCASTING, map))
+        ).then();
     }
 
 }

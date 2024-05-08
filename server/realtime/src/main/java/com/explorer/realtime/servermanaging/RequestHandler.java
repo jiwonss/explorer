@@ -2,7 +2,8 @@ package com.explorer.realtime.servermanaging;
 
 import com.explorer.realtime.channeldatahandling.ChannelDataHandler;
 import com.explorer.realtime.gamedatahandling.GameDataHandler;
-import com.explorer.realtime.initializing.InitializeHandler;
+import com.explorer.realtime.initializing.event.InitializeMapRedis;
+import com.explorer.realtime.initializing.event.InitializeHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
 import lombok.RequiredArgsConstructor;
@@ -59,11 +60,13 @@ public class RequestHandler {
                                 case "channel":
                                     log.info("type : {}", type);
                                     channelDataHandler.channelDataHandler(json, connection);
+                                    break;
 
                                 case "initialize":
                                     log.info("initialize map");
                                     initializeHandler.initializeHandler(json).subscribe();
                                     break;
+
                             }
                         });
 

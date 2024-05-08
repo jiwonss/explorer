@@ -9,7 +9,7 @@ spring:
     name: realtime
 
   profiles:
-    active: dev
+    active: prod
 
   cloud:
     config:
@@ -26,14 +26,14 @@ management:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
-    ip-address: 3.36.60.98
+    ip-address: ${BASIC}
     hostname: realtime
     prefer-ip-address: true
   client:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: http://3.36.60.98:8761/eureka
+      defaultZone: http://${BASIC}:8761/eureka
 
 ---
 
