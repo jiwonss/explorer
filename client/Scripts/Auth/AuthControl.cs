@@ -194,8 +194,12 @@
             {
                 ToggleObject();
             }
-            LogOutModal.SetActive(LogOutOnOff);
-        }
+            // LogOutModal이 null이 아닐 때만 접근
+            if (LogOutModal != null)
+            {
+                LogOutModal.SetActive(LogOutOnOff);
+            }
+        }   
         void ToggleObject()
         {
             // isActive 값을 반대로 변경하고 그에 따라 게임 오브젝트를 활성화 또는 비활성화
@@ -536,7 +540,10 @@
         {
             JoinNewChannel.SetActive(false);
             string teamCode = JoinRoomInput.text;
-            // Debug.Log("teamCode input : " + teamCode);
+            teamCode = teamCode.Replace(" ", "");
+            teamCode = teamCode.Replace("\u200b", "");
+            TCPMessageHandler.SetTeamCode(teamCode);
+            Debug.Log("teamCode input : " + teamCode);
 
             // TCP Check
             tcpClientManager = TCPClientManager.Instance;
@@ -570,9 +577,9 @@
         // 방 입장 성공 반환 시 씬 전환
         public void EnterRoom()
         {
-            SceneManager.LoadScene("TempScene2");
-            
-        }
+        SceneManager.LoadScene("WaitingRoom");
+
+    }
 
         public void JoinCancel()
         {
@@ -639,7 +646,7 @@
 
         public void MakeRoom()
         {   
-            SceneManager.LoadScene("TempScene2");
+            SceneManager.LoadScene("WaitingRoom");
 
         }
 
@@ -745,8 +752,3 @@
             }
         }
     }
-
-
-
-
-
