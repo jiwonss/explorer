@@ -33,7 +33,7 @@ public class Moving {
 
         return broadcasting.broadcasting(
                 channelId,
-                MessageConverter.convert(Message.success("moving", CastingType.BROADCASTING, map))
+                MessageConverter.convert(Message.success("move", CastingType.BROADCASTING, map))
         ).then();
     }
 
