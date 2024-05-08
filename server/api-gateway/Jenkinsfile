@@ -70,7 +70,7 @@ pipeline {
                 script{
                     sh "docker rm -f api-gateway || true"
                     sh "docker pull \${repository}:api-gateway-\${BUILD_NUMBER}"
-                    sh "docker compose up -d --build"
+                    sh "docker-compose up -d --build"
                 }
             }
         }
