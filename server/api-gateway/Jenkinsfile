@@ -55,7 +55,9 @@ pipeline {
             }
             steps{
                 script{
-                    sh 'docker-compose -f server/api-gateway/docker-compose.yml push'
+                    dir("./server/api-gateway") {
+                        sh 'docker-compose -f docker-compose.yml push'
+                    }
                 }
             }
         }
@@ -83,7 +85,9 @@ pipeline {
             }
             steps {
                 script {
-                    sh "docker-compose -f server/api-gateway/docker-compose.yml -p api-gateway pull"
+                    dir("./server/api-gateway") {
+                        sh "docker-compose pull"
+                    }
                 }
             }
         }
@@ -96,7 +100,9 @@ pipeline {
                 script {
                     def containers = sh(script: "docker ps -q --filter ancestor=api-gateway", returnStdout: true).trim()
                     if (containers) {
-                        sh "docker-compose -f server/api-gateway/docker-compose.yml -p api-gateway down"
+                        dir("./server/api-gateway") {
+                            sh "docker-compose down"
+                        }
                     }
                     sh "docker system prune -af --volumes"
                 }
@@ -110,7 +116,7 @@ pipeline {
             steps{
                 script{
                     dir("./server/api-gateway") {
-                        sh "docker-compose -f docker-compose.yml -p api-gateway up -d --build"
+                        sh "docker-compose up -d --build"
                     }
                 }
             }
