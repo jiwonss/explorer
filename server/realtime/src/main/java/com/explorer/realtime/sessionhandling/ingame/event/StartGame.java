@@ -1,6 +1,8 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.event.SetInitialInventory;
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.event.SetInitialPlayerInfo;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -29,6 +31,10 @@ public class StartGame {
     private final Broadcasting broadcasting;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final InitializeMapObject initializeMapObject;
+    private final SetInitialPlayerInfo setInitialPlayerInfo;
+    private final SetInitialInventory setInitialInventory;
+
+    private static final int INVENTORY_CNT = 8;
 
     public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
@@ -39,10 +45,16 @@ public class StartGame {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
                         elementLaboratoryRepository.initialize(channelId).subscribe();
+                        initializeMapObject.initializeMapObject(channelId).subscribe();
+                        setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
+                        setInitialInventory.process(channelId, INVENTORY_CNT).subscribe();
+
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);
-                        initializeMapObject.initializeMapObject(channelId).subscribe();
-                        return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
+                        return broadcasting.broadcasting(
+                                channelId,
+                                MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map))
+                        );
                     }))
                     .subscribe();
         });
