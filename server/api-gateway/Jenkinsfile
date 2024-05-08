@@ -69,9 +69,8 @@ pipeline {
             steps{
                 script{
                     sh "docker rm -f api-gateway || true"
-                    dir("docker/api-gateway") {
-                        sh "docker-compose up -d"
-                    }
+                    sh "docker pull \${repository}:api-gateway-\${BUILD_NUMBER}"
+                    sh "docker compose up -d --build"
                 }
             }
         }
