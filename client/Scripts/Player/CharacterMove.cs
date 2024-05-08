@@ -10,22 +10,21 @@ public class CharacterMove : MonoBehaviour
     public TCPClientManager tcpClientManager;
 
     public Transform cameraTransform;
-    public CharacterController characterController;
+    public Rigidbody rb;
 
-    public float moveSpeed = 3f;
-    public float jumpSpeed = 3f;
-    public float gravity = -10f;
-    public float yVelocity = 0;
+    public float moveSpeed = 1f;
+    public float jumpSpeed = 1f;
 
-    private bool isMoving = false;
+    private bool isGrounded;
+
     private float sendTimer = 0f;
-    private float sendInterval = 0.5f;
+    private float sendInterval = 0.08f;
 
 
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
         cameraTransform = GetComponentInChildren<Camera>().transform;
-        characterController = GetComponent<CharacterController>();
 
         tcpClientManager = TCPClientManager.Instance;
         if (tcpClientManager == null)
@@ -37,10 +36,23 @@ public class CharacterMove : MonoBehaviour
             SetTCPClientManager(tcpClientManager);
         }
     }
-
     public void SetTCPClientManager(TCPClientManager clientManager)
     {
         tcpClientManager = clientManager;
+    }
+    void OnCollisionEnter(Collision collision)
+    {
+        // 땅과의 충돌 감지
+        if (collision.contacts[0].normal.y > 0.5)  // 충돌 표면의 방향이 위쪽인 경우만
+        {
+            isGrounded = true;
+        }
+    }
+
+    void OnCollisionExit(Collision collision)
+    {
+        // 땅에서 벗어남을 감지
+        isGrounded = false;
     }
 
     void Update()
@@ -48,50 +60,48 @@ public class CharacterMove : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        Vector3 moveDirection = new Vector3(h, 0, v);
-        moveDirection = cameraTransform.TransformDirection(moveDirection);
-        moveDirection *= moveSpeed;
+        Vector3 moveDirection = new Vector3(h, 0.0f, v);
 
-        if (characterController.isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            yVelocity = 0;
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                yVelocity = jumpSpeed;
-                SendPlayerPosition();
-            }
+            rb.AddForce(Vector3.up * jumpSpeed, ForceMode.Impulse);
+
+            //SendPlayerPosition();
         }
 
-        yVelocity += (gravity * Time.deltaTime);
-        moveDirection.y = yVelocity;
-        characterController.Move(moveDirection * Time.deltaTime);
-
-        Dash();
-
-        isMoving = (h != 0 || v != 0);
-
-        sendTimer += Time.deltaTime;
-        if (sendTimer >= sendInterval && isMoving)
-        {
-            SendPlayerPosition();
-            sendTimer = 0f; // 시간초기화
-        }
-    }
-
-    void Dash()
-    {
         if (!Input.GetKeyDown(KeyCode.S))
         {
             if (Input.GetKeyDown(KeyCode.LeftShift))
             {
-                moveSpeed += 10f;
+                Dash();
             }
 
             if (Input.GetKeyUp(KeyCode.LeftShift))
             {
-                moveSpeed -= 10f;
+                NonDash();
             }
         }
+
+        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+
+        // 타이머 업데이트
+        sendTimer += Time.deltaTime;
+        if (sendTimer >= sendInterval)
+        {
+            // 위치를 전송하는 간격이 되면 플레이어 위치를 서버로 전송
+            SendPlayerPosition();
+            sendTimer = 0f; // 타이머 초기화
+        }
+    }
+
+
+    void Dash()
+    {
+        moveSpeed += 2f;
+    }
+    void NonDash()
+    {
+        moveSpeed -= 2f;
     }
 
     void SendPlayerPosition()
@@ -116,7 +126,8 @@ public class CharacterMove : MonoBehaviour
         //Debug.Log(playerPosition);
         //Debug.Log(playerRotation);
         int mapId = 0;
-        int channelId = 0;
+        //int channelId = 0;
+        string teamCode = TCPMessageHandler.GetTeamCode();
         UserInfoManager userInfoManager = UserInfoManager.Instance;
         int userId = userInfoManager.GetUserId();
 
@@ -127,7 +138,10 @@ public class CharacterMove : MonoBehaviour
         float rotY = transform.rotation.eulerAngles.y;
         float rotZ = transform.rotation.eulerAngles.z;
 
-        playerMovement data = new playerMovement("ingame", "moving", mapId, channelId, userId, posX, posY, posZ, rotX, rotY, rotZ);
+        string position = posX + ":" + posY + ":" + posZ + ":" + rotX + ":" + rotY + ":" + rotZ;
+
+
+        playerMovement data = new playerMovement("ingame", "move", "moving", mapId, teamCode, userId, position);
         string json = JsonConvert.SerializeObject(data);
 
         tcpClientManager.SendTCPRequest(json);
@@ -137,28 +151,21 @@ public class CharacterMove : MonoBehaviour
     {
         public string type;
         public string category;
+        public string eventName;
         public int mapId;
-        public int channelId;
+        public string channelId;
         public int userId;
-        public float posX;
-        public float posY;
-        public float posZ;
-        public float rotX;
-        public float rotY;
-        public float rotZ;
-        public playerMovement(string type, string category, int mapId, int channelId, int userId, float posX, float posY, float posZ, float rotX, float rotY, float rotZ)
+        public string position;
+
+        public playerMovement(string type, string category, string eventName, int mapId, string channelId, int userId, string position)
         {
             this.type = type;
             this.category = category;
+            this.eventName = eventName;
             this.mapId = mapId;
             this.channelId = channelId;
             this.userId = userId;
-            this.posX = posX;
-            this.posX = posY;
-            this.posZ = posZ;
-            this.rotX = rotX;
-            this.rotY = rotY;
-            this.rotZ = rotZ;
+            this.position = position;
         }
     }
 

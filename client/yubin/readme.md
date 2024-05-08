@@ -146,4 +146,10 @@
 - MakeRoomPlayerRenderer.cs 수정
 - TCPMessageHandler.cs 수정
 - CharacterMove.cs 수정 (CharacterMove2.cs)
-- 대기방 중력 적용 중
+- 대기방 중력 적용
+- JoinRoomBroadcastPosition.cs
+- ObjGravity.cs
+- Planet.cs
+- TCPMessageHandler.cs 수정
+- MakeRoomPlayerRenderer.cs 수정
+- - CharacterMove.cs 수정

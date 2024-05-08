@@ -82,7 +82,7 @@ public static class TCPMessageHandler
                             }
                             else
                             {
-                                SceneManager.LoadScene("TempScene2");
+                                SceneManager.LoadScene("WaitingRoom");
                                 GameObject.FindObjectOfType<JoinRoomManager>().ReceiveData(data);
                             }
                         }
