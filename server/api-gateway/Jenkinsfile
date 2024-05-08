@@ -19,20 +19,29 @@ pipeline {
                     sh "chmod +x ./gradlew"
                     sh "./gradlew clean build"
                 }
+                dir("./server/user") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
             }
         }
         stage('Build Image'){
             when {
-                changeset "server/**"
+                changeset "**/server/api-gateway/**"
             }
             steps{
                 script {
-                    dockerImage = docker.build("${repository}:api-gateway-${BUILD_NUMBER}", "-f server/api-gateway/Dockerfile ./server/api-gateway")
+                    dir("./server/api-gateway") {
+                        sh 'docker-compose -f docker-compose.yml build'
+                    }
                 }
             }
         }
 
         stage('DockerHub Login'){
+            when {
+                changeset "**/server/api-gateway/**"
+            }
             steps{
                 script{
                     sh "echo \${DOCKERHUB_PASSWORD} | docker login -u \${DOCKERHUB_ID} --password-stdin"
@@ -41,38 +50,60 @@ pipeline {
         }
 
         stage('Push Image'){
+            when {
+                changeset "**/server/api-gateway/**"
+            }
             steps{
                 script{
-                    sh "docker push \${repository}:api-gateway-\${BUILD_NUMBER}"
+                    sh 'docker-compose -f server/api-gateway/docker-compose.yml push'
                 }
             }
         }
 
         stage('Clean Image'){
+            when {
+                changeset "**/server/api-gateway/**"
+            }
             steps{
                 script{
-                    sh "docker rmi \${repository}:api-gateway-\${BUILD_NUMBER}"
+                    sh "docker rmi vlwli99:api-gateway"
+                    sh 'docker image prune --filter until=1h'
                 }
             }
         }
 
-        stage("Garbage Collect") {
+        stage('Pull') {
+            when {
+                changeset "**/server/api-gateway/**"
+            }
             steps {
                 script {
-                    def containers = sh(script: "docker ps -q --filter ancestor=\${repository}:api-gateway-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    sh "docker-compose -f server/api-gateway/docker-compose.yml -p api-gateway pull"
+                }
+            }
+        }
+
+        stage("Down") {
+            when {
+                changeset "**/server/api-gateway/**"
+            }
+            steps {
+                script {
+                    def containers = sh(script: "docker ps -q --filter ancestor=api-gateway", returnStdout: true).trim()
                     if (containers) {
-                        sh "docker kill \${containers}"
+                        sh "docker-compose -f server/api-gateway/docker-compose.yml -p api-gateway down"
                     }
                     sh "docker system prune -af --volumes"
                 }
             }
         }
 
-        stage("Deploy"){
+        stage("Up"){
+            when {
+                changeset "**/server/api-gateway/**"
+            }
             steps{
                 script{
-                    sh "docker rm -f api-gateway || true"
-                    sh "docker pull \${repository}:api-gateway-\${BUILD_NUMBER}"
                     dir("./server/api-gateway") {
                         sh "docker-compose -f docker-compose.yml -p api-gateway up -d --build"
                     }
