@@ -22,8 +22,11 @@ pipeline {
             }
         }
         stage('Build Image'){
+            when {
+                changeset "server/**"
+            }
             steps{
-                script{
+                script {
                     dockerImage = docker.build("${repository}:api-gateway-${BUILD_NUMBER}", "-f server/api-gateway/Dockerfile ./server/api-gateway")
                 }
             }
