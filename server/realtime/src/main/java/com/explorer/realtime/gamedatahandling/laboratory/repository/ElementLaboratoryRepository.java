@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @Repository("elementLaboratoryRepositoryInExtract")
@@ -24,13 +25,20 @@ public class ElementLaboratoryRepository {
         this.objectMapper = new ObjectMapper();
     }
 
-    public Mono<Void> updateValueAtIndex(String channelId, String result) {
+    public Mono<List<Integer>> findAllElements(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+        return listOperations.range(elementKey, 0, -1)
+                .cast(Integer.class)
+                .collectList();
+    }
+
+    public Mono<Void> updateValueAtIndex(String channelId, String response) {
         try {
             //
             String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
 
             // JSON 문자열을 Map으로 파싱
-            Map<String, Integer> parsedData = objectMapper.readValue(result, Map.class);
+            Map<String, Integer> parsedData = objectMapper.readValue(response, Map.class);
 
             // 각 key-value 쌍에 대해 업데이트 수행
             Iterator<Map.Entry<String, Integer>> iterator = parsedData.entrySet().iterator();
@@ -48,7 +56,6 @@ public class ElementLaboratoryRepository {
                                 .flatMap(existingCnt -> listOperations.set(elementKey, itemId, Integer.valueOf(existingCnt) + itemCnt))
                                 .then()
                 );
-
 
             }
             return updateChain.then();

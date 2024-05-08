@@ -16,7 +16,7 @@ public class MapObjectRepository {
 
     private static final String KEY_PREFIX = "mapData";
 
-    public MapObjectRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public MapObjectRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.hashOperations = reactiveRedisTemplate.opsForHash();
     }
