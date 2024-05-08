@@ -66,11 +66,13 @@ pipeline {
             }
             steps{
                 script{
-                    def imageId = sh(script: "docker images -q vlwli99/api-gateway", returnStdout: true).trim()
-                    if (imageId) {
-                        sh "docker rmi ${imageId}"
+                    def imageIds = sh(script: "docker images -q vlwli99/api-gateway", returnStdout: true).trim().split()
+                    imageIds.each { id ->
+                        if (id) {
+                            sh "docker rmi ${id} || true"
+                        }
                     }
-                    sh 'docker image prune --filter until=1h'
+                    sh 'docker image prune -f --filter until=1h'
                 }
             }
         }
