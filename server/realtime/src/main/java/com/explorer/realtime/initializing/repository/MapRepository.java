@@ -12,11 +12,11 @@ import java.util.List;
 @Repository
 public class MapRepository {
 
-    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
 
     private static final String KEY_PREFIX = "map";
 
-    public MapRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, String> reactiveRedisTemplate){
+    public MapRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate){
         this.reactiveRedisTemplate = reactiveRedisTemplate;
     }
 
@@ -29,7 +29,8 @@ public class MapRepository {
     }
 
     public Flux<String> findMapData(Integer mapId) {
-        return reactiveRedisTemplate.opsForList().range(KEY_PREFIX + mapId, 0, -1);
+        return reactiveRedisTemplate.opsForList().range(KEY_PREFIX + mapId, 0, -1)
+                .map(Object::toString);
     }
 
 }

@@ -91,11 +91,11 @@ public class RedisConfig {
     }
 
     @Bean(name = "staticgameReactiveRedisTemplate")
-    public ReactiveRedisTemplate<String, String> staticgameReactiveRedisTemplate() {
+    public ReactiveRedisTemplate<String, Object> staticgameReactiveRedisTemplate() {
         return new ReactiveRedisTemplate<>(
-                gameReactiveRedisConnectionFactory(),
-                RedisSerializationContext.<String, String>newSerializationContext(new StringRedisSerializer())
-                        .value(new StringRedisSerializer())
+                staticgameReactiveRedisConnectionFactory(),
+                RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
+                        .value(new GenericJackson2JsonRedisSerializer())
                         .build());
     }
 }
