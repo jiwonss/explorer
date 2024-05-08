@@ -22,11 +22,11 @@ pipeline {
             }
         }
         stage('Build Image'){
-             steps{
-                   script{
-                        dockerImage = docker.build("${repository}:service-discovery-${BUILD_NUMBER}", "-f server/service-discovery/Dockerfile ./server/service-discovery")
-                   }
-              }
+            steps{
+                script{
+                    dockerImage = docker.build("${repository}:service-discovery-${BUILD_NUMBER}", "-f server/service-discovery/Dockerfile ./server/service-discovery")
+                }
+            }
         }
 
         stage('DockerHub Login'){
@@ -40,7 +40,7 @@ pipeline {
         stage('Push Image'){
             steps{
                 script{
-                     sh "docker push \${repository}:service-discovery-\${BUILD_NUMBER}"
+                    sh "docker push \${repository}:service-discovery-\${BUILD_NUMBER}"
                 }
             }
         }
@@ -48,47 +48,27 @@ pipeline {
         stage('Clean Image'){
             steps{
                 script{
-                     sh "docker rmi \${repository}:service-discovery-\${BUILD_NUMBER}"
+                    sh "docker rmi \${repository}:service-discovery-\${BUILD_NUMBER}"
                 }
             }
         }
 
-         stage("Garbage Collect") {
-             steps {
-                 sshPublisher(
-                     continueOnError: true, failOnError: false,
-                     publishers: [
-                         sshPublisherDesc(
-                             configName: "service-discovery",
-                             verbose: true,
-                             transfers: [
-                                 sshTransfer(execCommand: "sudo docker kill \$(docker ps | grep service-discovery | tr ' ' '\t' | cut -f1)"),
-                                 sshTransfer(execCommand: "sudo docker system prune -af")
-                             ]
-                         )
-                     ]
-                 )
-             }
-         }
+        stage("Garbage Collect") {
+            steps {
+                script {
+                    sh "docker kill \$(docker ps -q --filter ancestor=\${repository}:service-discovery-\${BUILD_NUMBER})"
+                    sh "docker system prune -af --volumes"
+                }
+            }
+        }
 
-         stage("Deploy"){
-             steps{
-                 sshPublisher(
-                     continueOnError: false, failOnError: true,
-                     publishers: [
-                         sshPublisherDesc(
-                             configName: "service-discovery",
-                             verbose: true,
-                             transfers: [
-                                 sshTransfer(execCommand: "sudo docker rm -f service-discovery"),
-                                 sshTransfer(execCommand: "sudo docker run -d -p 8761:8761 --name service-discovery " + repository + ":service-discovery-${BUILD_NUMBER}")
-                             ]
-                         )
-                     ]
-                 )
-             }
-         }
-
-
+        stage("Deploy"){
+            steps{
+                script{
+                    sh "docker rm -f service-discovery || true"
+                    sh "docker run -d -p 8761:8761 --name service-discovery \${repository}:service-discovery-\${BUILD_NUMBER}"
+                }
+            }
+        }
     }
 }
