@@ -87,7 +87,7 @@ public class RedisConfig {
 
     @Bean(name = "staticgameReactiveRedisConnectionFactory")
     public ReactiveRedisConnectionFactory staticgameReactiveRedisConnectionFactory() {
-        return createReactiveConnectionFactory(gameHost, gamePort, gamePassword);
+        return createReactiveConnectionFactory(staticgameHost, staticgamePort, staticgamePassword);
     }
 
     @Bean(name = "staticgameReactiveRedisTemplate")

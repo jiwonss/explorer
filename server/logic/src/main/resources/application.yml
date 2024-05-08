@@ -9,7 +9,7 @@ spring:
     name: logic
 
   profiles:
-    active: prod
+    active: dev
 
 management:
   endpoints:
