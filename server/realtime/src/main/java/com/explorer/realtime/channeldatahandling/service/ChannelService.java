@@ -20,10 +20,11 @@ public class ChannelService {
 
     private final ReactiveMongoTemplate reactiveMongoTemplate;
 
-    public Mono<List<ChannelInfo>> findChannelInfoByUserId(Long userId) {
+    public Mono<List<ChannelInfo>> findAllChannelInfoByUserId(Long userId) {
         ProjectionOperation project = Aggregation.project()
                 .andExpression("_id").as("channelId")
                 .andExpression("name").as("channelName")
+                .andExpression("size(playerList)").as("headcount")
                 .andExpression("createdAt").as("createdAt");
 
         Aggregation aggregation = Aggregation.newAggregation(
