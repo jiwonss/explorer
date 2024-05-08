@@ -98,11 +98,8 @@ pipeline {
             }
             steps {
                 script {
-                    def containers = sh(script: "docker ps -q --filter ancestor=api-gateway", returnStdout: true).trim()
-                    if (containers) {
-                        dir("./server/api-gateway") {
-                            sh "docker-compose down"
-                        }
+                    dir("./server/api-gateway") {
+                        sh "docker-compose down"
                     }
                     sh "docker system prune -af --volumes"
                 }
@@ -122,5 +119,15 @@ pipeline {
             }
         }
 
+        post {
+            always {
+                script {
+                    echo "Cleaning up all services..."
+                    dir("./server/api-gateway") {
+                        sh "docker-compose down"
+                    }
+                }
+            }
+        }
     }
 }
