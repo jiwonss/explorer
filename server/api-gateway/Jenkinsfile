@@ -123,7 +123,12 @@ pipeline {
             steps {
                 script {
                     dir("./server/api-gateway") {
-                        sh "docker-compose down"
+                        try {
+                            sh "docker-compose down --remove-orphans --volumes || true"
+                        } catch (Exception e) {
+                            echo "Failed to bring down containers, attempting force removal..."
+                            sh "docker-compose down --remove-orphans --volumes"
+                        }
                     }
                     sh "docker system prune -af --volumes"
                 }
