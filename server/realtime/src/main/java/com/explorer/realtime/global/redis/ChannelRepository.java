@@ -1,5 +1,6 @@
 package com.explorer.realtime.global.redis;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ public class ChannelRepository {
 
     private static final String KEY_PREFIX = "channel:";
 
-    public ChannelRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ChannelRepository(@Qualifier("channelReactiveRedisTemplate")ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }

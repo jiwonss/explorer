@@ -133,3 +133,23 @@
   - MakeRoomPlayerRenderer.cs
   - JoinRoomManager.cs
   - PlayerInfo.cs
+
+## 24.05.08
+
+- 대기방 생성 로직 구현
+  - 대기방 생성 시 플레이어 오브젝트 생성
+  - 대기방 생성 시 타 플레이어 오브젝트 생성
+- 대기방 내 움직임 브로드캐스팅 기능 구현
+- AuthControl.cs 수정
+- CameraInfoManager.cs
+- JoinRoomManager.cs 수정
+- MakeRoomPlayerRenderer.cs 수정
+- TCPMessageHandler.cs 수정
+- CharacterMove.cs 수정 (CharacterMove2.cs)
+- 대기방 중력 적용
+- JoinRoomBroadcastPosition.cs
+- ObjGravity.cs
+- Planet.cs
+- TCPMessageHandler.cs 수정
+- MakeRoomPlayerRenderer.cs 수정
+- - CharacterMove.cs 수정

@@ -1,6 +1,7 @@
 package com.explorer.realtime.sessionhandling.waitingroom.repository;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ public class UserRepository {
 
     private static final String KEY_PREFIX = "user:";
 
-    public UserRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public UserRepository(@Qualifier("channelReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }

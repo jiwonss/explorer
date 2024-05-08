@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -10,12 +11,12 @@ import java.util.*;
 @Repository
 public class MapObjectRepository {
 
-    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, String, String> hashOperations;
 
     private static final String KEY_PREFIX = "mapData";
 
-    public MapObjectRepository(ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
+    public MapObjectRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.hashOperations = reactiveRedisTemplate.opsForHash();
     }

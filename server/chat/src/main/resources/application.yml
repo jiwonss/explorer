@@ -1,21 +1,15 @@
 server:
-  port: 9001
+  port: 9002
 
 spring:
   application:
-    name: realtime
+    name: chat
 
   config:
-    name: realtime
+    name: chat
 
   profiles:
     active: prod
-
-  cloud:
-    config:
-      server:
-        git:
-          default-label: main
 
 management:
   endpoints:
@@ -27,7 +21,7 @@ eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
     ip-address: ${BASIC}
-    hostname: realtime
+    hostname: chat
     prefer-ip-address: true
   client:
     fetch-registry: true

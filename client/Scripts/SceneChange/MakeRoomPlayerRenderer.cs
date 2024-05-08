@@ -56,7 +56,7 @@ public class MakeRoomPlayerRenderer : MonoBehaviour
             if (selectedPrefab != null)
             {
                 // 플레이어 오브젝트 생성
-                GameObject newPlayer = Instantiate(selectedPrefab, new Vector3(0f, 157f, 5f), Quaternion.identity);
+                GameObject newPlayer = Instantiate(selectedPrefab, new Vector3(0f, 25f, 0f), Quaternion.identity);
 
                 // 플레이어 정보 설정
                 PlayerInfo playerInfo = newPlayer.GetComponent<PlayerInfo>();

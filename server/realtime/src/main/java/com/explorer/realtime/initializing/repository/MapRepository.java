@@ -1,5 +1,6 @@
 package com.explorer.realtime.initializing.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Repository;
@@ -11,11 +12,11 @@ import java.util.List;
 @Repository
 public class MapRepository {
 
-    private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
 
     private static final String KEY_PREFIX = "map";
 
-    public MapRepository(ReactiveRedisTemplate<String, String> reactiveRedisTemplate){
+    public MapRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate){
         this.reactiveRedisTemplate = reactiveRedisTemplate;
     }
 
@@ -28,7 +29,8 @@ public class MapRepository {
     }
 
     public Flux<String> findMapData(Integer mapId) {
-        return reactiveRedisTemplate.opsForList().range(KEY_PREFIX + mapId, 0, -1);
+        return reactiveRedisTemplate.opsForList().range(KEY_PREFIX + mapId, 0, -1)
+                .map(Object::toString);
     }
 
 }
