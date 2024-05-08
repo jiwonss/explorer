@@ -80,13 +80,19 @@ public class Message<T> {
                 .build();
     }
 
+    public static <T> Message<T> fail(String eventName, CastingType castingType, T dataBody) {
+        return Message.<T>builder()
+                .dataHeader(DataHeader.fail(eventName, castingType.name()))
+                .dataBody(dataBody)
+                .build();
+    }
+
     public static <T> Message<T> fail(String eventName, CastingType castingType) {
         return Message.<T>builder()
                 .dataHeader(DataHeader.fail(eventName, castingType.name()))
                 .dataBody(null)
                 .build();
     }
-
 
     public static <T> Message<T> fail(String eventName, CastingType castingType, String resultCode, String resultMessage) {
         return Message.<T>builder()
