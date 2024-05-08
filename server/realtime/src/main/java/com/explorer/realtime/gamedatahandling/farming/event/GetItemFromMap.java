@@ -1,15 +1,24 @@
 package com.explorer.realtime.gamedatahandling.farming.event;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.ConnectionInfo;
-import com.explorer.realtime.gamedatahandling.farming.dto.ItemInfo;
-import com.explorer.realtime.gamedatahandling.farming.repository.InventoryRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
+import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
+import com.explorer.realtime.global.common.dto.Message;
+import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.component.broadcasting.Unicasting;
+import com.explorer.realtime.global.util.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -17,50 +26,114 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GetItemFromMap {
 
     private final MapInfoRepository mapInfoRepository;
-    private final InventoryRepository inventoryRepository;
+    private final ItemRepository itemRepository;
+    private final PlayerInfoRepository playerInfoRepository;
+    private final InventoryInfoRepository inventoryInfoRepository;
+    private final Unicasting unicasting;
+    private final Broadcasting broadcasting;
 
-    public Mono<Void> process(ConnectionInfo connectionInfo, String position) {
-        log.info("getItemFromMap process");
+    private static final String eventName = "getItemFromMap";
 
-        String channelId = connectionInfo.getChannelId();
-        Long userId = connectionInfo.getUserId();
-        int mapId = connectionInfo.getMapId();
+    public Mono<Void> process(JSONObject json) {
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+        int mapId = json.getInt("mapId");
+        String position = json.getString("position");
 
-        mapInfoRepository.save(channelId, mapId, position, "category", 10, 1).subscribe();
+        log.info("[process] channelId : {}, userId : {}, mapId : {}, position : {}", channelId, userId, mapId, position);
 
-        AtomicReference<ItemInfo> itemInfo = new AtomicReference<>();;
-        mapInfoRepository.find(channelId, mapId, position).subscribe(
-                value -> {
-                    log.info("map : {}", value);
-                    itemInfo.set(ItemInfo.of((String) value, position));
-                    log.info("itemInfo : {}", itemInfo.get().toString());
+        Mono<Map<String, Object>> itemInfoMono = getItemInfoByPosition(channelId, mapId, position);
 
-                    int idx = 0;
-                    while (idx < 8) {
+        Mono<Integer> inventoryCntMono = getInventoryCntByUserId(channelId, userId);
 
-                        idx++;
-                    }
-                },
-                error -> {
-                    log.error("Error occurred: {}", error);
-                }
-        );
-        return Mono.empty();
+        Mono<InventoryInfo> checkInventoryMono = Mono.zip(itemInfoMono, inventoryCntMono)
+                .flatMap(tuple -> {
+                    Map<String, Object> itemInfo = tuple.getT1();
+                    int inventoryCnt = tuple.getT2();
+                    String itemCategory = (String) itemInfo.get("itemCategory");
+                    int itemId = (int) itemInfo.get("itemId");
+                    return checkInventory(channelId, userId, itemCategory, itemId, inventoryCnt);
+                });
+
+        return checkInventoryMono
+                .flatMap(result -> {
+                    log.info("[process] result : {}", result);
+
+                    unicasting.unicasting(
+                            channelId,
+                            userId,
+                            MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, result))
+                    ).subscribe();
+
+                    broadcasting.broadcasting(
+                            channelId,
+                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING))
+                    ).subscribe();
+                    return Mono.empty();
+                })
+                .then();
     }
 
-    // 게임 시작 시 초기 인벤토리 세팅
-    // 게임 재시작 시 mongodb에 저장된 정보 가져와서 세팅
-    // 게임 종료 시 인벤토리 정보 저장
+    private Mono<Map<String, Object>> getItemInfoByPosition(String channelId, int mapId, String position) {
+        log.info("[getItemInfoByPosition] channelId : {}, mapId : {}, position : {}", channelId, mapId, position);
 
-    // inventory idx for문 돌기
-    // isFull이 true인지 확인
-    // isFull이 true이면 다음 인덱스로
-    // isFull이 false이면 itemId가 같은지 비교
-    // itemId가 같다면 static item에서 해당 아이템이 인벤토리에 저장될 수 있는 maxCnt를 가져옴
-    // 기존 아이템 개수 + 넣으려는 아이템 개수 <= maxCnt 해당 위치에 아이템 저장 후 break
-    // 기존 아이템 개수 + 넣으려는 아이템 가수 > maxCnt 해당 위치에 maxCnt 까지 넣고 다음칸으로 이동
-    // 다음칸이 빈칸인 경우 아이템 널기
-    // 다음칸이 빈칸이 아닌 경우 또 확인하는 과정 반복
-    // 만약 인벤토리에 꽉차서 더이상 들어갈 수 없다면 다시 아이템을 떨어뜨려야한다.
+        return mapInfoRepository.findByPosition(channelId, mapId, position)
+                .map(result -> {
+                    String[] itemInfo = String.valueOf(result).split(":");
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("itemCategory", itemInfo[0]);
+                    map.put("itemId", Integer.parseInt(itemInfo[1]));
+                    return map;
+                });
+    }
+
+    private Mono<Integer> getInventoryCntByUserId(String channelId, Long userId) {
+        log.info("[getInventoryCntByUserId] channelId : {}, userId : {}", channelId, userId);
+
+        return playerInfoRepository.findInventoryCnt(channelId, userId)
+                .map(map -> Integer.parseInt(String.valueOf(map)));
+    }
+
+    private Mono<Integer> getItemMaxCnt(String itemCategory, int itemId) {
+        log.info("[getItemMaxCnt] itemCategory : {}, itemId : {}", itemCategory, itemId);
+
+        return itemRepository.findByItemCategoryAndItemId(itemCategory, itemId)
+                .flatMap(map -> {
+                    int maxCnt = Integer.parseInt(String.valueOf(map));
+                    log.info("[getItemMaxCnt] maxCnt : {}", maxCnt);
+                    return Mono.just(maxCnt);
+                });
+    }
+
+    private Mono<InventoryInfo> checkInventory(String channelId, Long userId, String itemCategory, int itemId, int inventoryCnt) {
+        log.info("[checkInventory] channelId : {}, userId : {}, itemCategory : {}, itemId : {}, inventoryCnt : {}", channelId, userId, itemCategory, itemId, inventoryCnt);
+
+        return Flux.range(0, inventoryCnt)
+                .concatMap(idx -> inventoryInfoRepository.find(channelId, userId, idx)
+                        .flatMap(inventoryInfo -> {
+                            log.info("[checkInventory] idx : {}, inventoryInfo : {}", idx, inventoryInfo);
+                            if (String.valueOf(inventoryInfo).isEmpty()) {
+                                InventoryInfo result = InventoryInfo.of(idx, itemCategory, itemId, 1, 0);
+                                return inventoryInfoRepository.save(channelId, userId, result).thenReturn(result);
+                            } else {
+                                InventoryInfo result = InventoryInfo.ofString(idx, String.valueOf(inventoryInfo));
+                                if (result.getIsFull() == 0 && itemId == result.getItemId()) {
+                                    result.setItemCnt(result.getItemCnt() + 1);
+                                    return getItemMaxCnt(itemCategory, itemId)
+                                            .flatMap(maxCnt -> {
+                                                if (result.getItemCnt() == maxCnt) {
+                                                    result.setIsFull(1);
+                                                }
+                                                return inventoryInfoRepository.save(channelId, userId, result)
+                                                        .thenReturn(result)
+                                                        .then(Mono.just(result));
+                                            });
+                                } else {
+                                    return Mono.empty();
+                                }
+                            }
+                        }))
+                .next();
+    }
 
 }
