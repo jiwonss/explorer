@@ -20,47 +20,29 @@ public class GetChannelList {
 
     private final UserClient userClient;
     private final ChannelService channelService;
+    private final Unicasting unicasting;
+
     private static final String TOKEN_PREFIX = "Bearer ";
 
-    public Mono<Void> process(String accessToken) {
-        log.info("getChannelList - accessToken : {}", accessToken);
-        return Mono.empty();
-    }
+    public Mono<Void> process(JSONObject json, Connection connection) {
+        Long userId = json.getLong("userId");
+        log.info("[process] userId : {}, connection : {}", userId, connection);
 
-    public Mono<Void> process(Long userId, Connection connection) {
-        log.info("getChannelList - userId : {}", userId);
-
-        channelService.findChannelInfoByUserId(userId).subscribe(
-                channels -> {
-                    log.info("channels : {}", channels);
-                    unicasting(
+        return channelService.findAllChannelInfoByUserId(userId)
+                .doOnNext(channels -> {
+                    log.info("[process] channels : {}", channels);
+                    unicasting.unicasting(
                             connection,
                             userId,
                             MessageConverter.convert(
                                     Message.success("getChannelList", CastingType.UNICASTING, channels)
                             )
                     ).subscribe();
-                },
-                error -> {
-                    log.info("error : findChannelsByUserId");
-                }
-        );
-
-        return Mono.empty();
-    }
-
-    private Mono<Void> unicasting(Connection connection, Long userId, JSONObject msg) {
-        log.info("getChannelList unicasting");
-
-        if (connection == null) {
-            log.warn("No connection found for {}", userId);
-            return Mono.empty();
-        }
-
-        return connection.outbound().sendString(Mono.just(msg.toString()+'\n'))
-                .then()
-                .doOnSuccess(aVoid -> log.info("Unicast completed : {}", userId))
-                .doOnError(error -> log.error("Unicast failed for userId: {}, error: {}", userId, error.getMessage()));
+                })
+                .onErrorResume(error -> {
+                    return Mono.empty();
+                })
+                .then();
     }
 
 }

@@ -3,7 +3,6 @@ package com.explorer.realtime.initializing.event;
 import com.explorer.realtime.initializing.entity.Map;
 import com.explorer.realtime.initializing.repository.MapMongoRepository;
 import com.explorer.realtime.initializing.repository.MapRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,11 @@ public class InitializeMapRedis {
 
     public Flux<Long> initializeMapRedis(){
         return mapMongoRepository.findAll()
-                .flatMap(this::saveMapToRedis);
+                .flatMap(this::saveMapToRedis)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("No maps found in MongoDB");
+                    return Mono.empty();
+                }));
     }
 
     private Mono<Long> saveMapToRedis(Map map) {
