@@ -17,16 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-//    private final Environment env;
-
-//    @GetMapping("/health-check")
-//    public String status() {
-//        return String.format("It's Working in User Service"
-//                + ", port(local.server.port) =" + env.getProperty("local.server.port")
-//                + ", port(server.port) =" + env.getProperty("server.port")
-//                + ", jwt access key =" + env.getProperty("jwt.access-key")
-//                + ", jwt refresh key =" + env.getProperty("jwt.refresh-key"));
-//    }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("X-Authorization-Id") Long userId,

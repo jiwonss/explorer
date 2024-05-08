@@ -1,15 +1,15 @@
 server:
-  port: 9000
+  port: 9003
 
 spring:
   application:
-    name: user
+    name: logic
 
   config:
-    name: user
+    name: logic
 
   profiles:
-    active: dev
+    active: prod
 
 management:
   endpoints:
@@ -21,7 +21,7 @@ eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
     ip-address: ${BASIC}
-    hostname: user
+    hostname: logic
     prefer-ip-address: true
   client:
     fetch-registry: true

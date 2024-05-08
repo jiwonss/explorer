@@ -1,5 +1,6 @@
 package com.explorer.realtime.initializing.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,7 @@ public class MapRepository {
 
     private static final String KEY_PREFIX = "map";
 
-    public MapRepository(ReactiveRedisTemplate<String, String> reactiveRedisTemplate){
+    public MapRepository(@Qualifier("staticgameReactiveRedisTemplate") ReactiveRedisTemplate<String, String> reactiveRedisTemplate){
         this.reactiveRedisTemplate = reactiveRedisTemplate;
     }
 

@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveListOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -18,7 +19,7 @@ public class ElementLaboratoryRepository {
     private static final String KEY_PREFIX = "labData:";
     private static final String ELEMENT_SUFFIX = ":0:element";
 
-    public ElementLaboratoryRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ElementLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.listOperations = reactiveRedisTemplate.opsForList();
         this.objectMapper = new ObjectMapper();
     }

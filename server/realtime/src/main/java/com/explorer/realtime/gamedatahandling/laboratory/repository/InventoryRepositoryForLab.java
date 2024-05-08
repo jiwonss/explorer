@@ -2,6 +2,7 @@ package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
 import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,7 +20,7 @@ public class InventoryRepositoryForLab {
     private static final String KEY_PREFIX = "data:";
     private static final String KEY_SUFFIX = ":inventory";
 
-    public InventoryRepositoryForLab(ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate) {
+    public InventoryRepositoryForLab(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate) {
         this.stringReactiveRedisTemplate = stringReactiveRedisTemplate;
         this.reactiveHashOperations = stringReactiveRedisTemplate.opsForHash();
     }

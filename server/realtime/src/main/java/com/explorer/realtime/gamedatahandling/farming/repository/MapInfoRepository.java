@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.farming.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,7 @@ public class MapInfoRepository {
     private static final String KEY_PREFIX = "data:";
     private static final String KEY_SUFFIX = ":mapInfo";
 
-    public MapInfoRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public MapInfoRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }

@@ -1,15 +1,15 @@
 server:
-  port: 9000
+  port: 9002
 
 spring:
   application:
-    name: user
+    name: chat
 
   config:
-    name: user
+    name: chat
 
   profiles:
-    active: dev
+    active: prod
 
 management:
   endpoints:
@@ -21,7 +21,7 @@ eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
     ip-address: ${BASIC}
-    hostname: user
+    hostname: chat
     prefer-ip-address: true
   client:
     fetch-registry: true

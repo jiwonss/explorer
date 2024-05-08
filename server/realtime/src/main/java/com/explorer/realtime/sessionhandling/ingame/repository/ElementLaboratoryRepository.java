@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame.repository;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveListOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ public class ElementLaboratoryRepository {
     private static final String ELEMENT_SUFFIX = ":0:element";
     private static final String COMPOUND_SUFFIX = ":0:compound";
 
-    public ElementLaboratoryRepository(ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ElementLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.listOperations = reactiveRedisTemplate.opsForList();
     }
 
