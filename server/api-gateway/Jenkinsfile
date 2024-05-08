@@ -78,20 +78,25 @@ pipeline {
                     changeset "**/server/user/**"
                 }
             }
-            steps{
-                script{
-                    def gatewayImageIds = sh(script: "docker images -q vlwli99/api-gateway", returnStdout: true).trim().split()
-                    gatewayImageIds.each { id ->
-                        if (id) {
-                            sh "docker rmi ${id} || true"
+            steps {
+                script {
+                    def imageNames = [
+                        "vlwli99/api-gateway",
+                        "vlwli99/user",
+                        "api-gateway-redis-user",
+                        "api-gateway-redis-gateway",
+                        "api-gateway-rabbitmq"
+                    ]
+
+                    imageNames.each { imageName ->
+                        def imageIds = sh(script: "docker images -q ${imageName}", returnStdout: true).trim().split()
+                        imageIds.each { id ->
+                            if (id) {
+                                sh "docker rmi ${id} || true"
+                            }
                         }
                     }
-                    def userImageIds = sh(script: "docker images -q vlwli99/user", returnStdout: true).trim().split()
-                    userImageIds.each { id ->
-                        if (id) {
-                            sh "docker rmi ${id} || true"
-                        }
-                    }
+
                     sh 'docker image prune -f --filter until=1h'
                 }
             }
@@ -123,13 +128,14 @@ pipeline {
             steps {
                 script {
                     dir("./server/api-gateway") {
-                        try {
-                            sh "docker-compose down --remove-orphans --volumes || true"
-                        } catch (Exception e) {
-                            echo "Failed to bring down containers, attempting force removal..."
-                            sh "docker-compose down --remove-orphans --volumes"
-                        }
+                        echo "Attempting to bring down containers..."
+                        sh "docker-compose down --remove-orphans --volumes || true"
+
+                        echo "Forcing container stop and removal..."
+                        sh "docker-compose rm -fsv || true"
+
                     }
+                    echo "Cleaning up all unused Docker resources..."
                     sh "docker system prune -af --volumes"
                 }
             }
@@ -139,6 +145,7 @@ pipeline {
             when {
                 anyOf {
                     changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
                 }
             }
             steps{
