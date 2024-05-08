@@ -118,16 +118,5 @@ pipeline {
                 }
             }
         }
-
-        post {
-            always {
-                script {
-                    echo "Cleaning up all services..."
-                    dir("./server/api-gateway") {
-                        sh "docker-compose down"
-                    }
-                }
-            }
-        }
     }
 }
