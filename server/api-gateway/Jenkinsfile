@@ -139,7 +139,6 @@ pipeline {
             when {
                 anyOf {
                     changeset "**/server/api-gateway/**"
-                    changeset "**/server/user/**"
                 }
             }
             steps{
