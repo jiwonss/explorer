@@ -27,7 +27,10 @@ pipeline {
         }
         stage('Build Image'){
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps{
                 script {
@@ -40,7 +43,10 @@ pipeline {
 
         stage('DockerHub Login'){
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps{
                 script{
@@ -51,7 +57,10 @@ pipeline {
 
         stage('Push Image'){
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps{
                 script{
@@ -64,12 +73,21 @@ pipeline {
 
         stage('Clean Image'){
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps{
                 script{
-                    def imageIds = sh(script: "docker images -q vlwli99/api-gateway", returnStdout: true).trim().split()
-                    imageIds.each { id ->
+                    def gatewayImageIds = sh(script: "docker images -q vlwli99/api-gateway", returnStdout: true).trim().split()
+                    gatewayImageIds.each { id ->
+                        if (id) {
+                            sh "docker rmi ${id} || true"
+                        }
+                    }
+                    def userImageIds = sh(script: "docker images -q vlwli99/user", returnStdout: true).trim().split()
+                    userImageIds.each { id ->
                         if (id) {
                             sh "docker rmi ${id} || true"
                         }
@@ -81,7 +99,10 @@ pipeline {
 
         stage('Pull') {
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps {
                 script {
@@ -94,7 +115,10 @@ pipeline {
 
         stage("Down") {
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps {
                 script {
@@ -108,7 +132,10 @@ pipeline {
 
         stage("Up"){
             when {
-                changeset "**/server/api-gateway/**"
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
             }
             steps{
                 script{
