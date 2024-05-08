@@ -30,7 +30,7 @@ public class InGameSessionHandler {
         switch (eventName) {
             case "startGame" :
                 log.info("start game");
-                String teamCode = json.getString("channel");
+                String teamCode = json.getString("channelId");
                 String channelName = json.getString("channelName");
                 startGame.process(teamCode, channelName);
                 break;
