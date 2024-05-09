@@ -72,7 +72,7 @@ public class GetItemFromMap {
 
                     broadcasting.broadcasting(
                             channelId,
-                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, position))
+                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
                     ).subscribe();
                     return Mono.empty();
                 })
