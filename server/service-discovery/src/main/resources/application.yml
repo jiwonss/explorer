@@ -13,7 +13,7 @@ management: # Actuator 설정 (애플리케이션의 상태 및 정보를 모니
     web:
       exposure:
         include: refresh, health, beans # 노출할 엔드포인트 목록 설정
-#
+
 ---
 
 spring:
