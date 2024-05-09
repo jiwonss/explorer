@@ -9,8 +9,10 @@ import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.ingame.document.Channel;
+import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
 import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class StartGame {
 
     private final ChannelMongoRepository channelMongoRepository;
     private final ChannelRepository channelRepository;
+    private final UserRepository userRepository;
     private final Broadcasting broadcasting;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final InitializeMapObject initializeMapObject;
@@ -72,14 +75,17 @@ public class StartGame {
 
     private Mono<String> saveChannel(String teamCode, String channelName) {
         return channelRepository.findAllFields(teamCode)
-                .map(field -> Long.valueOf(field.toString()))
+                .flatMap(field -> {
+                    Long userId = Long.parseLong(String.valueOf(field));
+                    return userRepository.findAll(userId)
+                            .map(userMap -> UserInfo.of(userId, String.valueOf(userMap.get("nickname")), Integer.parseInt(String.valueOf(userMap.get("avatar")))));
+                })
                 .collectList()
-                .flatMap(result -> {
-                    log.info("playerList : {}", result);
-                    return channelMongoRepository.save(Channel.from(channelName, new HashSet<>(result)))
+                .flatMap(userInfoList -> {
+                    log.info("userInfoList : {}", userInfoList);
+                    return channelMongoRepository.save(Channel.from(channelName, new HashSet<>(userInfoList)))
                             .map(Channel::getId)
-                            .doOnSuccess(channelId -> log.info("channelId : {}", channelId))
-                            .flatMap(Mono::just);
+                            .doOnSuccess(channelId -> log.info("channelId : {}", channelId));
                 });
     }
 

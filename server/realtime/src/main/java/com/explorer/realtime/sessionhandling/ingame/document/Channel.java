@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame.document;
 
+import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -21,12 +22,12 @@ public class Channel {
 
     private String name;
 
-    private Set<Long> playerList;
+    private Set<UserInfo> playerList;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
-    public static Channel from(String name, Set<Long> playerList) {
+    public static Channel from(String name, Set<UserInfo> playerList) {
         return Channel.builder()
                 .name(name)
                 .playerList(playerList)
