@@ -23,9 +23,7 @@ public class ChannelService {
     public Mono<List<ChannelInfo>> findAllChannelInfoByUserId(Long userId) {
         ProjectionOperation project = Aggregation.project()
                 .andExpression("_id").as("channelId")
-                .andExpression("name").as("channelName")
-                .andExpression("size(playerList)").as("headcount")
-                .andExpression("createdAt").as("createdAt");
+                .andExpression("name").as("channelName");
 
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("playerList").is(userId)),
