@@ -93,6 +93,7 @@ public class GetItemFromMap {
 
         return mapInfoRepository.findByPosition(channelId, mapId, position)
                 .map(result -> {
+                    log.info("[getItemInfoByPosition] map result : {}", result);
                     String[] itemInfo = String.valueOf(result).split(":");
                     Map<String, Object> map = new HashMap<>();
                     map.put("itemCategory", itemInfo[0]);
@@ -143,7 +144,7 @@ public class GetItemFromMap {
                                             });
                                 } else {
                                     InventoryInfo result = InventoryInfo.ofString(idx, String.valueOf(inventoryInfo));
-                                    if (result.getIsFull() == 0 && itemId == result.getItemId()) {
+                                    if (result.getIsFull() == 0 && (itemCategory.equals(result.getItemCategory()) && itemId == result.getItemId())) {
                                         result.setItemCnt(result.getItemCnt() + 1);
                                         return getItemMaxCnt(itemCategory, itemId)
                                                 .flatMap(maxCnt -> {
