@@ -1,0 +1,231 @@
+pipeline {
+    environment {
+        repository = "vlwli99/realtime"
+        dockerImage = ''
+    }
+
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Project') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                dir("./server/chat") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+                dir("./server/realtime") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+                dir("./server/logic") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+            }
+        }
+        stage('Build Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script {
+                    dir("./server/realtime") {
+                        sh 'docker-compose -f docker-compose.yml build'
+                    }
+                }
+            }
+        }
+
+        stage('DockerHub Login'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script{
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                            set +x
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
+                            set -x
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script{
+                    dir("./server/realtime") {
+                        sh 'docker-compose -f docker-compose.yml push'
+                    }
+                }
+            }
+        }
+
+        stage('Clean Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                script {
+                    def imageNames = [
+                        "vlwli99/chat",
+                        "vlwli99/realtime",
+                        "vlwli99/logic",
+                        "realtime-rabbitmq",
+                        "realtime-redis-channel",
+                        "realtime-redis-game",
+                        "realtime-redis-staticgame",
+                    ]
+
+                    imageNames.each { imageName ->
+                        def imageIds = sh(script: "docker images -q ${imageName}", returnStdout: true).trim().split()
+                        imageIds.each { id ->
+                            if (id) {
+                                sh "docker rmi ${id} || true"
+                            }
+                        }
+                    }
+
+                    sh 'docker image prune -f --filter until=1h'
+                }
+            }
+        }
+
+        stage('Pull') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                sshagent(['EC2_C5_SSH_KEY']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no $EC2_C5_IP '
+                        if [ ! -d "/server/realtime" ]; then
+                            git clone $GITLAB_URL /server/realtime
+                        else
+                            cd /server/realtime
+                            git pull
+                        fi
+
+                        cd /server/realtime
+                        docker-compose pull
+                    '
+                    """
+                }
+            }
+        }
+
+        stage("Down") {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                sshagent(['EC2_C5_SSH_KEY']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no $EC2_C5_IP '
+                        cd /server/realtime
+                        echo "Attempting to bring down containers..."
+                        docker-compose down --remove-orphans --volumes || true
+
+                        echo "Forcing container stop and removal..."
+                        docker-compose rm -fsv || true
+                    '
+                    ssh -o StrictHostKeyChecking=no $EC2_C5_IP 'docker system prune -af --volumes || true'
+                    """
+                }
+            }
+        }
+
+        stage("Up"){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                sshagent(['EC2_C5_SSH_KEY']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no $EC2_C5_IP '
+                        cd /server/realtime
+                        echo "Deploying containers..."
+                        docker-compose up -d --build
+                    '
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'good',
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+        failure {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'danger',
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+    }
+}
