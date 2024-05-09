@@ -149,14 +149,14 @@ pipeline {
                             transfers: [
                                 sshTransfer(
                                     execCommand: """
-                                        sudo mkdir -p /server/realtime;
-                                        if [ ! -d "/server/realtime" ]; then
-                                            sudo git clone ${GITLAB_URL} /server/realtime;
+                                        sudo mkdir -p /git;
+                                        if [ ! -d "/git" ]; then
+                                            sudo git clone ${GITLAB_URL};
                                         else
-                                            cd /server/realtime;
+                                            cd /git;
                                             sudo git pull;
                                         fi;
-                                        cd /server/realtime;
+                                        cd /git/server/realtime;
                                         sudo docker-compose pull;
                                     """
                                 )
@@ -185,7 +185,7 @@ pipeline {
                             transfers: [
                                 sshTransfer(
                                     execCommand: """
-                                        cd /server/realtime;
+                                        cd /git/server/realtime;
                                         echo "Attempting to bring down containers...";
                                         sudo docker-compose down --remove-orphans --volumes || true;
                                         echo "Forcing container stop and removal...";
@@ -218,7 +218,7 @@ pipeline {
                             transfers: [
                                 sshTransfer(
                                     execCommand: '''
-                                        cd /server/realtime;
+                                        cd /git/server/realtime;
                                         echo "Deploying containers...";
                                         sudo docker-compose up -d --build;
                                     '''
