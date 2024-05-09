@@ -13,7 +13,5 @@ public class ChannelInfo {
 
     private String channelId;
     private String channelName;
-    private int headcount;
-    private LocalDateTime createdAt;
 
 }
