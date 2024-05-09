@@ -64,7 +64,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                         sh """
                             set +x
-                            echo $DOCKERHUB_ID | docker login -u $DOCKERHUB_PASSWORD --password-stdin
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
                             set -x
                         """
                     }
@@ -170,6 +170,14 @@ pipeline {
                     dir("./server/api-gateway") {
                         sh "docker-compose up -d --build"
                     }
+                }
+            }
+        }
+
+        stage('Stop Gradle Daemon') {
+            steps {
+                script {
+                    sh "./gradlew --stop"
                 }
             }
         }

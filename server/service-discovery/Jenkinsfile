@@ -46,7 +46,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                         sh """
                             set +x
-                            echo $DOCKERHUB_ID | docker login -u $DOCKERHUB_PASSWORD --password-stdin
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
                             set -x
                         """
                     }
@@ -112,6 +112,14 @@ pipeline {
                         sh "docker rm -f service-discovery"
                     }
                     sh "docker run -d -p 8761:8761 --name service-discovery \${repository}:service-discovery-\${BUILD_NUMBER}"
+                }
+            }
+        }
+
+        stage('Stop Gradle Daemon') {
+            steps {
+                script {
+                    sh "./gradlew --stop"
                 }
             }
         }
