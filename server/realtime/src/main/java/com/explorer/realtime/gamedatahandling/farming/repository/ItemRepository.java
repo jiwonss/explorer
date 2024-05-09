@@ -21,15 +21,15 @@ public class ItemRepository {
     }
 
     public Mono<Boolean> save(String itemCategory, int itemId, int maxCnt) {
-        String key = KEY_PREFIX + String.valueOf(itemId);
-        String field = itemCategory + ":" + String.valueOf(itemId);
+        String key = KEY_PREFIX + itemCategory;
+        String field = String.valueOf(itemId);
         String value = String.valueOf(maxCnt);
         return reactiveHashOperations.put(key, field, value);
     }
 
     public Mono<Object> findByItemCategoryAndItemId(String itemCategory, int itemId) {
-        String key = KEY_PREFIX + String.valueOf(itemId);
-        String field = itemCategory + ":" + String.valueOf(itemId);
+        String key = KEY_PREFIX + itemCategory;
+        String field = String.valueOf(itemId);
         return reactiveHashOperations.get(key, field);
     }
 
