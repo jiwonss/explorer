@@ -3,6 +3,8 @@ package com.explorer.realtime.gamedatahandling.farming.event;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.farming.exception.FarmingErrorCode;
+import com.explorer.realtime.gamedatahandling.farming.exception.FarmingException;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
 import com.explorer.realtime.global.common.dto.Message;
@@ -74,6 +76,15 @@ public class GetItemFromMap {
                     ).subscribe();
                     return Mono.empty();
                 })
+                .onErrorResume(FarmingException.class, error -> {
+                    log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
+                    unicasting.unicasting(
+                            channelId,
+                            userId,
+                            MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
+                    ).subscribe();
+                    return Mono.empty();
+                })
                 .then();
     }
 
@@ -111,17 +122,16 @@ public class GetItemFromMap {
     private Mono<InventoryInfo> checkInventory(String channelId, Long userId, String itemCategory, int itemId, int inventoryCnt) {
         log.info("[checkInventory] channelId : {}, userId : {}, itemCategory : {}, itemId : {}, inventoryCnt : {}", channelId, userId, itemCategory, itemId, inventoryCnt);
 
-        return Flux.range(0, inventoryCnt)
-                .concatMap(idx -> inventoryInfoRepository.find(channelId, userId, idx)
-                        .flatMap(inventoryInfo -> {
-                            log.info("[checkInventory] idx : {}, inventoryInfo : {}", idx, inventoryInfo);
-                            if (String.valueOf(inventoryInfo).isEmpty()) {
-                                InventoryInfo result = InventoryInfo.of(idx, itemCategory, itemId, 1, 0);
-                                return inventoryInfoRepository.save(channelId, userId, result).thenReturn(result);
-                            } else {
-                                InventoryInfo result = InventoryInfo.ofString(idx, String.valueOf(inventoryInfo));
-                                if (result.getIsFull() == 0 && itemId == result.getItemId()) {
-                                    result.setItemCnt(result.getItemCnt() + 1);
+        return Flux.range(0, inventoryCnt + 1)
+                .concatMap(idx -> {
+                    if (idx >= inventoryCnt) {
+                        return Mono.error(new FarmingException(FarmingErrorCode.EXCEEDING_CAPACITY));
+                    }
+                    return inventoryInfoRepository.find(channelId, userId, idx)
+                            .flatMap(inventoryInfo -> {
+                                log.info("[checkInventory] idx : {}, inventoryInfo : {}", idx, inventoryInfo);
+                                if (String.valueOf(inventoryInfo).isEmpty()) {
+                                    InventoryInfo result = InventoryInfo.of(idx, itemCategory, itemId, 1, 0);
                                     return getItemMaxCnt(itemCategory, itemId)
                                             .flatMap(maxCnt -> {
                                                 if (result.getItemCnt() == maxCnt) {
@@ -132,10 +142,24 @@ public class GetItemFromMap {
                                                         .then(Mono.just(result));
                                             });
                                 } else {
-                                    return Mono.empty();
+                                    InventoryInfo result = InventoryInfo.ofString(idx, String.valueOf(inventoryInfo));
+                                    if (result.getIsFull() == 0 && itemId == result.getItemId()) {
+                                        result.setItemCnt(result.getItemCnt() + 1);
+                                        return getItemMaxCnt(itemCategory, itemId)
+                                                .flatMap(maxCnt -> {
+                                                    if (result.getItemCnt() == maxCnt) {
+                                                        result.setIsFull(1);
+                                                    }
+                                                    return inventoryInfoRepository.save(channelId, userId, result)
+                                                            .thenReturn(result)
+                                                            .then(Mono.just(result));
+                                                });
+                                    } else {
+                                        return Mono.empty();
+                                    }
                                 }
-                            }
-                        }))
+                            });
+                        })
                 .next();
     }
 
