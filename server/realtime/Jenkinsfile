@@ -147,20 +147,7 @@ pipeline {
                             configName: 'explorer',
                             verbose: true,
                             transfers: [
-                                sshTransfer(
-                                    execCommand: """
-                                        sudo mkdir -p /gitlab;
-                                        if [ ! -d "/gitlab" ]; then
-                                            sudo git init;
-                                            sudo git remote add origin ${GITLAB_URL};
-                                        else
-                                            cd /gitlab;
-                                            sudo git pull;
-                                        fi;
-                                        cd /gitlab/server/realtime;
-                                        sudo docker-compose pull;
-                                    """
-                                )
+                                sshTransfer(execCommand: "sudo docker-compose pull || true")
                             ]
                         )
                     ]
@@ -186,7 +173,6 @@ pipeline {
                             transfers: [
                                 sshTransfer(
                                     execCommand: """
-                                        cd /gitlab/server/realtime;
                                         echo "Attempting to bring down containers...";
                                         sudo docker-compose down --remove-orphans --volumes || true;
                                         echo "Forcing container stop and removal...";
@@ -217,13 +203,7 @@ pipeline {
                             configName: "explorer",
                             verbose: true,
                             transfers: [
-                                sshTransfer(
-                                    execCommand: '''
-                                        cd /gitlab/server/realtime;
-                                        echo "Deploying containers...";
-                                        sudo docker-compose up -d --build;
-                                    '''
-                                )
+                                sshTransfer(execCommand: "sudo docker-compose up -d --build")
                             ]
                         )
                     ]
