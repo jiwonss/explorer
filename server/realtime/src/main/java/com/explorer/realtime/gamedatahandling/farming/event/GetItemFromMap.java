@@ -65,9 +65,12 @@ public class GetItemFromMap {
                             MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, result))
                     ).subscribe();
 
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("position", position);
+
                     broadcasting.broadcasting(
                             channelId,
-                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING))
+                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, position))
                     ).subscribe();
                     return Mono.empty();
                 })
