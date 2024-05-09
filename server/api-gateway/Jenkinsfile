@@ -173,13 +173,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Stop Gradle Daemon') {
-            steps {
-                script {
-                    sh "./gradlew --stop"
-                }
-            }
-        }
     }
 }
