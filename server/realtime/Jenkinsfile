@@ -141,29 +141,29 @@ pipeline {
             }
             steps {
                 sshPublisher(
-                     continueOnError: true, failOnError: false,
-                     publishers: [
-                         sshPublisherDesc(
-                             configName: 'explorer',
-                             verbose: true,
-                             transfers: [
-                                 sshTransfer(
-                                     remoteDirectory: "/server/realtime",
-                                     execCommand: """
-                                         if [ ! -d "/server/realtime" ]; then
-                                             git clone ${GITLAB_URL} /server/realtime
-                                         else
-                                             cd /server/realtime
-                                             git pull
-                                         fi
-                                         cd /server/realtime
-                                         docker-compose pull
-                                     """
-                                 )
-                             ]
-                         )
-                     ]
-                 )
+                    continueOnError: true, failOnError: false,
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: 'explorer',
+                            verbose: true,
+                            transfers: [
+                                sshTransfer(
+                                    execCommand: """
+                                        sudo mkdir -p /server/realtime;
+                                        if [ ! -d "/server/realtime" ]; then
+                                            sudo git clone ${GITLAB_URL} /server/realtime;
+                                        else
+                                            cd /server/realtime;
+                                            sudo git pull;
+                                        fi;
+                                        cd /server/realtime;
+                                        sudo docker-compose pull;
+                                    """
+                                )
+                            ]
+                        )
+                    ]
+                )
             }
         }
 
@@ -185,19 +185,18 @@ pipeline {
                             transfers: [
                                 sshTransfer(
                                     execCommand: """
-                                        cd /server/realtime
-                                        echo "Attempting to bring down containers..."
-                                        docker-compose down --remove-orphans --volumes || true
-                                        echo "Forcing container stop and removal..."
-                                        docker-compose rm -fsv || true
-                                        docker system prune -af --volumes || true
+                                        cd /server/realtime;
+                                        echo "Attempting to bring down containers...";
+                                        sudo docker-compose down --remove-orphans --volumes || true;
+                                        echo "Forcing container stop and removal...";
+                                        sudo docker-compose rm -fsv || true;
+                                        sudo docker system prune -af --volumes || true;
                                     """
                                 )
                             ]
                         )
                     ]
                 )
-
             }
         }
 
@@ -218,11 +217,10 @@ pipeline {
                             verbose: true,
                             transfers: [
                                 sshTransfer(
-                                    remoteDirectory: "/server/realtime",
                                     execCommand: '''
-                                        cd /server/realtime
-                                        echo "Deploying containers..."
-                                        docker-compose up -d --build
+                                        cd /server/realtime;
+                                        echo "Deploying containers...";
+                                        sudo docker-compose up -d --build;
                                     '''
                                 )
                             ]
