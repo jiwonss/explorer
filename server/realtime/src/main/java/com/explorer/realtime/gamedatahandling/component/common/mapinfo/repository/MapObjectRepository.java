@@ -21,8 +21,8 @@ public class MapObjectRepository {
         this.hashOperations = reactiveRedisTemplate.opsForHash();
     }
 
-    public Mono<Boolean> saveMapData(String channelId, Integer mapId, List<String> positions, Integer category, Integer itemId) {
-        Map<String, String> hashData = dataToHash(positions, category, itemId);
+    public Mono<Boolean> saveMapData(String channelId, Integer mapId, List<String> positions, String itemCategory, Integer itemId) {
+        Map<String, String> hashData = dataToHash(positions, itemCategory, itemId);
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
         return hashOperations.putAll(key, hashData)
                 .map(result -> result == Boolean.TRUE);
@@ -34,10 +34,10 @@ public class MapObjectRepository {
         return selectedEntries.subList(0, Math.min(selectedEntries.size(), count));  // 랜덤하게 count개의 요소를 선택
     }
 
-    private Map<String, String> dataToHash(List<String> positions, Integer category, Integer itemId) {
+    private Map<String, String> dataToHash(List<String> positions, String itemCategory, Integer itemId) {
         Map<String, String> hashData = new HashMap<>();
         for (String position : positions) {
-            hashData.put(position, category + ":" + itemId);
+            hashData.put(position, itemCategory + ":" + itemId);
         }
         return hashData;
     }

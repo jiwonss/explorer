@@ -25,16 +25,16 @@ public class InitializeMapObject {
 
 
     public Mono<Void> initializeMapObject(String channelId) {
-        Integer mapId = 1;
-        Integer category = 1;
-        Integer itemId = 1;
+        Integer mapId = 1;              // 주행성
+        String itemCategory = "extractionMaterial";       //
+        Integer itemId = 0;
         log.info("Initializing Map Object for channelId: {}, mapId: {}", channelId, mapId);
 
         return mapRepository.findMapData(mapId)
                 .collectList()
                 .flatMap(data -> {
                     List<String> selectedData = selectRandomEntries(data, 50);
-                    return mapObjectRepository.saveMapData(channelId, mapId, selectedData, category, itemId);
+                    return mapObjectRepository.saveMapData(channelId, mapId, selectedData, itemCategory, itemId);
                 })
                 .flatMap(result -> {
                     if (result) {
