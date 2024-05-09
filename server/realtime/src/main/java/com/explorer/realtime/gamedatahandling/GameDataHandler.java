@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling;
 
+import com.explorer.realtime.gamedatahandling.component.common.boxinfo.InstallHandler;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
 import com.explorer.realtime.gamedatahandling.laboratory.LaboratoryHandler;
@@ -19,6 +20,7 @@ public class GameDataHandler {
     private final FarmingHandler farmingHandler;
     private final InitializeMapObject initializeMapObject;
     private final LaboratoryHandler laboratoryHandler;
+    private final InstallHandler installHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
         String category = json.getString("category");
@@ -42,6 +44,11 @@ public class GameDataHandler {
             case "laboratory":
                 log.info("category : {}", category);
                 laboratoryHandler.laboratoryHandler(json);
+                break;
+
+            case "install":
+                log.info("category : {}", category);
+                installHandler.boxHandler(json);
                 break;
         }
 
