@@ -20,6 +20,14 @@ public class MapInfoRepository {
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
+    /*
+     * key : mapData:{channelId}:{mapId}
+     * field : {posX}:{posY}:{posZ}:{rotX}:{rotY}:{rotZ}
+     * value : {itemCategory}:{itemId}
+     * 반환값 :
+     *      있는 경우 : {itemCategory}:{itemId}
+     *      없는 경우 : empty Mono
+     */
     public Mono<String> findByPosition(String channelId, int mapId, String position) {
         String key = KEY_PREFIX + channelId + ":" + String.valueOf(mapId);
         return reactiveHashOperations.get(key, position).map(Object::toString);
