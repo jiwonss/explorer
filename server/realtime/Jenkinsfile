@@ -147,7 +147,7 @@ pipeline {
                             configName: 'explorer',
                             verbose: true,
                             transfers: [
-                                sshTransfer(execCommand: "cd /home/ubuntu/docker/realtime")
+                                sshTransfer(execCommand: "cd /home/ubuntu/docker/realtime"),
                                 sshTransfer(execCommand: "sudo docker-compose pull || true")
                             ]
                         )
