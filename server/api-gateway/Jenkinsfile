@@ -152,8 +152,11 @@ pipeline {
                         sh "docker-compose rm -fsv || true"
 
                     }
-                    echo "Cleaning up all unused Docker resources..."
-                    sh "docker system prune -af --volumes"
+                    echo "Attempting to clean up all unused Docker resources..."
+                    retry(3) {
+                        sleep time: 10, unit: 'SECONDS'
+                        sh "docker system prune -af --volumes || true"
+                    }
                 }
             }
         }
@@ -182,7 +185,7 @@ pipeline {
                 mattermostSend (color: 'good',
                 message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
                 endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
-                channel: 'C201/Jenkins'
+                channel: 'C201_Jenkins'
                 )
             }
         }
@@ -193,7 +196,7 @@ pipeline {
                 mattermostSend (color: 'danger',
                 message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
                 endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
-                channel: 'C201/Jenkins'
+                channel: 'C201_Jenkins'
                 )
             }
         }
