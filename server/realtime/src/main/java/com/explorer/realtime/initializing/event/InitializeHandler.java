@@ -31,7 +31,6 @@ public class InitializeHandler {
 
         return mapMongoRepository.findById(mapId)
                 .flatMap(existingMap -> {
-                    existingMap.getPosition().clear();
                     existingMap.getPosition().addAll(positions);
                     return mapMongoRepository.save(existingMap);
                 })
