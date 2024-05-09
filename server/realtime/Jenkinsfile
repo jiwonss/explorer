@@ -42,6 +42,27 @@ pipeline {
                 }
             }
         }
+
+        stage('Transfer JAR') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'EC2_C5_SSH_KEY', keyFileVariable: 'SSH_KEY')]) {
+                        sh "scp -i $SSH_KEY ./server/chat/build/libs/chat-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/chat/chat.jar"
+                        sh "scp -i $SSH_KEY ./server/realtime/build/libs/realtime-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/realtime/realtime.jar"
+                        sh "scp -i $SSH_KEY ./server/logic/build/libs/logic-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/logic/logic.jar"
+                    }
+                }
+            }
+        }
+
+
         stage('Build Image'){
             when {
                 anyOf {
@@ -111,10 +132,10 @@ pipeline {
                         "vlwli99/chat",
                         "vlwli99/realtime",
                         "vlwli99/logic",
-                        "realtime-rabbitmq",
-                        "realtime-redis-channel",
-                        "realtime-redis-game",
-                        "realtime-redis-staticgame",
+                        "rabbitmq",
+                        "redis-channel",
+                        "redis-game",
+                        "redis-staticgame",
                     ]
 
                     imageNames.each { imageName ->
