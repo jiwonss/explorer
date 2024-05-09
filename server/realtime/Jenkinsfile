@@ -43,26 +43,6 @@ pipeline {
             }
         }
 
-        stage('Transfer JAR') {
-            when {
-                anyOf {
-                    changeset "**/server/chat/**"
-                    changeset "**/server/realtime/**"
-                    changeset "**/server/logic/**"
-                }
-            }
-            steps {
-                script {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'EC2_C5_SSH_KEY', keyFileVariable: 'SSH_KEY')]) {
-                        sh "scp -i $SSH_KEY ./server/chat/build/libs/chat-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/chat/chat.jar"
-                        sh "scp -i $SSH_KEY ./server/realtime/build/libs/realtime-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/realtime/realtime.jar"
-                        sh "scp -i $SSH_KEY ./server/logic/build/libs/logic-0.0.1-SNAPSHOT.jar ${EC2_C5_IP}:/home/ubuntu/docker/logic/logic.jar"
-                    }
-                }
-            }
-        }
-
-
         stage('Build Image'){
             when {
                 anyOf {
@@ -73,8 +53,14 @@ pipeline {
             }
             steps{
                 script {
+                    dir("./server/chat") {
+                        sh 'docker build --tag vlwli99/chat .'
+                    }
                     dir("./server/realtime") {
-                        sh 'docker-compose -f docker-compose.yml build'
+                        sh 'docker build --tag vlwli99/realtime .'
+                    }
+                    dir("./server/logic") {
+                        sh 'docker build --tag vlwli99/logic .'
                     }
                 }
             }
@@ -111,8 +97,14 @@ pipeline {
             }
             steps{
                 script{
+                    dir("./server/chat") {
+                        sh 'docker push vlwli99/chat'
+                    }
                     dir("./server/realtime") {
-                        sh 'docker-compose -f docker-compose.yml push'
+                        sh 'docker push vlwli99/realtime'
+                    }
+                    dir("./server/logic") {
+                        sh 'docker push vlwli99/logic'
                     }
                 }
             }
@@ -152,30 +144,6 @@ pipeline {
             }
         }
 
-        stage('Pull') {
-            when {
-                anyOf {
-                    changeset "**/server/chat/**"
-                    changeset "**/server/realtime/**"
-                    changeset "**/server/logic/**"
-                }
-            }
-            steps {
-                sshPublisher(
-                    continueOnError: true, failOnError: false,
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'explorer',
-                            verbose: true,
-                            transfers: [
-                                sshTransfer(execCommand: "cd /home/ubuntu/docker/realtime && sudo docker-compose pull || true")
-                            ]
-                        )
-                    ]
-                )
-            }
-        }
-
         stage("Down") {
             when {
                 anyOf {
@@ -197,8 +165,6 @@ pipeline {
                                         cd /home/ubuntu/docker/realtime;
                                         echo "Attempting to bring down containers...";
                                         sudo docker-compose down --remove-orphans --volumes || true;
-                                        echo "Forcing container stop and removal...";
-                                        sudo docker-compose rm -fsv || true;
                                         sudo docker system prune -af --volumes || true;
                                     """
                                 )
