@@ -1,7 +1,6 @@
 pipeline {
     environment {
         repository = "vlwli99/api-gateway"
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub_token')
         dockerImage = ''
     }
 
@@ -62,7 +61,7 @@ pipeline {
             }
             steps{
                 script{
-                    withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                         sh """
                             set +x
                             echo $DOCKERHUB_ID | docker login -u $DOCKERHUB_PASSWORD --password-stdin
