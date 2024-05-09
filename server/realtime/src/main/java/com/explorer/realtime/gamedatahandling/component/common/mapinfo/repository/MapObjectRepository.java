@@ -47,5 +47,10 @@ public class MapObjectRepository {
         return hashOperations.entries(key)
                 .collectMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue);
     }
+    public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, int itemId) {
+        String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
+        String value = itemCategory + ":" + itemId;
+        return hashOperations.put(key, position, value);
+    }
 }
 
