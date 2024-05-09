@@ -1,5 +1,6 @@
 package com.explorer.logic.servermanaging;
 
+import com.explorer.logic.farm.FarmHandler;
 import com.explorer.logic.laboratory.extract.LabExtractHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import reactor.netty.http.server.HttpServerResponse;
 public class RequestHandler {
 
     private final LabExtractHandler labExtractHandler;
+    private final FarmHandler farmHandler;
 
     public Mono<Void> handleRequest(HttpServerRequest request, HttpServerResponse response) {
         // 요청이 POST 메서드인지 확인
@@ -24,6 +26,9 @@ public class RequestHandler {
                 case "lab/extract":
                     log.info("POST :: lab/extract");
                     return labExtractHandler.labExtractHandler(request, response);
+                case "farm":
+                    log.info("POST :: farm");
+                    return farmHandler.farmHandler(request, response);
             }
         }
 
