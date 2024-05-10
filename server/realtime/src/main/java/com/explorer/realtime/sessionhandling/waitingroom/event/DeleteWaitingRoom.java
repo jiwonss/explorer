@@ -17,14 +17,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LeaveWaitingRoom {
+public class DeleteWaitingRoom {
 
     private final ChannelRepository channelRepository;
     private final SessionManager sessionManager;
@@ -32,7 +30,7 @@ public class LeaveWaitingRoom {
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
-    private static final String eventName = "leaveWaitingRoom";
+    private static final String eventName = "deleteWaitingRoom";
 
     public Mono<Void> process(JSONObject json, Connection connection) {
         String teamCode = json.getString("teamCode");
@@ -41,7 +39,7 @@ public class LeaveWaitingRoom {
 
         return existByTeamCode(teamCode)
                 .flatMap(exists -> {
-                    return leaveWaitingRoom(teamCode, userId);
+                    return deleteWaitingRoom(teamCode);
                 })
                 .onErrorResume(WaitingRoomException.class, error -> {
                     if (Objects.requireNonNull(error.getErrorCode()) == WaitingRoomErrorCode.NOT_EXIST_TEAMCODE) {
@@ -73,19 +71,18 @@ public class LeaveWaitingRoom {
                 });
     }
 
-    private Mono<Void> leaveWaitingRoom(String teamCode, Long userId) {
-        log.info("[leaveWaitingRoom] teamCode : {}, userId : {}", teamCode, userId);
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("userId", userId);
+    private Mono<Void> deleteWaitingRoom(String teamCode) {
+        log.info("[deleteWaitingRoom] teamCode : {}", teamCode);
 
         return broadcasting.broadcasting(
                         teamCode,
-                        MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
+                        MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING))
                 )
-                .then(userRepository.delete(userId))
-                .then(channelRepository.deleteByUserId(teamCode, userId))
-                .then(Mono.fromRunnable(() -> sessionManager.removeConnection(userId)));
+                .then(channelRepository.findAllFields(teamCode)
+                        .flatMap(value -> userRepository.delete(Long.valueOf(String.valueOf(value))))
+                        .then(channelRepository.deleteAll(teamCode))
+                ).then();
     }
+
 
 }

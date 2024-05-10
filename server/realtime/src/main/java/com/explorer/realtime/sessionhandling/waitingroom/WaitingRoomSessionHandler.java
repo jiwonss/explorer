@@ -19,8 +19,8 @@ public class WaitingRoomSessionHandler {
     private final CreateWaitingRoom createWaitingRoom;
     private final JoinWaitingRoom joinWaitingRoom;
     private final LeaveWaitingRoom leaveWaitingRoom;
+    private final DeleteWaitingRoom deleteWaitingRoom;
     private final BroadcastPosition broadcastPosition;
-    private final GetWaitingRoomHeadcount getWaitingRoomHeadcount;
 
     public Mono<Void> waitingRoomSessionHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -41,14 +41,14 @@ public class WaitingRoomSessionHandler {
                 leaveWaitingRoom.process(json, connection).subscribe();
                 break;
 
+            case "deleteWaitingRoom":
+                log.info("event : {}", eventName);
+                deleteWaitingRoom.process(json, connection).subscribe();
+                break;
+
             case "broadcastPosition":
                 log.info("event : {}", eventName);
                 broadcastPosition.process(json).subscribe();
-                break;
-
-            case "getWaitingRoomHeadcount":
-                log.info("event : {}", eventName);
-                getWaitingRoomHeadcount.process(json).subscribe();
                 break;
         }
 
