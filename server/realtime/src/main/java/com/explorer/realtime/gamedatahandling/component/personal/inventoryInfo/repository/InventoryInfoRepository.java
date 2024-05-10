@@ -43,4 +43,9 @@ public class InventoryInfoRepository {
                 .switchIfEmpty(Mono.just(""));
     }
 
+    public Mono<Long> deleteByInventoryIdx(String channelId, Long userId, int inventoryIdx) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.remove(key, String.valueOf(inventoryIdx));
+    }
+
 }
