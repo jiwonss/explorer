@@ -31,10 +31,11 @@ public class GameDataHandler {
                 farmingHandler.farmingHandler(json);
                 break;
 
-            case "mapObject":
+            case "exploration":
                 log.info("category : {}", category);
                 String channelId = json.getString("channel");
-                initializeMapObject.initializeMapObject(channelId).subscribe();
+                int mapId = json.getInt("mapId");
+                initializeMapObject.initializeMapObject(channelId, mapId).subscribe();
 
             case "moving":
                 log.info("category : {}", category);
