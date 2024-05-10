@@ -1,10 +1,7 @@
 package com.explorer.realtime.sessionhandling.waitingroom;
 
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
-import com.explorer.realtime.sessionhandling.waitingroom.event.CreateWaitingRoom;
-import com.explorer.realtime.sessionhandling.waitingroom.event.BroadcastPosition;
-import com.explorer.realtime.sessionhandling.waitingroom.event.JoinWaitingRoom;
-import com.explorer.realtime.sessionhandling.waitingroom.event.LeaveWaitingRoom;
+import com.explorer.realtime.sessionhandling.waitingroom.event.*;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -23,6 +20,7 @@ public class WaitingRoomSessionHandler {
     private final JoinWaitingRoom joinWaitingRoom;
     private final LeaveWaitingRoom leaveWaitingRoom;
     private final BroadcastPosition broadcastPosition;
+    private final GetWaitingRoomHeadcount getWaitingRoomHeadcount;
 
     public Mono<Void> waitingRoomSessionHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -46,6 +44,11 @@ public class WaitingRoomSessionHandler {
             case "broadcastPosition":
                 log.info("event : {}", eventName);
                 broadcastPosition.process(json).subscribe();
+                break;
+
+            case "getWaitingRoomHeadcount":
+                log.info("event : {}", eventName);
+                getWaitingRoomHeadcount.process(json).subscribe();
                 break;
         }
 
