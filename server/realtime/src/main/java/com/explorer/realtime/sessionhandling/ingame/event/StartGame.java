@@ -48,7 +48,8 @@ public class StartGame {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
                         elementLaboratoryRepository.initialize(channelId).subscribe();
-//                        initializeMapObject.initializeMapObject(channelId, mapId).subscribe();
+                        initializeMapObject.initializeMapObject(channelId, 2).subscribe();
+                        initializeMapObject.initializeMapObject(channelId, 3).subscribe();
                         setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
                         setInitialInventory.process(channelId, INVENTORY_CNT).subscribe();
 
