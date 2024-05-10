@@ -42,12 +42,13 @@ public class StartGame {
         log.info("Processing game start for teamCode: {}", teamCode);
 
         Mono<String> saveChannelMono = saveChannel(teamCode, channelName);
-
+//        int mapId = 1;
         saveChannelMono.subscribe(channelId -> {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
                         elementLaboratoryRepository.initialize(channelId).subscribe();
-                        initializeMapObject.initializeMapObject(channelId).subscribe();
+                        initializeMapObject.initializeMapObject(channelId, 2).subscribe();
+                        initializeMapObject.initializeMapObject(channelId, 3).subscribe();
                         setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
 
                         Map<String, String> map = new HashMap<>();
