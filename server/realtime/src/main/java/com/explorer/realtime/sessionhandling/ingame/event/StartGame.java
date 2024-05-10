@@ -35,7 +35,6 @@ public class StartGame {
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final InitializeMapObject initializeMapObject;
     private final SetInitialPlayerInfo setInitialPlayerInfo;
-    private final SetInitialInventory setInitialInventory;
 
     private static final int INVENTORY_CNT = 8;
 
@@ -50,7 +49,6 @@ public class StartGame {
                         elementLaboratoryRepository.initialize(channelId).subscribe();
                         initializeMapObject.initializeMapObject(channelId).subscribe();
                         setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
-                        setInitialInventory.process(channelId, INVENTORY_CNT).subscribe();
 
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);

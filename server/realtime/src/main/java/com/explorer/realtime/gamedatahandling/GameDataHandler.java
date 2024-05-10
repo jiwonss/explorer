@@ -3,6 +3,7 @@ package com.explorer.realtime.gamedatahandling;
 import com.explorer.realtime.gamedatahandling.component.common.boxinfo.InstallHandler;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
+import com.explorer.realtime.gamedatahandling.inventory.InventoryHandler;
 import com.explorer.realtime.gamedatahandling.laboratory.LaboratoryHandler;
 import com.explorer.realtime.gamedatahandling.moving.MovingHandler;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class GameDataHandler {
     private final InitializeMapObject initializeMapObject;
     private final LaboratoryHandler laboratoryHandler;
     private final InstallHandler installHandler;
+    private final InventoryHandler inventoryHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
         String category = json.getString("category");
@@ -49,6 +51,11 @@ public class GameDataHandler {
             case "install":
                 log.info("category : {}", category);
                 installHandler.boxHandler(json);
+                break;
+
+            case "inventory":
+                log.info("category : {}", category);
+                inventoryHandler.inventoryHandler(json);
                 break;
         }
 
