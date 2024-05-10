@@ -37,7 +37,7 @@ public class InventoryInfoRepository {
         return reactiveHashOperations.put(key, field, value);
     }
 
-    public Mono<Object> find(String channelId, Long userId, int inventoryIdx) {
+    public Mono<Object> findByInventoryIdx(String channelId, Long userId, int inventoryIdx) {
         String key = KEY_PREFIX + channelId + ":" + userId;
         return reactiveHashOperations.get(key, String.valueOf(inventoryIdx))
                 .switchIfEmpty(Mono.just(""));

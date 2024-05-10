@@ -136,7 +136,7 @@ public class GetItemFromMap {
         return Flux.range(0, inventoryCnt)
                 .concatMap(idx -> {
                     log.info("[checkInventory] idx : {}", idx);
-                    return inventoryInfoRepository.find(channelId, userId, idx)
+                    return inventoryInfoRepository.findByInventoryIdx(channelId, userId, idx)
                             .flatMap(inventoryInfo -> {
                                 log.info("[checkInventory] inventoryInfo : {}", inventoryInfo);
                                 if (inventoryInfo == null || String.valueOf(inventoryInfo).isEmpty()) {
