@@ -1,6 +1,6 @@
 pipeline {
     environment {
-        repository = "vlwli99/service-discovery"
+        repository = "vlwli99/config-service"
         dockerImage = ''
     }
 
@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps {
                 checkout scm
@@ -17,10 +17,10 @@ pipeline {
         }
         stage('Build Project') {
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps {
-                dir("./server/service-discovery") {
+                dir("./server/config-service") {
                     sh "chmod +x ./gradlew"
                     sh "./gradlew clean build"
                 }
@@ -28,18 +28,18 @@ pipeline {
         }
         stage('Build Image'){
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps{
                 script{
-                    dockerImage = docker.build("${repository}:service-discovery-${BUILD_NUMBER}", "-f server/service-discovery/Dockerfile ./server/service-discovery")
+                    dockerImage = docker.build("${repository}:config-service-${BUILD_NUMBER}", "-f server/config-service/Dockerfile ./server/config-service")
                 }
             }
         }
 
         stage('DockerHub Login'){
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps{
                 script{
@@ -56,14 +56,12 @@ pipeline {
 
         stage('Push Image'){
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps{
                 script{
                     if (dockerImage) {
-                        sh "docker push \${repository}:service-discovery-\${BUILD_NUMBER}"
-                    } else {
-                        echo "No docker image to push."
+                        sh "docker push \${repository}:config-service-\${BUILD_NUMBER}"
                     }
                 }
             }
@@ -71,15 +69,13 @@ pipeline {
 
         stage('Clean Image'){
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps{
                 script{
-                    def imageExists = sh(script: "docker images -q \${repository}:service-discovery-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    def imageExists = sh(script: "docker images -q \${repository}:config-service-\${BUILD_NUMBER}", returnStdout: true).trim()
                     if (imageExists) {
-                        sh "docker rmi \${repository}:service-discovery-\${BUILD_NUMBER}"
-                    } else {
-                        echo "No image found to remove."
+                        sh "docker rmi \${repository}:config-service-\${BUILD_NUMBER}"
                     }
                 }
             }
@@ -87,11 +83,11 @@ pipeline {
 
         stage("Garbage Collect") {
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps {
                 script {
-                    def containers = sh(script: "docker ps -q --filter ancestor=\${repository}:service-discovery-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    def containers = sh(script: "docker ps -q --filter ancestor=\${repository}:config-service-\${BUILD_NUMBER}", returnStdout: true).trim()
                     if (containers) {
                         sh "docker kill \${containers}"
                     }
@@ -100,18 +96,17 @@ pipeline {
             }
         }
 
-
         stage("Deploy"){
             when {
-                changeset "**/server/service-discovery/**"
+                changeset "**/server/config-service/**"
             }
             steps{
                 script{
-                    def containerExists = sh(script: "docker ps -aq --filter 'name=service-discovery'", returnStdout: true).trim()
+                    def containerExists = sh(script: "docker ps -aq --filter 'name=config-service'", returnStdout: true).trim()
                     if (containerExists) {
-                        sh "docker rm -f service-discovery"
+                        sh "docker rm -f config-service"
                     }
-                    sh "docker run -d -p 8761:8761 --name service-discovery \${repository}:service-discovery-\${BUILD_NUMBER}"
+                    sh "docker run -d -p 8888:8888 --name config-service \${repository}:config-service-\${BUILD_NUMBER}"
                 }
             }
         }

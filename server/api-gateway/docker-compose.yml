@@ -12,7 +12,7 @@ services:
       - ./redis_data:/data
     networks:
       explorer:
-        ipv4_address: 172.20.0.4
+        ipv4_address: 172.20.0.5
 
   redis-gateway:
     build:
@@ -27,7 +27,7 @@ services:
       - ./redis_data:/data
     networks:
       explorer:
-        ipv4_address: 172.20.0.5
+        ipv4_address: 172.20.0.6
 
   rabbitmq:
     build:
@@ -44,7 +44,7 @@ services:
       - ./rabbitmq_data:/var/lib/rabbitmq
     networks:
       explorer:
-        ipv4_address: 172.20.0.6
+        ipv4_address: 172.20.0.7
 
   springboot-user:
     image: vlwli99/user
@@ -59,7 +59,7 @@ services:
       - "9000:9000"
     networks:
       explorer:
-        ipv4_address: 172.20.0.7
+        ipv4_address: 172.20.0.8
 
   springboot-gateway:
     image: vlwli99/api-gateway
@@ -74,10 +74,11 @@ services:
       - "8000:8000"
     networks:
       explorer:
-        ipv4_address: 172.20.0.8
+        ipv4_address: 172.20.0.9
 
 networks:
   explorer:
+    name: explorer
     ipam:
       driver: default
       config:
