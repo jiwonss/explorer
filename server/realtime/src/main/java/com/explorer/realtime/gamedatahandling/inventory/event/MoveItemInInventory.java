@@ -39,11 +39,15 @@ public class MoveItemInInventory {
         log.info("[process] inventoryIdxFrom : {}, inventoryIdxTo : {}", inventoryIdxFrom, inventoryIdxTo);
 
         return checkInventory(channelId, userId, inventoryIdxFrom, inventoryIdxTo)
-                .then(inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString))
-                .zipWith(inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString))
+                .then(Mono.defer(() -> Mono.zip(
+                        inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString),
+                        inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString)
+                )))
                 .flatMap(tuple -> {
                     String fromInventory = tuple.getT1();
                     String toInventory = tuple.getT2();
+                    log.info("[process] fromInventory : {}, fromInventory : {}", fromInventory, toInventory);
+
                     InventoryInfo fromItem = InventoryInfo.ofString(inventoryIdxFrom, fromInventory);
                     InventoryInfo toItem = InventoryInfo.ofString(inventoryIdxTo, toInventory);
                     InventoryResponse inventoryResponse = InventoryResponse.of(fromItem, toItem);
@@ -78,10 +82,14 @@ public class MoveItemInInventory {
     }
 
     private Mono<Void> checkInventory(String channelId, Long userId, int inventoryIdxFrom, int inventoryIdxTo) {
-        Mono<String> fromNono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
-        Mono<String> toNono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
+        if (inventoryIdxFrom == inventoryIdxTo) {
+            return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
+        }
 
-        Mono<Tuple2<String, String>> tupleMono = Mono.zip(fromNono, toNono);
+        Mono<String> fromMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
+        Mono<String> toMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
+
+        Mono<Tuple2<String, String>> tupleMono = Mono.zip(fromMono, toMono);
 
         return tupleMono.publishOn(Schedulers.boundedElastic()).flatMap(tuple -> {
             String fromInventory = tuple.getT1();

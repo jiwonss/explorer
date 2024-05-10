@@ -29,6 +29,12 @@ public class InventoryInfo {
     }
 
     public static InventoryInfo ofString(int inventoryIdx, String inventoryInfo) {
+        if (inventoryInfo.isEmpty()) {
+            return InventoryInfo.builder()
+                    .inventoryIdx(inventoryIdx)
+                    .itemCategory("none")
+                    .build();
+        }
         String[] result = inventoryInfo.split(":");
         return InventoryInfo.builder()
                 .inventoryIdx(inventoryIdx)
