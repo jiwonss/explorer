@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.farming.repository;
 
+import com.explorer.realtime.gamedatahandling.farming.dto.FarmingItemInfo;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -31,6 +32,17 @@ public class MapInfoRepository {
     public Mono<String> findByPosition(String channelId, int mapId, String position) {
         String key = KEY_PREFIX + channelId + ":" + String.valueOf(mapId);
         return reactiveHashOperations.get(key, position).map(Object::toString);
+    }
+
+    public Mono<Void> deleteOldPosition(FarmingItemInfo droppedItemInfo) {
+        String key = KEY_PREFIX + droppedItemInfo.getChannelId() + ":" + droppedItemInfo.getMapId();
+        return reactiveHashOperations.remove(key, droppedItemInfo.getOldPosition()).then();
+    }
+
+    public Mono<Boolean> save(FarmingItemInfo droppedItemInfo) {
+        String key = KEY_PREFIX + droppedItemInfo.getChannelId() + ":" + droppedItemInfo.getMapId();
+        String value = droppedItemInfo.getItemCategory() + ":notFarmable:" + droppedItemInfo.getItemId();
+        return reactiveHashOperations.put(key, droppedItemInfo.getPosition(), value);
     }
 
 }
