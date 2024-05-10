@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Random;
 
 @Slf4j
-@Component
+@Component("labCalculate")
 @RequiredArgsConstructor
 public class Calculate {
 
