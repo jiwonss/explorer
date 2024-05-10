@@ -6,6 +6,7 @@ import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
 import com.explorer.realtime.gamedatahandling.inventory.InventoryHandler;
 import com.explorer.realtime.gamedatahandling.laboratory.LaboratoryHandler;
 import com.explorer.realtime.gamedatahandling.moving.MovingHandler;
+import com.explorer.realtime.gamedatahandling.tool.ToolHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -23,6 +24,7 @@ public class GameDataHandler {
     private final LaboratoryHandler laboratoryHandler;
     private final InstallHandler installHandler;
     private final InventoryHandler inventoryHandler;
+    private final ToolHandler toolHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
         String category = json.getString("category");
@@ -56,6 +58,11 @@ public class GameDataHandler {
             case "inventory":
                 log.info("category : {}", category);
                 inventoryHandler.inventoryHandler(json);
+                break;
+
+            case "tool":
+                log.info("category : {}", category);
+                toolHandler.toolHandler(json);
                 break;
         }
 
