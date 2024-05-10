@@ -37,7 +37,7 @@ public class MapObjectRepository {
     private Map<String, String> dataToHash(List<String> positions, String itemCategory, Integer itemId) {
         Map<String, String> hashData = new HashMap<>();
         for (String position : positions) {
-            hashData.put(position, itemCategory + ":" + itemId);
+            hashData.put(position, itemCategory + ":" + "isFarmable" + ":" + itemId);
         }
         return hashData;
     }
@@ -47,9 +47,9 @@ public class MapObjectRepository {
         return hashOperations.entries(key)
                 .collectMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue);
     }
-    public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, int itemId) {
+    public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, String isFarmable, int itemId) {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
-        String value = itemCategory + ":" + itemId;
+        String value = itemCategory + ":" + isFarmable + ":" + itemId;
         return hashOperations.put(key, position, value);
     }
 }
