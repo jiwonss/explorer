@@ -82,6 +82,10 @@ public class MoveItemInInventory {
     }
 
     private Mono<Void> checkInventory(String channelId, Long userId, int inventoryIdxFrom, int inventoryIdxTo) {
+        if (inventoryIdxFrom == inventoryIdxTo) {
+            return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
+        }
+
         Mono<String> fromMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
         Mono<String> toMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
 
