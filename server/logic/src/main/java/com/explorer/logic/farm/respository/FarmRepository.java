@@ -15,14 +15,20 @@ public class FarmRepository {
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
+    private static final String KEY_PREFIX = "farm:";
+
     public FarmRepository(@Qualifier("reactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
 
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
+    /*
+     * field : {itemCategory}:{itemId}
+     * value : {maxCnt}
+     */
     public Mono<Map<Object, Object>> findAll(String itemCategory, int itemId) {
-        log.info("key : {}", itemCategory + itemId);
-        return reactiveHashOperations.entries(itemCategory + ":" + itemId).collectMap(Map.Entry::getKey, Map.Entry::getValue);
+        log.info("key : {}", KEY_PREFIX + itemCategory + ":" + itemId);
+        return reactiveHashOperations.entries(KEY_PREFIX + itemCategory + ":" + itemId).collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 }
