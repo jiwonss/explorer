@@ -1,7 +1,7 @@
 package com.explorer.realtime.gamedatahandling;
 
 import com.explorer.realtime.gamedatahandling.component.common.boxinfo.InstallHandler;
-import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.MapDataHandler;
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
 import com.explorer.realtime.gamedatahandling.laboratory.LaboratoryHandler;
 import com.explorer.realtime.gamedatahandling.moving.MovingHandler;
@@ -18,7 +18,7 @@ public class GameDataHandler {
 
     private final MovingHandler movingHandler;
     private final FarmingHandler farmingHandler;
-    private final InitializeMapObject initializeMapObject;
+    private final MapDataHandler mapDataHandler;
     private final LaboratoryHandler laboratoryHandler;
     private final InstallHandler installHandler;
 
@@ -31,11 +31,10 @@ public class GameDataHandler {
                 farmingHandler.farmingHandler(json);
                 break;
 
-            case "exploration":
-                log.info("category : {}", category);
-                String channelId = json.getString("channel");
-                int mapId = json.getInt("mapId");
-                initializeMapObject.initializeMapObject(channelId, mapId).subscribe();
+            case "map":
+                log.info("category : {}, :{}", category, json);
+                mapDataHandler.mapDataHandler(json);
+                break;
 
             case "moving":
                 log.info("category : {}", category);
