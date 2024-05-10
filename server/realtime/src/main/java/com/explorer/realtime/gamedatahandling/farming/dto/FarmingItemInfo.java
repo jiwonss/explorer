@@ -16,7 +16,10 @@ public class FarmingItemInfo {
     private String channelId;
     private int mapId;
     private String position;
+    private String oldPosition;
     private Long userId;
+    private String itemCategory;
+    private int itemId;
 
     public static FarmingItemInfo of(JSONObject json) {
 
@@ -25,6 +28,18 @@ public class FarmingItemInfo {
                 .mapId(json.getInt("mapId"))
                 .position(json.getString("position"))
                 .userId(json.getLong("userId"))
+                .build();
+    }
+
+    public static FarmingItemInfo droppedOf(JSONObject json) {
+
+        return FarmingItemInfo.builder()
+                .channelId(json.getString("channelId"))
+                .mapId(json.getInt("mapId"))
+                .position(json.getString("position"))
+                .oldPosition(json.getString("oldPosition"))
+                .itemCategory(json.getString("itemCategory"))
+                .itemId(json.getInt("itemId"))
                 .build();
     }
 
