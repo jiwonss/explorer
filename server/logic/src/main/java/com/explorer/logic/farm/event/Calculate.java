@@ -12,23 +12,24 @@ import java.util.Map;
 import java.util.Random;
 
 @Slf4j
-@Component
+@Component("farmCalculate")
 @RequiredArgsConstructor
 public class Calculate {
 
     private final FarmRepository farmRepository;
 
-    public Mono<String> process(String body) {
+    public Mono<String> process(String body) {  // body : {itemCategory}:{isFarmable}:{itemId}
         log.info("Request body: {}", body);
 
         try {
-            JSONObject json = new JSONObject(body);
+            String[] parsedItemInfo = body.split(":"); // 0:itemCategory, 1:isFarming, 2:itemId
+            String itemCategory = parsedItemInfo[0];
+            int itemId = Integer.valueOf(parsedItemInfo[2]);
+
             JSONObject responseJson = new JSONObject();
-            String itemCategory = json.getString("itemCategory");
-            int itemId = json.getInt("itemId");
             Random random = new Random();
 
-            return findAllextractableItemIds(itemCategory, itemId)
+            return findAllDroppedItemIds(itemCategory, itemId)
                     .flatMapMany(map -> Flux.fromIterable(map.entrySet())
                             .doOnNext(entry -> {
 
@@ -50,7 +51,7 @@ public class Calculate {
         }
     }
 
-    private Mono<Map<Object, Object>> findAllextractableItemIds(String itemCategory, int itemId) {
+    private Mono<Map<Object, Object>> findAllDroppedItemIds(String itemCategory, int itemId) {
         return farmRepository.findAll(itemCategory, itemId);
     }
 }
