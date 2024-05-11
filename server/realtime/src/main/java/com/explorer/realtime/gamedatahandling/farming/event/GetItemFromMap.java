@@ -97,7 +97,7 @@ public class GetItemFromMap {
                     String[] itemInfo = String.valueOf(result).split(":");
                     Map<String, Object> map = new HashMap<>();
                     map.put("itemCategory", itemInfo[0]);
-                    map.put("itemId", Integer.parseInt(itemInfo[1]));
+                    map.put("itemId", Integer.parseInt(itemInfo[2]));
                     return map;
                 });
     }
