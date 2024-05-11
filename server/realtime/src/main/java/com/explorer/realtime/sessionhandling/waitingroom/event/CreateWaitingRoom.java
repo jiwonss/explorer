@@ -42,7 +42,7 @@ public class CreateWaitingRoom {
                 .flatMap(teamCode -> {
                     log.info("[process] teamCode : {}", teamCode);
                     return createConnectionInfo(teamCode, userInfo.getUserId(), connection)
-                            .then(userRepository.save(userInfo))
+                            .then(userRepository.save(userInfo, teamCode, "0"))
                             .then(Mono.fromRunnable(() -> {
                                 Map<String, String> map = new HashMap<>();
                                 map.put("teamCode", teamCode);
