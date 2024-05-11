@@ -21,6 +21,7 @@ public class WaitingRoomSessionHandler {
     private final LeaveWaitingRoom leaveWaitingRoom;
     private final DeleteWaitingRoom deleteWaitingRoom;
     private final BroadcastPosition broadcastPosition;
+    private final GetWaitingRoomHeadcount getWaitingRoomHeadcount;
 
     public Mono<Void> waitingRoomSessionHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -49,6 +50,12 @@ public class WaitingRoomSessionHandler {
             case "broadcastPosition":
                 log.info("event : {}", eventName);
                 broadcastPosition.process(json).subscribe();
+                break;
+
+
+            case "getWaitingRoomHeadcount":
+                log.info("event : {}", eventName);
+                getWaitingRoomHeadcount.process(json).subscribe();
                 break;
         }
 
