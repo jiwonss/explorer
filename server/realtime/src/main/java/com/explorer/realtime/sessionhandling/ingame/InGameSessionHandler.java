@@ -41,7 +41,7 @@ public class InGameSessionHandler {
 
             case "endGame":
                 log.info("end game");
-                return endGame.process(channel, UserInfo.ofJson(json));
+                return endGame.process(channel, json);
         }
 
         return Mono.empty();

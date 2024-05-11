@@ -25,13 +25,13 @@ public class RestartGame {
     private final ChannelRepository channelRepository;
     private final Unicasting unicasting;
 
-    public Mono<Void> process(String channel, UserInfo userInfo, Connection connection) {
+    public Mono<Void> process(String channelId, UserInfo userInfo, Connection connection) {
         // 사용자 정보를 Redis에 저장
-        createConnectionInfo(channel, (userInfo.getUserId()), connection);
+        createConnectionInfo(channelId, (userInfo.getUserId()), connection);
 //        channelRepository.save(channel, userInfo.getUserId()).subscribe();
-        userRepository.save(userInfo).subscribe();
+        userRepository.save(userInfo, channelId, "1").subscribe();
         unicasting.unicasting(
-                channel,
+                channelId,
                 userInfo.getUserId(),
                 MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING))
         );

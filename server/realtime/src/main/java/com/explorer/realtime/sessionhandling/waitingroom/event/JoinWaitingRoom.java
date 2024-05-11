@@ -42,7 +42,7 @@ public class JoinWaitingRoom {
         return existByTeamCode(teamCode)
                 .flatMap(isExist -> check(teamCode)
                         .flatMap(count -> createConnectionInfo(teamCode, userInfo.getUserId(), connection)
-                                .then(userRepository.save(userInfo))
+                                .then(userRepository.save(userInfo, teamCode, "0"))
                                 .then(Mono.defer(() -> multicasting.multicasting(
                                         teamCode,
                                         String.valueOf(userInfo.getUserId()),

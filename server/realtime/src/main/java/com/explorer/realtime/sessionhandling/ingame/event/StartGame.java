@@ -84,7 +84,13 @@ public class StartGame {
                     log.info("userInfoList : {}", userInfoList);
                     return channelMongoRepository.save(Channel.from(channelName, new HashSet<>(userInfoList)))
                             .map(Channel::getId)
-                            .doOnSuccess(channelId -> log.info("channelId : {}", channelId));
+                            .doOnSuccess(channelId -> {
+                                log.info("channelId : {}", channelId);
+                                userInfoList.forEach(userInfo -> {
+                                    userRepository.updateUserData(userInfo.getUserId(), channelId, "1").subscribe();
+
+                                });
+                      });
                 });
     }
 

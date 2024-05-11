@@ -22,10 +22,12 @@ public class UserRepository {
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
-    public Mono<Void> save(UserInfo userInfo) {
+    public Mono<Void> save(UserInfo userInfo, String teamCode, String mapId) {
         return Mono.when(
                 reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "nickname", userInfo.getNickname()),
-                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "avatar", String.valueOf(userInfo.getAvatar()))
+                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "avatar", String.valueOf(userInfo.getAvatar())),
+                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "channelId", teamCode),
+                reactiveHashOperations.put(KEY_PREFIX + userInfo.getUserId(), "mapId", mapId)
         ).then();
     }
 
@@ -35,5 +37,12 @@ public class UserRepository {
 
     public Mono<Map<Object, Object>> findAll(Long userId) {
         return reactiveHashOperations.entries(KEY_PREFIX + userId).collectMap(Map.Entry::getKey, Map.Entry::getValue);
+    }
+
+    public Mono<Void> updateUserData(Long userId, String channelId, String mapId) {
+        return Mono.when(
+                reactiveHashOperations.put(KEY_PREFIX + userId, "channelId", channelId),
+                reactiveHashOperations.put(KEY_PREFIX + userId, "mapId", mapId)
+        ).then();
     }
 }
