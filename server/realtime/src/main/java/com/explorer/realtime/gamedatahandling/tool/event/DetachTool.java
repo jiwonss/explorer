@@ -4,7 +4,7 @@ import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.r
 import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolErrorCode;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolException;
-import com.explorer.realtime.gamedatahandling.tool.repository.ToolInventoryRepository;
+import com.explorer.realtime.gamedatahandling.tool.repository.ToolRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -25,7 +25,7 @@ import java.util.Map;
 public class DetachTool {
 
     private final InventoryRepository inventoryRepository;
-    private final ToolInventoryRepository toolInventoryRepository;
+    private final ToolRepository toolRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
@@ -52,9 +52,24 @@ public class DetachTool {
                     }
 
                     log.info("[process] inventoryInfo : {}", inventoryInfo);
-                    return toolInventoryRepository.delete(channelId, userId, inventoryIdx)
-                            .then(unicasting(channelId, userId, inventoryIdx))
-                            .then(broadcasting(channelId, userId, inventoryInfo.getItemId()));
+                    return toolRepository.find(channelId, userId)
+                            .flatMap(info -> {
+                                if (info != null) {
+                                    String[] toolInfo = String.valueOf(info).split(":");
+                                    if (inventoryIdx != Integer.parseInt(toolInfo[0])) {
+                                        return Mono.error(new ToolException(ToolErrorCode.MISMATCHED_INVENTORY_IDX));
+                                    }
+                                } else {
+                                    return Mono.error(new ToolException(ToolErrorCode.NO_ATTACHED_TOOL));
+                                }
+                                return Mono.empty();
+                            })
+                            .flatMap(result -> {
+                                log.info("[process] inventoryInfo : {}", inventoryInfo);
+                                return toolRepository.delete(channelId, userId)
+                                        .then(unicasting(channelId, userId, inventoryIdx))
+                                        .then(broadcasting(channelId, userId, inventoryInfo.getItemId()));
+                            });
                 })
                 .onErrorResume(ToolException.class, error -> {
                     log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
@@ -71,6 +86,8 @@ public class DetachTool {
     private Mono<Void> unicasting(String channelId, Long userId, int inventoryIdx) {
         Map<String, Object> map = new HashMap<>();
         map.put("inventoryIdx", inventoryIdx);
+        log.info("[unicasting] map : {}", map);
+
         return unicasting.unicasting(
                 channelId,
                 userId,
@@ -83,6 +100,8 @@ public class DetachTool {
         map.put("userId", userId);
         map.put("itemCategory", "tool");
         map.put("itemId", itemId);
+        log.info("[broadcasting] map : {}", map);
+
         return broadcasting.broadcasting(
                 channelId,
                 MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
