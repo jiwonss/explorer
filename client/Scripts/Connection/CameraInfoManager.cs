@@ -11,10 +11,6 @@ public class CameraInfoManager : MonoBehaviour
         FindMainCamera();
     }
 
-    void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;  // 이벤트 등록 해제
-    }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

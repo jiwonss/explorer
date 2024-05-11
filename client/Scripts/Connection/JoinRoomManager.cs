@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class JoinRoomManager : MonoBehaviour
 {
+
     private Queue<JObject> pendingData = new Queue<JObject>();
 
     public GameObject prefab0;
@@ -22,7 +23,7 @@ public class JoinRoomManager : MonoBehaviour
 
     void Awake()
     {
-        DontDestroyOnLoad(gameObject);
+        // DontDestroyOnLoad(gameObject);
         
     }
 
@@ -170,12 +171,39 @@ public class JoinRoomManager : MonoBehaviour
         }
 
         // 입장 완료 알림
-        string teamCode = TCPMessageHandler.GetTeamCode();
+        string teamCode = ChannelManager.instance.GetTeamCode();
         UserInfoManager userInfoManager = UserInfoManager.Instance;
         int nowUserId = userInfoManager.GetUserId();
         EnterRequest request = new EnterRequest("waitingRoomSession", "broadcastPosition", teamCode, nowUserId, true);
         string json = JsonConvert.SerializeObject(request);
         TCPClientManager.Instance.SendTCPRequest(json);
+        // 방 입장 인원 브로드캐스팅
+
+        // 인원 업데이트 메시지 송신
+        StartCoroutine(WaitAndSendUpdateCount());
+    }
+
+    // 3초 기다린 후 인원 업데이트 메시지 송신
+    IEnumerator WaitAndSendUpdateCount()
+    {
+        yield return new WaitForSeconds(2);
+    string teamCode = ChannelManager.instance.GetTeamCode();
+        UpdateCount request = new UpdateCount("waitingRoomSession", "getWaitingRoomHeadcount", teamCode);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendTCPRequest(json);
+    }
+
+    public class UpdateCount
+    {
+        public string type;
+        public string eventName;
+        public string teamCode;
+        public UpdateCount(string type, string eventName, string teamCode)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.teamCode = teamCode;
+        }
     }
 
 
@@ -233,7 +261,7 @@ public class JoinRoomManager : MonoBehaviour
         newPlayer.SetActive(true);
 
         // 본인 위치 정보 전송
-        string teamCode = TCPMessageHandler.GetTeamCode();
+        string teamCode = ChannelManager.instance.GetTeamCode();
         UserInfoManager userInfoManager = UserInfoManager.Instance;
         int nowUserId = userInfoManager.GetUserId();
         string positionInfo = "";
@@ -251,11 +279,12 @@ public class JoinRoomManager : MonoBehaviour
 
         SendInitPosition request = new SendInitPosition("waitingRoomSession", "broadcastPosition", teamCode, nowUserId, positionInfo, false);
         string json = JsonConvert.SerializeObject(request);
-        Debug.Log("sendData : " + json);
         TCPClientManager.Instance.SendTCPRequest(json);
 
-    }
+         // 인원 업데이트 메시지 송신
+        StartCoroutine(WaitAndSendUpdateCount());
 
+    }
 
     
 }

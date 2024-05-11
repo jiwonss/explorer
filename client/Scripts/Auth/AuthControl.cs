@@ -9,6 +9,7 @@
     using static UnityEngine.UIElements.UxmlAttributeDescription;
     using UnityEngine.Networking;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System.Net.Sockets;
 
     public class AuthControl : MonoBehaviour
@@ -18,10 +19,15 @@
         private string accessToken;
         private string refreshToken;
 
+        [Header("Pages")]
+        public GameObject SignUpPage;
+        public GameObject BeforeSignUp;
+        public GameObject ChannelChoose;
+        public GameObject LogOutBack;
+
         [Header("LoginPage")]
         public GameObject loginPage;// 초기 로그인 화면 오브젝트
         public GameObject signPage;// 회원가입을 눌렀을때 나타나는 오브젝트
-        public GameObject ChannelChoose; // 로그인 후에 보이는 채녈 목록
         public GameObject title;
         public Button SignUpBtn;
         public Button SignUpYesBTN;
@@ -43,66 +49,29 @@
         public TMP_InputField signUpPwChenk;
         public TextMeshProUGUI signUpInfoText;
 
-        [Header("ProfilePage")]
-        public GameObject ProfilePage;
-        public GameObject ProfileChanger;
-        public Image ProfileImage;
-        public Button ProfileDesignLeftBtn;
-        public Button ProfileDesignRightBtn;
-        public TextMeshProUGUI NowNickName;
-        public TextMeshProUGUI NickNameChange;
-        public Button ProfileChangeBtn;
-        public Button ProfileChangeAcceptBtn;
-        public Button endingPlanetBtn;
-
-
-        [Header("RoomChannelSelect")]
-        public GameObject ExistRoomOBJ;
-        public GameObject NoneRoomOBJ;
-        public GameObject NewMakeChannel;
-        public GameObject JoinNewChannel;
-        public Button ExistChannelBtn;
-        public Button ExistChannelJoinBtn;
-        public Button ExistChannelDeleteBtn;
-        public Button NoneChannelBtn;
-        public Button NewChannelJoinBtn;
-        public Button JoinOkBtn;
-        public Button JoinCancelBtn;
-        public Button MakeOkBtn;
-        public Button MakeCancelBtn;
-        public Button MakeNewChannelBtn;
-
         [Header("LogOutModal")]
         public GameObject LogOutModal;
         public bool LogOutOnOff = false;
         public Button LogOut;
         public Button Exit;
 
-        [Header("JoinRoomInput")]
-        public TextMeshProUGUI JoinRoomInput;
-
+        void Awake()
+        {
+            DontDestroyOnLoad(this.gameObject);
+        }
 
         // Start is called before the first frame update
         private void Start()
         {
+
+            Cursor.visible = true;
+
             SignUpBtn.onClick.AddListener(GoSignUp);
             SignUpYesBTN.onClick.AddListener(() => SignUp());
             SignUpNoBTN.onClick.AddListener(SignUpCancel);
             LoginBTN.onClick.AddListener(Login);
-            ProfileChangeBtn.onClick.AddListener(EditProfile);
-            ProfileChangeAcceptBtn.onClick.AddListener(EditAccept);
-            ExistChannelBtn.onClick.AddListener(IfExistRoom);
-            NoneChannelBtn.onClick.AddListener(IfNoneRoom);
-            //ExistChannelJoinBtn.onClick.AddListener(IfNoneRoom);
-            //ExistChannelDeleteBtn.onClick.AddListener(IfNoneRoom);
-            NewChannelJoinBtn.onClick.AddListener(JoinAnotherRoom);
-            JoinOkBtn.onClick.AddListener(JoinOk);
             idCheckBTN.onClick.AddListener(validId);
             nickNameCheckBTN.onClick.AddListener(validNickName);
-            JoinCancelBtn.onClick.AddListener(JoinCancel);
-            MakeNewChannelBtn.onClick.AddListener(MakeAnotherRoom);
-            MakeOkBtn.onClick.AddListener(MakeOk);
-            MakeCancelBtn.onClick.AddListener(MakeCancel);
             LogOut.onClick.AddListener(FuncLogOut);
             Exit.onClick.AddListener(FuncExit);
             title.SetActive(true);
@@ -131,15 +100,10 @@
 
     public void FuncExit()
     {
-        // Debug.Log("나가기 들어옴");
         // accessToken과 refreshToken을 현재 클래스의 private 변수에서 가져옴
         StartCoroutine(SendLogoutRequest(TokenManager.Instance.GetAccessToken(), TokenManager.Instance.GetRefreshToken()));
         Application.Quit();
     }
-
-
-
-
 
         IEnumerator SendLogoutRequest(string accessToken,string refreshToken)
         {
@@ -185,9 +149,6 @@
             }   
         }
 
-
-
-
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Escape))
@@ -228,17 +189,7 @@
             idCheckBTN.interactable = true;
             SignUpYesBTN.interactable = false;
     }
-        public void EditProfile()
-        {
-            ProfileChanger.SetActive(true);
-            ProfilePage.SetActive(false);
-        }
 
-        public void EditAccept()
-        {
-            ProfileChanger.SetActive(false);
-            ProfilePage.SetActive(true);
-        }
 
         public void GoSignUp()
         {
@@ -378,7 +329,6 @@
             else
             {
                 // 유효하지 않은 비밀번호입니다.
-                // Debug.Log("비밀번호는 알파벳, 숫자,@$!%*?&를 각각 1개 이상 포함해야합니다. ");
                 signUpInfoText.text = "비밀번호는 알파벳, 숫자, 특수문자(@$!%*?&)를 각각 1개 이상 포함해야합니다.";
             }
         }
@@ -386,7 +336,6 @@
         public void SignUpCancel()
         {
             CancelSignUp();
-            // Debug.Log("이거 캔슬사인업 찍혔어");
             signPage.SetActive(false);
             loginPage.SetActive(true);
         }
@@ -425,6 +374,18 @@
         }
 
 
+    public class ChannelListRequest
+    {
+        public string type;
+        public string eventName;
+        public int userId;
+        public ChannelListRequest(string type, string eventName, int userId)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.userId = userId;
+        }
+    }
     // 로그인 요청
     private IEnumerator LoginRequest(string loginId, string password)
         {
@@ -471,7 +432,11 @@
                         ChannelChoose.SetActive(true);
                         // TCP 이벤트 수신 시작
                         TCPClientManager.Instance.StartReceiving();
-                    }
+                        // 채널 목록 조회 메시지 전송
+                        ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
+                        string json = JsonConvert.SerializeObject(requestData);
+                        TCPClientManager.Instance.SendTCPRequest(json);
+                }
                     else
                     {
                         Debug.LogError("TCP 연결 실패!");
@@ -492,169 +457,7 @@
         {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
-            // Debug.Log("Access Token Updated: " + accessToken);
-            // Debug.Log("Refresh Token Updated: " + refreshToken);
         }
-
-        public void IfExistRoom()
-        {
-            // Debug.Log("ExistOK");
-            NoneRoomOBJ.SetActive(false);
-            ExistRoomOBJ.SetActive(true);
-        }
-        public void IfNoneRoom()
-        {
-            // Debug.Log("NoneOk");
-            ExistRoomOBJ.SetActive(false);
-            NoneRoomOBJ.SetActive(true);
-        }
-
-        // 팀코드 입력 모달
-        public void JoinAnotherRoom()
-        {
-            JoinNewChannel.SetActive(true);
-        }
-
-        public class JoinRoomRequest
-        {
-            public string type;
-            public string eventName;
-            public string teamCode;
-            public int userId;
-            public string nickname;
-            public int avatar;
-
-            public JoinRoomRequest(string type, string eventName, string teamCode, int userId, string nickname, int avatar)
-            {
-                this.type = type;
-                this.eventName = eventName;
-                this.teamCode = teamCode;
-                this.userId = userId;
-                this.nickname = nickname;
-                this.avatar = avatar;
-            }
-
-        }
-        // 팀코드로 입장 요청
-        public void JoinOk()
-        {
-            JoinNewChannel.SetActive(false);
-            string teamCode = JoinRoomInput.text;
-            teamCode = teamCode.Replace(" ", "");
-            teamCode = teamCode.Replace("\u200b", "");
-            TCPMessageHandler.SetTeamCode(teamCode);
-            Debug.Log("teamCode input : " + teamCode);
-
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
-            // 유저 정보
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-            string nickname = userInfoManager.GetNickname();
-            int avatar = userInfoManager.GetAvatar();
-            // 방 입장 요청 보냄
-            JoinRoomRequest request = new JoinRoomRequest("waitingRoomSession", "joinWaitingRoom", teamCode, userId, nickname, avatar);
-            string json = JsonConvert.SerializeObject(request);
-            tcpClientManager.SendTCPRequest(json);
-        }
-
-        // 방 입장 성공 반환 시 씬 전환
-        public void EnterRoom()
-        {
-        SceneManager.LoadScene("WaitingRoom");
-
-    }
-
-        public void JoinCancel()
-        {
-            JoinNewChannel.SetActive(false);
-        }
-
-        public void MakeAnotherRoom()
-        {
-            NewMakeChannel.SetActive(true);
-        }
-
-        // 방 생성 요청
-        public class MakeRoomRequest
-        {
-            public string type;
-            public string eventName;
-            public int userId;
-            public string nickname;
-            public int avatar;
-
-            public MakeRoomRequest(string type, string eventName, int userId, string nickname, int avatar)
-            {
-                this.type = type;
-                this.eventName = eventName;
-                this.userId = userId;
-                this.nickname = nickname;
-                this.avatar = avatar;
-            }
-        }
-        public void MakeOk()
-        {
-            NewMakeChannel.SetActive(false);
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
-            // 저장된 유저 정보
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-            string nickname = userInfoManager.GetNickname();
-            int avatar = userInfoManager.GetAvatar();
-
-
-            // 방 생성 메시지 발신
-            MakeRoomRequest request = new MakeRoomRequest("waitingRoomSession", "createWaitingRoom", userId, nickname, avatar);
-            string json = JsonConvert.SerializeObject(request);
-            // Debug.Log("json : " + json);
-            tcpClientManager.SendTCPRequest(json);
-        }
-
-        public void MakeRoom()
-        {   
-            SceneManager.LoadScene("WaitingRoom");
-
-        }
-
-        public void MakeCancel()
-        {
-            NewMakeChannel.SetActive(false);
-        }
-
 
     
         bool CheckOkId(string id)
@@ -673,9 +476,6 @@
             }
 
         }
-
-
-
 
         public void validId()
         {
@@ -751,4 +551,56 @@
                 signUpPw.interactable = false;
             }
         }
+
+    // 방 삭제 메시지 수신
+    public void DeleteRoom()
+    {
+        Debug.Log("방 삭제 메시지 수신");
+        SignUpPage.SetActive(true);
+        BeforeSignUp.SetActive(false);
+        ChannelChoose.SetActive(true);
+        LogOutBack.SetActive(false);
+
+        UserInfoManager userInfoManager = UserInfoManager.Instance;
+        int userId = userInfoManager.GetUserId();
+
+        ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
+        string json = JsonConvert.SerializeObject(requestData);
+        TCPClientManager.Instance.SendTCPRequest(json);
+        Debug.Log("delete room 수행");
+
     }
+
+    // 방나가기 실행
+    public void ExitRoomSelf()
+    {
+        Cursor.visible = true;
+        SignUpPage.SetActive(true);
+        BeforeSignUp.SetActive(false);
+        ChannelChoose.SetActive(true);
+        LogOutBack.SetActive(false);
+
+        
+    }
+
+    // 방 나가기 메시지 수신
+    public void ExitRoom()
+    {
+        
+    }
+
+    public class ExitRoomSelfRequest
+    {
+        public string type;
+        public string eventName;
+        public string teamCode;
+        
+        public ExitRoomSelfRequest(string type, string eventName, string teamCode)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.teamCode = teamCode;
+        }
+    }
+
+}

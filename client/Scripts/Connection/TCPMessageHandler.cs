@@ -5,10 +5,14 @@ using Newtonsoft.Json.Linq;
 using UnityEngine.SceneManagement;
 using System;
 
+
 public static class TCPMessageHandler
 {
     private static string teamCode;
     private static AuthControl authControlInstance;
+    private static ChannelControl channelControlInstance;
+    public static WaitingRoomFirstRender waitingRoomFirstRender;
+    public static WaitingRoomOtherRender waitingRoomOtherRender;
 
     // HandleReceivedData 메서드에 AuthControl 인스턴스를 전달할 수 있는 메서드 추가
     public static void SetAuthControlInstance(AuthControl authControl)
@@ -16,15 +20,47 @@ public static class TCPMessageHandler
         authControlInstance = authControl;
     }
 
+    public static void SetChannelControlInstance(ChannelControl channelControl)
+    {
+        channelControlInstance = channelControl;
+    }
+    public static void SetWaitingRoomFirstRender(WaitingRoomFirstRender waitingRoomFirstRender)
+    {
+        TCPMessageHandler.waitingRoomFirstRender = waitingRoomFirstRender; 
+        if (waitingRoomFirstRender == null)
+    {
+        Debug.LogError("waitingRoomFirstRender was called with a null reference");
+    }
+    else
+    {
+        Debug.Log("waitingRoomFirstRender was set successfully");
+    }
+    }
+
+    public static void SetWaitingRoomOtherRender(WaitingRoomOtherRender waitingRoomOtherRender)
+{
+    TCPMessageHandler.waitingRoomOtherRender = waitingRoomOtherRender; 
+    if (waitingRoomOtherRender == null)
+    {
+        Debug.LogError("SetWaitingRoomOtherRender was called with a null reference");
+    }
+    else
+    {
+        Debug.Log("SetWaitingRoomOtherRender was set successfully");
+    }
+}
+
     public static void HandleReceivedData(string response)
     {
 
         try
         {
-            string[] jsonObjects = response.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            Debug.Log("response :" + response);
+            string[] jsonObjects = response.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string obj in jsonObjects)
             {
                 JObject data = JObject.Parse(obj);
+                Debug.Log("data :" + data);
                 string castingType = (string)data["dataHeader"]["castingType"];
                 string eventName = (string)data["dataHeader"]["eventName"];
 
@@ -36,23 +72,79 @@ public static class TCPMessageHandler
                     {
                         GameObject.FindObjectOfType<JoinRoomBroadcastPosition>().SyncPosition(data);
                     }
+                    // 움직임 브로드캐스팅
                     if(eventName == "move")
                     {
                         GameObject.FindObjectOfType<JoinRoomBroadcastPosition>().SyncPosition(data);
                     }
+                    // 대기방 삭제 브로드캐스팅
+                    if(eventName == "deleteWaitingRoom")
+                    {
+                        authControlInstance.DeleteRoom();
+                    }
+                    // 대기방 나가기 브로드캐스팅
+                    if(eventName == "leaveWaitingRoom")
+                    {
+                        UserInfoManager userInfoManager = UserInfoManager.Instance;
+                        int nowUserId = userInfoManager.GetUserId();
+                        int userId = (int)data["dataBody"]["userId"];
+                        if(nowUserId != userId)
+                        {
+                            // 해당 유저 삭제
+                            if (waitingRoomOtherRender != null)
+                            {
+                                waitingRoomOtherRender.ExitUserReceive(userId);
+                            }
+                            else if (waitingRoomFirstRender != null)
+                            {
+                                waitingRoomFirstRender.ExitUserReceive(userId);
+                            }
+
+                        }
+                        
+                    }
+                    // 대기방 인원 업데이트 브로드캐스팅
+                    if (eventName == "getWaitingRoomHeadcount")
+                    {
+                        Debug.Log("인원 업데이트 브로드캐스팅");
+                        string value = (string)data["dataBody"]["headcount"];
+                        // 대기방 인원 업데이트
+                        if (waitingRoomOtherRender != null)
+                        {
+                            waitingRoomOtherRender.UpdateCountValue(value);
+                        }
+                        else if (waitingRoomFirstRender != null)
+                        {
+                            waitingRoomFirstRender.UpdateCountValue(value);
+                        }
+                        else
+                        {
+                            Debug.Log("waitingRoomRender 인스턴스를 찾을 수 없습니다.");
+                        }
+                    }
+                    
 
                 }
                 // 유니캐스팅
                 if (castingType == "UNICASTING")
                 {
                     // Debug.Log("유니캐스팅 진입");
+                    // 채널 목록 조회 메시지 수신
+                    if(eventName == "getChannelList")
+                    {
+                        // 채널 목록 조회
+                        channelControlInstance.SetChannelList(data);
+                    }
+
                     // 방 생성 메시지 수신
                     if (eventName == "createWaitingRoom")
                     {
                         teamCode = (string)data["dataBody"]["teamCode"];
-                        if (authControlInstance != null)
+                        if (channelControlInstance != null)
                         {
-                            authControlInstance.MakeRoom();
+                            ChannelManager instance = ChannelManager.Instance;
+                            ChannelManager.instance.SetTeamCode(teamCode);
+                            channelControlInstance.MakeRoom();
                         }
                         else
                         {
@@ -82,7 +174,7 @@ public static class TCPMessageHandler
                             }
                             else
                             {
-                                SceneManager.LoadScene("WaitingRoom");
+                                channelControlInstance.EnterRoom();
                                 GameObject.FindObjectOfType<JoinRoomManager>().ReceiveData(data);
                             }
                         }
@@ -109,17 +201,5 @@ public static class TCPMessageHandler
         }
     }
 
-    public static void SetTeamCode(string code)
-    {
-        teamCode = code;
-        Debug.Log("Team code set to: " + teamCode);
-    }
-    public static string GetTeamCode()
-    {
-        return teamCode;
-    }
-    public static void DeleteTeamCode()
-    {
-        teamCode = null;
-    }
+
 }
