@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.farming.repository;
 
+import com.explorer.realtime.gamedatahandling.farming.dto.FarmingItemInfo;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -20,9 +21,28 @@ public class MapInfoRepository {
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
+    /*
+     * key : mapData:{channelId}:{mapId}
+     * field : {posX}:{posY}:{posZ}:{rotX}:{rotY}:{rotZ}
+     * value : {itemCategory}:{itemId}
+     * 반환값 :
+     *      있는 경우 : {itemCategory}:{itemId}
+     *      없는 경우 : empty Mono
+     */
     public Mono<String> findByPosition(String channelId, int mapId, String position) {
         String key = KEY_PREFIX + channelId + ":" + String.valueOf(mapId);
         return reactiveHashOperations.get(key, position).map(Object::toString);
+    }
+
+    public Mono<Void> deleteOldPosition(FarmingItemInfo droppedItemInfo) {
+        String key = KEY_PREFIX + droppedItemInfo.getChannelId() + ":" + droppedItemInfo.getMapId();
+        return reactiveHashOperations.remove(key, droppedItemInfo.getOldPosition()).then();
+    }
+
+    public Mono<Boolean> save(FarmingItemInfo droppedItemInfo) {
+        String key = KEY_PREFIX + droppedItemInfo.getChannelId() + ":" + droppedItemInfo.getMapId();
+        String value = droppedItemInfo.getItemCategory() + ":notFarmable:" + droppedItemInfo.getItemId();
+        return reactiveHashOperations.put(key, droppedItemInfo.getPosition(), value);
     }
 
 }

@@ -1,6 +1,6 @@
-package com.explorer.logic.laboratory.extract.event;
+package com.explorer.logic.farm.event;
 
-import com.explorer.logic.laboratory.extract.repository.ExtractionMaterialRepository;
+import com.explorer.logic.farm.respository.FarmRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -12,23 +12,24 @@ import java.util.Map;
 import java.util.Random;
 
 @Slf4j
-@Component("labCalculate")
+@Component("farmCalculate")
 @RequiredArgsConstructor
 public class Calculate {
 
-    private final ExtractionMaterialRepository extractionMaterialRepository;
+    private final FarmRepository farmRepository;
 
-    public Mono<String> process(String body) {
+    public Mono<String> process(String body) {  // body : {itemCategory}:{isFarmable}:{itemId}
         log.info("Request body: {}", body);
 
         try {
-            JSONObject json = new JSONObject(body);
+            String[] parsedItemInfo = body.split(":"); // 0:itemCategory, 1:isFarming, 2:itemId
+            String itemCategory = parsedItemInfo[0];
+            int itemId = Integer.valueOf(parsedItemInfo[2]);
+
             JSONObject responseJson = new JSONObject();
-            int itemId = json.getInt("itemId");
             Random random = new Random();
 
-            // 추출 가능한 아이템 ID 목록 가져오기
-            return findAllextractableItemIds(itemId)
+            return findAllDroppedItemIds(itemCategory, itemId)
                     .flatMapMany(map -> Flux.fromIterable(map.entrySet())
                             .doOnNext(entry -> {
 
@@ -50,7 +51,7 @@ public class Calculate {
         }
     }
 
-    private Mono<Map<Object, Object>> findAllextractableItemIds(int itemId) {
-        return extractionMaterialRepository.findAll(itemId);
+    private Mono<Map<Object, Object>> findAllDroppedItemIds(String itemCategory, int itemId) {
+        return farmRepository.findAll(itemCategory, itemId);
     }
 }
