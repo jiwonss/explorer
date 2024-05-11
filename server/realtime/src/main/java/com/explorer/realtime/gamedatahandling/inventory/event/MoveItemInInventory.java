@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling.inventory.event;
 
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.inventory.dto.InventoryResponse;
@@ -23,7 +23,7 @@ import reactor.util.function.Tuple2;
 @RequiredArgsConstructor
 public class MoveItemInInventory {
 
-    private final InventoryInfoRepository inventoryInfoRepository;
+    private final InventoryRepository inventoryRepository;
     private final ItemRepository itemRepository;
     private final Unicasting unicasting;
 
@@ -40,8 +40,8 @@ public class MoveItemInInventory {
 
         return checkInventory(channelId, userId, inventoryIdxFrom, inventoryIdxTo)
                 .then(Mono.defer(() -> Mono.zip(
-                        inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString),
-                        inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString)
+                        inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString),
+                        inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString)
                 )))
                 .flatMap(tuple -> {
                     String fromInventory = tuple.getT1();
@@ -86,8 +86,8 @@ public class MoveItemInInventory {
             return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
         }
 
-        Mono<String> fromMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
-        Mono<String> toMono = inventoryInfoRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
+        Mono<String> fromMono = inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
+        Mono<String> toMono = inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
 
         Mono<Tuple2<String, String>> tupleMono = Mono.zip(fromMono, toMono);
 
@@ -105,8 +105,8 @@ public class MoveItemInInventory {
             if (toInventory.isEmpty()) {
                 resultMono = Mono.fromRunnable(() -> {
                     log.info("[checkInventory] to에 해당하는 인벤토리가 비어있습니다.");
-                    inventoryInfoRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).block();
-                    inventoryInfoRepository.save(channelId, userId, InventoryInfo.ofString(inventoryIdxTo, String.valueOf(fromInventory))).block();
+                    inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).block();
+                    inventoryRepository.save(channelId, userId, InventoryInfo.ofString(inventoryIdxTo, String.valueOf(fromInventory))).block();
                 });
             } else {
                 resultMono = Mono.fromRunnable(() -> {
@@ -123,21 +123,21 @@ public class MoveItemInInventory {
                                      log.info("[checkInventory] sum : {}", sum);
                                     if (sum <= maxCnt) {
                                         toItem.setItemCnt(sum);
-                                        inventoryInfoRepository.save(channelId, userId, toItem).subscribe();
-                                        inventoryInfoRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).subscribe();
+                                        inventoryRepository.save(channelId, userId, toItem).subscribe();
+                                        inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).subscribe();
                                     } else {
                                         fromItem.setItemCnt(sum - maxCnt);
                                         toItem.setItemCnt(maxCnt);
-                                        inventoryInfoRepository.save(channelId, userId, toItem).subscribe();
-                                        inventoryInfoRepository.save(channelId, userId, fromItem).subscribe();
+                                        inventoryRepository.save(channelId, userId, toItem).subscribe();
+                                        inventoryRepository.save(channelId, userId, fromItem).subscribe();
                                     }
                                 }).subscribe();
                     } else {
                         log.info("[checkInventory] from, to 아이템 종류가 다릅니다.");
                         fromItem.setInventoryIdx(inventoryIdxTo);
                         toItem.setInventoryIdx(inventoryIdxFrom);
-                        inventoryInfoRepository.save(channelId, userId, fromItem).subscribe();
-                        inventoryInfoRepository.save(channelId, userId, toItem).subscribe();
+                        inventoryRepository.save(channelId, userId, fromItem).subscribe();
+                        inventoryRepository.save(channelId, userId, toItem).subscribe();
                     }
                 });
             }
