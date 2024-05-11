@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -51,6 +52,13 @@ public class MapObjectRepository {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
         return reactiveRedisTemplate.delete(key)
                 .map(count -> count > 0);
+    }
+
+    public Mono<Boolean> deleteAllMap(String channelId) {
+        List<Integer> mapIds = Arrays.asList(1, 2, 3);
+        return Flux.fromIterable(mapIds)
+                .flatMap(mapid -> resetMapData(channelId, mapid))
+                .reduce(true, (allSuccess, success) -> allSuccess && success);
     }
 }
 

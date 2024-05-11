@@ -44,4 +44,9 @@ public class PlayerInfoRepository {
         return reactiveHashOperations.get(key, "tool");
     }
 
+    public Mono<Boolean> deleteUserChannelInfo(String channelId, Long userId) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.delete(key);
+    }
+
 }
