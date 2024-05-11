@@ -28,29 +28,29 @@ public class MapObjectRepository {
                 .map(result -> result == Boolean.TRUE);
     }
 
-    private List<String> selectRandomEntries(List<String> positions, int count) {
-        List<String> selectedEntries = new ArrayList<>(positions);
-        Collections.shuffle(selectedEntries);  // 리스트를 무작위로 섞음
-        return selectedEntries.subList(0, Math.min(selectedEntries.size(), count));  // 랜덤하게 count개의 요소를 선택
-    }
-
     private Map<String, String> dataToHash(List<String> positions, String itemCategory, Integer itemId) {
         Map<String, String> hashData = new HashMap<>();
         for (String position : positions) {
-            hashData.put(position, itemCategory + ":" + itemId);
+            hashData.put(position, itemCategory + ":" + "isFarmable" + ":" + itemId);
         }
         return hashData;
     }
 
-    public Mono<java.util.Map<String, String>> findMapData(String channelId, Integer mapId) {
+    public Mono<Map<String, String>> findMapData(String channelId, Integer mapId) {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
         return hashOperations.entries(key)
                 .collectMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue);
     }
-    public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, int itemId) {
+    public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, String isFarmable, int itemId) {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
-        String value = itemCategory + ":" + itemId;
+        String value = itemCategory + ":" + isFarmable + ":" + itemId;
         return hashOperations.put(key, position, value);
+    }
+
+    public Mono<Boolean> resetMapData(String channelId, Integer mapId) {
+        String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
+        return reactiveRedisTemplate.delete(key)
+                .map(count -> count > 0);
     }
 }
 

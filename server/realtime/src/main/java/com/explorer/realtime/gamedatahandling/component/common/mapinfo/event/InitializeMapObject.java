@@ -24,17 +24,20 @@ public class InitializeMapObject {
     private final Broadcasting broadcasting;
 
 
-    public Mono<Void> initializeMapObject(String channelId) {
-        Integer mapId = 1;              // 주행성
-        String itemCategory = "extractionMaterial";       //
-        Integer itemId = 0;
+    public Mono<Void> initializeMapObject(String channelId, Integer mapId) {
+
+        String itemCategory = "debris";       //
+        Integer itemId = mapId - 1;
+        Integer spaceSheep = 0;
         log.info("Initializing Map Object for channelId: {}, mapId: {}", channelId, mapId);
 
         return mapRepository.findMapData(mapId)
                 .collectList()
                 .flatMap(data -> {
-                    List<String> selectedData = selectRandomEntries(data, 50);
-                    return mapObjectRepository.saveMapData(channelId, mapId, selectedData, itemCategory, itemId);
+                    List<String> selectedData = selectRandomEntries(data, 150);
+                    List<String> selectSpaceSheep = selectRandomEntries(data, 1);
+                    mapObjectRepository.saveMapData(channelId, mapId, selectedData, itemCategory, itemId).subscribe();
+                    return mapObjectRepository.saveMapData(channelId, mapId, selectSpaceSheep, itemCategory, spaceSheep);
                 })
                 .flatMap(result -> {
                     if (result) {

@@ -43,7 +43,7 @@ public class BoxInstall {
                             log.info("userId {}", userId);
                             if (inventoryItemInfo.getItemId() == 0 && itemCategory.equals(inventoryItemInfo.getItemCategory())) {
 
-                                mapObjectRepository.save(channelId, 1, position, "installation", 0).subscribe();
+//                                mapObjectRepository.save(channelId, 1, position, "installation", 0).subscribe();
                                 log.info("map save");
                                 userInventoryRepository.deleteInventoryItem(channelId, userId, inventoryIdx).subscribe();
                                 broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("boxInstall", CastingType.BROADCASTING, position + ":" + "box" + ":" + 0))).subscribe();
