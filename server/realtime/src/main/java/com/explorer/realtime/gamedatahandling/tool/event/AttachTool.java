@@ -4,7 +4,7 @@ import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.r
 import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolErrorCode;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolException;
-import com.explorer.realtime.gamedatahandling.tool.repository.ToolInventoryRepository;
+import com.explorer.realtime.gamedatahandling.tool.repository.ToolRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ import java.util.Map;
 public class AttachTool {
 
     private final InventoryRepository inventoryRepository;
-    private final ToolInventoryRepository toolInventoryRepository;
+    private final ToolRepository toolRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
@@ -52,9 +53,23 @@ public class AttachTool {
                     }
 
                     log.info("[process] inventoryInfo : {}", inventoryInfo);
-                    return toolInventoryRepository.save(channelId, userId, inventoryIdx, inventoryInfo.getItemId())
-                            .then(unicasting(channelId, userId, inventoryIdx))
-                            .then(broadcasting(channelId, userId, inventoryInfo.getItemId()));
+
+                    AtomicInteger preInventoryIdx = new AtomicInteger(-1);
+                    return toolRepository.find(channelId, userId)
+                            .flatMap(info -> {
+                                if (info != null) {
+                                    String[] toolInfo = String.valueOf(info).split(":");
+                                    preInventoryIdx.set(Integer.parseInt(toolInfo[0]));
+                                }
+                                return Mono.empty();
+                            })
+                            .then(Mono.just(preInventoryIdx.get()))
+                            .flatMap(preIdx -> {
+                                log.info("[process] inventoryInfo : {}", inventoryInfo);
+                                return toolRepository.save(channelId, userId, inventoryIdx, inventoryInfo.getItemId())
+                                        .then(unicasting(channelId, userId, inventoryIdx, preIdx))
+                                        .then(broadcasting(channelId, userId, inventoryInfo.getItemId()));
+                            });
                 })
                 .onErrorResume(ToolException.class, error -> {
                     log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
@@ -68,9 +83,12 @@ public class AttachTool {
                 .then();
     }
 
-    private Mono<Void> unicasting(String channelId, Long userId, int inventoryIdx) {
+    private Mono<Void> unicasting(String channelId, Long userId, int inventoryIdx, int preInventoryIdx) {
         Map<String, Object> map = new HashMap<>();
         map.put("inventoryIdx", inventoryIdx);
+        map.put("preInventoryIdx", preInventoryIdx);
+        log.info("[unicasting] map : {}", map);
+
         return unicasting.unicasting(
                 channelId,
                 userId,
@@ -83,6 +101,8 @@ public class AttachTool {
         map.put("userId", userId);
         map.put("itemCategory", "tool");
         map.put("itemId", itemId);
+        log.info("[broadcasting] map : {}", map);
+
         return broadcasting.broadcasting(
                 channelId,
                 MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
