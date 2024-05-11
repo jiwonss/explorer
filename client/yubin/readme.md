@@ -153,3 +153,25 @@
 - TCPMessageHandler.cs 수정
 - MakeRoomPlayerRenderer.cs 수정
 - - CharacterMove.cs 수정
+
+# 24.05.11
+
+- 대기방 로직 구현
+  - 대기방 생성
+  - 대기방 참가
+  - 대기방 삭제
+  - 대기방 나가기
+  - 대기방 내 브로드캐스팅
+    - 인원 브로드캐스팅
+    - 움직임 브로드캐스팅
+  - WaitingRoomFirstRender.cs
+  - WaitingRoomOtherRender.cs
+  - JoinRoomManager.cs 수정
+  - TCPMessageHandler.cs 수정
+  - AuthControl.cs 수정
+  - MakeRoomPlayerRenderer.cs 수정
+  - ChannelControl.cs 수정
+- 평면 움직임 적용
+  - CharacterMove.cs 수정
+  - CameraControl.cs 수정
+  - CameraInfoManager.cs 수정
