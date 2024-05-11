@@ -22,14 +22,14 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AttachTool {
+public class DetachTool {
 
     private final InventoryRepository inventoryRepository;
     private final ToolInventoryRepository toolInventoryRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
-    private static final String eventName = "attachTool";
+    private static final String eventName = "detachTool";
 
     public Mono<Void> process(JSONObject json) {
         String channelId = json.getString("channelId");
@@ -52,7 +52,7 @@ public class AttachTool {
                     }
 
                     log.info("[process] inventoryInfo : {}", inventoryInfo);
-                    return toolInventoryRepository.save(channelId, userId, inventoryIdx, inventoryInfo.getItemId())
+                    return toolInventoryRepository.delete(channelId, userId, inventoryIdx)
                             .then(unicasting(channelId, userId, inventoryIdx))
                             .then(broadcasting(channelId, userId, inventoryInfo.getItemId()));
                 })
@@ -88,4 +88,5 @@ public class AttachTool {
                 MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
         );
     }
+
 }
