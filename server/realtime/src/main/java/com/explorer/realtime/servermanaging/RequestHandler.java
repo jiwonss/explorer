@@ -2,7 +2,6 @@ package com.explorer.realtime.servermanaging;
 
 import com.explorer.realtime.channeldatahandling.ChannelDataHandler;
 import com.explorer.realtime.gamedatahandling.GameDataHandler;
-import com.explorer.realtime.initializing.event.InitializeMapRedis;
 import com.explorer.realtime.initializing.event.InitializeHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
@@ -42,6 +41,10 @@ public class RequestHandler {
                             String type = json.getString("type");
 
                             switch(type) {
+                                case "leave":
+                                    connection.channel().disconnect();
+                                    break;
+
                                 case "waitingRoomSession" :
                                     log.info("type : {}", type);
                                     waitingRoomSessionHandler.waitingRoomSessionHandler(json, connection);
@@ -70,7 +73,6 @@ public class RequestHandler {
                             }
                         });
 
-//                        return outbound.sendString(Mono.just("success"));  // echoing
                         return Mono.empty();
                     } catch (JSONException e) {
                         log.error("ERROR : {}", e.getMessage());
