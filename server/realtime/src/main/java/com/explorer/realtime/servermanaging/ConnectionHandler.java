@@ -1,6 +1,7 @@
 package com.explorer.realtime.servermanaging;
 
 import com.explorer.realtime.global.component.session.SessionManager;
+import com.explorer.realtime.sessionhandling.disconnect.event.LeaveGame;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,6 +19,7 @@ public class ConnectionHandler implements Consumer<Connection> {
 
     private final UserRepository userRepository;
     private final SessionManager sessionManager;
+    private final LeaveGame leaveGame;
 
     @Override
     public void accept(Connection connection) {
@@ -43,6 +45,7 @@ public class ConnectionHandler implements Consumer<Connection> {
                             break;
                         case "1":
                             log.info("[INGAME] Client leaved >> userId:{}, channelId:{}, isInGame:{}", userId, channelId, isInGame);
+                            leaveGame.process(channelId, userId).subscribe();
                             break;
                     }
 
