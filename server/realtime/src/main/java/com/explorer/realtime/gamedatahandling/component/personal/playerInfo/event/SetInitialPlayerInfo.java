@@ -29,7 +29,7 @@ public class SetInitialPlayerInfo {
                 .flatMap(userId -> userRepository.findAll(Long.valueOf(String.valueOf(userId)))
                         .flatMap(map -> {
                             log.info("[saveAllInitPlayerInfoByChannelId] map : {}", map);
-                            return playerInfoRepository.save(
+                            return playerInfoRepository.init(
                                     channelId,
                                     Long.valueOf(String.valueOf(userId)),
                                     String.valueOf(map.get("nickname")),

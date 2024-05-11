@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling.farming.event;
 
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.farming.exception.FarmingErrorCode;
@@ -30,7 +30,7 @@ public class GetItemFromMap {
     private final MapInfoRepository mapInfoRepository;
     private final ItemRepository itemRepository;
     private final PlayerInfoRepository playerInfoRepository;
-    private final InventoryInfoRepository inventoryInfoRepository;
+    private final InventoryRepository inventoryRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
@@ -126,7 +126,7 @@ public class GetItemFromMap {
                     if (result.getItemCnt() == maxCnt) {
                         result.setIsFull(1);
                     }
-                    return inventoryInfoRepository.save(channelId, userId, result).thenReturn(result);
+                    return inventoryRepository.save(channelId, userId, result).thenReturn(result);
                 });
     }
 
@@ -136,7 +136,7 @@ public class GetItemFromMap {
         return Flux.range(0, inventoryCnt)
                 .concatMap(idx -> {
                     log.info("[checkInventory] idx : {}", idx);
-                    return inventoryInfoRepository.findByInventoryIdx(channelId, userId, idx)
+                    return inventoryRepository.findByInventoryIdx(channelId, userId, idx)
                             .flatMap(inventoryInfo -> {
                                 log.info("[checkInventory] inventoryInfo : {}", inventoryInfo);
                                 if (inventoryInfo == null || String.valueOf(inventoryInfo).isEmpty()) {

@@ -1,12 +1,10 @@
 package com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.event;
 
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -15,7 +13,7 @@ import reactor.core.publisher.Mono;
 public class InitializeInventory {
 
     private final PlayerInfoRepository playerInfoRepository;
-    private final InventoryInfoRepository inventoryInfoRepository;
+    private final InventoryRepository inventoryRepository;
 
     public Mono<Void> process(String channelId, Long userId) {
         log.info("[process] channelId : {}, userId : {}", channelId, userId);
@@ -34,7 +32,7 @@ public class InitializeInventory {
     private Mono<Void> initInventory(String channelId, Long userId, int inventoryCnt) {
         log.info("[initInventory] channelId : {}, userId : {}, inventoryCnt : {}", channelId, userId, inventoryCnt);
 
-        return inventoryInfoRepository.init(channelId, userId, inventoryCnt).then();
+        return inventoryRepository.init(channelId, userId, inventoryCnt).then();
     }
 
 

@@ -9,14 +9,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public class InventoryInfoRepository {
+public class InventoryRepository {
 
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
-    private static final String KEY_PREFIX = "inventoryInfoData:";
+    private static final String KEY_PREFIX = "inventoryData:";
 
-    public InventoryInfoRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public InventoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }

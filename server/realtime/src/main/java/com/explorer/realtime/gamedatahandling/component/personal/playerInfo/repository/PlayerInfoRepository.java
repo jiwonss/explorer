@@ -19,18 +19,29 @@ public class PlayerInfoRepository {
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
 
-    public Mono<Void> save(String channelId, Long userId, String nickname, int avatar, int inventoryCnt) {
-        String key = channelId + ":" + userId;
+    public Mono<Void> init(String channelId, Long userId, String nickname, int avatar, int inventoryCnt) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
         return Mono.when(
-                reactiveHashOperations.put(KEY_PREFIX + key, "nickname", nickname),
-                reactiveHashOperations.put(KEY_PREFIX + key, "avatar", String.valueOf(avatar)),
-                reactiveHashOperations.put(KEY_PREFIX + key, "inventoryCnt", String.valueOf(inventoryCnt))
+                reactiveHashOperations.put(key, "nickname", nickname),
+                reactiveHashOperations.put( key, "avatar", String.valueOf(avatar)),
+                reactiveHashOperations.put(key, "inventoryCnt", String.valueOf(inventoryCnt)),
+                reactiveHashOperations.put(key, "tool", String.valueOf(-1))
         ).then();
     }
 
     public Mono<Object> findInventoryCnt(String channelId, Long userId) {
-        String key = channelId + ":" + userId;
-        return reactiveHashOperations.get(KEY_PREFIX + key, "inventoryCnt");
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.get(key, "inventoryCnt");
+    }
+
+    public Mono<Boolean> saveTool(String channelId, Long userId, int toolIdx) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.put(key, "tool", String.valueOf(toolIdx));
+    }
+
+    public Mono<Object> findTool(String channelId, Long userId) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.get(key, "tool");
     }
 
 }

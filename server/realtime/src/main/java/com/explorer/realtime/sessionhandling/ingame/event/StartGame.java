@@ -1,7 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.event.InitializeMapObject;
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.event.SetInitialInventory;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.event.SetInitialPlayerInfo;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
