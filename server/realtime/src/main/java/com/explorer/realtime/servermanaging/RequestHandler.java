@@ -42,6 +42,7 @@ public class RequestHandler {
 
                             switch(type) {
                                 case "leave":
+                                    log.info("type : {}", type);
                                     connection.channel().disconnect();
                                     break;
 
