@@ -18,7 +18,7 @@ public class ExtractionMaterialRepository {
 
     private static final String KEY_PREFIX = "extractionMaterial:";
 
-    public ExtractionMaterialRepository(@Qualifier("reactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ExtractionMaterialRepository(@Qualifier("stringReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
 
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
