@@ -56,7 +56,7 @@ services:
       context: ../user
       dockerfile: ./Dockerfile
     ports:
-      - "9000:9000"
+      - "8100:8100"
     networks:
       explorer:
         ipv4_address: 172.20.0.8
