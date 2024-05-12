@@ -33,7 +33,7 @@ public class ReturnMainMap {
             mapObjectRepository.resetMapData(channelId, mapId).subscribe();
         } else { // else mongodb에 데이터 저장하기
             log.info("returnMap else");
-            return mapObjectRepository.findMapData(channelId, mapId)
+            mapObjectRepository.findMapData(channelId, mapId)
                     .flatMap(data -> {
                         log.info("mapRepository {}", data);
                         MapData mapData = new MapData();
@@ -44,9 +44,12 @@ public class ReturnMainMap {
                                 .collect(Collectors.toList()));
                         log.info("mongo save logic");
                         mapDataMongoRepository.save(mapData).subscribe();
-                        return Mono.empty();
+                        return mapObjectRepository.findMapData(channelId, 1)
+                                .flatMap(mainMapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mainMapData))));
+
                     });
         }
+        log.info("before broadcasting");
         return mapObjectRepository.findMapData(channelId, 1)
                 .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mapData))));
     }
