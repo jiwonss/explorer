@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveListOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Iterator;
@@ -19,6 +20,7 @@ public class ElementLaboratoryRepository {
 
     private static final String KEY_PREFIX = "labData:";
     private static final String ELEMENT_SUFFIX = ":0:element";
+    private static final String COMPOUND_SUFFIX = ":0:compound";
 
     public ElementLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.listOperations = reactiveRedisTemplate.opsForList();
@@ -65,4 +67,25 @@ public class ElementLaboratoryRepository {
         }
     }
 
+    public Flux<Integer> findAllElementData(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+        return listOperations.range(elementKey, 0, -1)
+                .map(this::convertToInt);
+    }
+
+    public Flux<Integer> findAllCompoundData(String channelId) {
+        String compoundKey = KEY_PREFIX+channelId+COMPOUND_SUFFIX;
+        return listOperations.range(compoundKey, 0, -1)
+                .map(this::convertToInt);
+    }
+    public Mono<Boolean> deleteAllData(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+        String compoundKey = KEY_PREFIX+channelId+COMPOUND_SUFFIX;
+        listOperations.delete(compoundKey).subscribe();
+        return listOperations.delete(elementKey);
+    }
+
+    private Integer convertToInt(Object data) {
+        return Integer.parseInt(data.toString());
+    }
 }
