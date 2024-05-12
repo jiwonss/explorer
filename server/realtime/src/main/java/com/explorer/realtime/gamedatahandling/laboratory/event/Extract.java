@@ -106,7 +106,7 @@ public class Extract {
                                                     // redis-ingame에 element laboratory 상태 데이터 update
                                                     elementLaboratoryRepository.updateValueAtIndex(userInfo.getChannelId(), response)
                                                                     .then(Mono.fromRunnable(() -> {
-                                                                        elementLaboratoryRepository.findAllElements(userInfo.getChannelId())
+                                                                        elementLaboratoryRepository.findAllElements(json)
                                                                                 .flatMap(elementList -> {
                                                                                     dataBodyForBroadcasting.put("labData:element", elementList);
                                                                                     return broadcasting.broadcasting(
