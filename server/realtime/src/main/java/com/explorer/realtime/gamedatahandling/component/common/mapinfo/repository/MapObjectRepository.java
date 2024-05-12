@@ -40,7 +40,7 @@ public class MapObjectRepository {
     public Mono<Map<String, String>> findMapData(String channelId, Integer mapId) {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;
         return hashOperations.entries(key)
-                .collectMap(java.util.Map.Entry::getKey, java.util.Map.Entry::getValue);
+                .collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
     public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, String isFarmable, int itemId) {
         String key = KEY_PREFIX + ":" + channelId + ":" + mapId;

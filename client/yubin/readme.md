@@ -154,7 +154,7 @@
 - MakeRoomPlayerRenderer.cs 수정
 - - CharacterMove.cs 수정
 
-# 24.05.11
+## 24.05.11
 
 - 대기방 로직 구현
   - 대기방 생성
@@ -175,3 +175,20 @@
   - CharacterMove.cs 수정
   - CameraControl.cs 수정
   - CameraInfoManager.cs 수정
+
+## 24.05.12
+
+- 대기방 로직 구현
+  - 채팅 구현
+  - 프로필 변경 기능 구현
+    - 프리팹 수정
+    - 플레이어 이미지 추가
+    - 서버 정보 로드 방법 변경
+    - AuthControl.cs 수정
+    - UserInfoManager.cs 수정
+    - CharacterMove.cs 수정
+    - WaitingRoomFirstRender.cs 수정
+    - WaitingRoomOtherRender.cs 수정
+    - ServerConfingLoader.cs 수정
+    - TCPMessageHandler.cs 수정
+    - JoinRoomManager.cs 수정

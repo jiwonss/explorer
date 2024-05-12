@@ -121,11 +121,24 @@ public class Extract {
                                                     inventoryRepositoryForLab.deleteFields(userInfo, hasItemInventoryIds)
                                                             .then(findAllInventoryItemByUserInfo(userInfo)
                                                                     .flatMap(inventory -> {
+
+                                                                        // 추출 결과
+                                                                        Map<String, String> extractResult = new HashMap<>();
+                                                                        String[] pairs = response.substring(1, response.length() - 1).split(",");
+                                                                        for (String pair : pairs) {
+                                                                            String[] keyValue = pair.split("\":");
+                                                                            String key = keyValue[0].substring(1, keyValue[0].length());
+                                                                            String value = keyValue[1];
+                                                                            extractResult.put(key, value);
+                                                                        }
+                                                                        dataBodyForUnicasting.put("extractResult", extractResult);
+
                                                                         // 인벤토리에 남아있는 아이템이 없는 경우
                                                                         if (inventory.isEmpty()) {
                                                                             return Mono.fromRunnable(() -> {
                                                                                 log.warn("[EXTRACT] Finished! No inventory data for userId: {} in {} channel", userInfo.getUserId(), userInfo.getChannelId());
                                                                                 dataBodyForUnicasting.put("inventoryData", "noItem");
+
                                                                                 unicasting.unicasting(
                                                                                         userInfo.getChannelId(), userInfo.getUserId(),
                                                                                         MessageConverter.convert(Message.success("extracting", CastingType.UNICASTING, dataBodyForUnicasting))

@@ -33,9 +33,6 @@ public class UserInfoManager : MonoBehaviour
         this.userId = userId;
         this.nickname = nickname;
         this.avatar = avatar;
-
-        Debug.Log("유저 정보 저장, userId : " + userId + " nickname : " + nickname + " avatar : " + avatar);
-
     }
 
     public int GetUserId()
@@ -52,5 +49,11 @@ public class UserInfoManager : MonoBehaviour
     {
 
         return avatar;
+    }
+
+    public void ChangeProfile(string nickname, int avatar)
+    {
+        this.nickname = nickname;
+        this.avatar = avatar;
     }
 }

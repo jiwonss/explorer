@@ -8,11 +8,13 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Repository
 public class InventoryRepository {
 
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
-    private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
+    private final ReactiveHashOperations<String, String, Object> reactiveHashOperations;
 
     private static final String KEY_PREFIX = "inventoryData:";
 
@@ -48,4 +50,14 @@ public class InventoryRepository {
         return reactiveHashOperations.remove(key, String.valueOf(inventoryIdx));
     }
 
+    public Mono<Boolean> deleteUserInventory(String channelId, Long userId) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
+        return reactiveHashOperations.delete(key);
+    }
+
+    public Mono<Map<String, String>> findInventoryData(String channeId, Long userId) {
+        String key = KEY_PREFIX + channeId + ":" + userId;
+        return reactiveHashOperations.entries(key)
+                .collectMap(Map.Entry::getKey,entry -> (String)entry.getValue());
+    }
 }

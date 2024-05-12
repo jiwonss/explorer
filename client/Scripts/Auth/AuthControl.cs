@@ -35,7 +35,7 @@
         public Button idCheckBTN;
         public Button nickNameCheckBTN;
         public Button LoginBTN;
-        private string URL = "localhost:8000";
+
 
 
         [Header("LoginField")]
@@ -119,7 +119,7 @@
             // 만약 토큰 갱신이나 새로운 토큰을 얻는 기능이 있다면 이 곳에 해당 코드를 추가해야 합니다.
 
             // 3. 로그인되어 있는 상태에서만 로그아웃을 시도
-            string url = URL + "/user/users/logout";
+            string url = ServerConfigLoader.URL + "/user/users/logout";
 
             string jsonData = "{\"refreshToken\": \"" + refreshToken + "\"}";
 
@@ -237,7 +237,7 @@
         private IEnumerator SignUpRequest(string loginId, string password, string nickname)
         {
             // 요청할 URL 설정
-            string requestUrl = URL + "/user/auth/signup";
+            string requestUrl = ServerConfigLoader.URL + "/user/auth/signup";
 
             // JSON 데이터 생성
             string jsonData = "{\"loginId\": \"" + loginId + "\", \"password\": \"" + password + "\", \"nickname\": \"" + nickname + "\"}";
@@ -267,7 +267,6 @@
                     if (response.dataHeader.successCode == 0)
                     {
                         // Debug.Log("회원가입 성공");
-                        Debug.Log("응답 데이터: " + request.downloadHandler.text);
                         // Debug.Log(request.responseCode);
                         // 성공한 경우 처리
                         CancelSignUp();
@@ -389,7 +388,7 @@
     // 로그인 요청
     private IEnumerator LoginRequest(string loginId, string password)
         {
-            string requestUrl = URL + "/user/auth/login";
+            string requestUrl = ServerConfigLoader.URL + "/user/auth/login";
             string jsonData = "{\"loginId\": \"" + loginId + "\", \"password\": \"" + password + "\"}";
             UnityWebRequest request = new UnityWebRequest(requestUrl, "POST");
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData));
@@ -405,16 +404,13 @@
                 if (response.dataHeader.successCode == 0)
                 {
                     TokenManager.Instance.SetTokens(response.dataBody.tokenInfo.accessToken, response.dataBody.tokenInfo.refreshToken);
-                    // Debug.Log("Access Token: " + TokenManager.Instance.GetAccessToken());
-                    // Debug.Log("Refresh Token: " + TokenManager.Instance.GetRefreshToken());
-
                     // 유저 정보 저장
                     int userId = response.dataBody.userInfo.userId;
                     string nickname = response.dataBody.userInfo.nickname;
                     int avatar = response.dataBody.userInfo.avatar;
 
                     UserInfoManager.Instance.SetUserInfo(userId, nickname, avatar);
-                    Debug.Log("로그인 : userId : " + userId + " nickname : " + nickname + " avatar : " + avatar);
+                    // Debug.Log("로그인 : userId : " + userId + " nickname : " + nickname + " avatar : " + avatar);
 
                     //TCP
                     string ip = ServerConfigLoader.serverIp;
@@ -567,7 +563,6 @@
         ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
         string json = JsonConvert.SerializeObject(requestData);
         TCPClientManager.Instance.SendTCPRequest(json);
-        Debug.Log("delete room 수행");
 
     }
 
