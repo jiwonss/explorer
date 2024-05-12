@@ -179,8 +179,8 @@ pipeline {
 
         stage('SonarQube analysis') {
              steps {
-                 withSonarQubeEnv('SonarQube') {
-                     sh 'mvn sonar:sonar'
+                 withSonarQubeEnv('SonarQube Scanner') {
+                     sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://k10c201.p.ssafy.io:9000'
                  }
              }
          }
