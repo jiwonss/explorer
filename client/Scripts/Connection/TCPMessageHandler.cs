@@ -122,7 +122,20 @@ public static class TCPMessageHandler
                             Debug.Log("waitingRoomRender 인스턴스를 찾을 수 없습니다.");
                         }
                     }
-                    
+                // 채팅 브로드캐스팅
+                if( eventName == "chat")
+                {
+                    string nickname = (string)data["dataBody"]["nickname"];
+                    string content = (string)data["dataBody"]["content"];
+                    if (waitingRoomOtherRender != null)
+                    {
+                        waitingRoomOtherRender.RenderChat(nickname, content);
+                    }
+                    else if (waitingRoomFirstRender != null)
+                    {
+                        waitingRoomFirstRender.RenderChat(nickname, content);
+                    }
+                }
 
                 }
                 // 유니캐스팅
@@ -134,6 +147,7 @@ public static class TCPMessageHandler
                     {
                         // 채널 목록 조회
                         channelControlInstance.SetChannelList(data);
+                        channelControlInstance.SetProfile();
                     }
 
                     // 방 생성 메시지 수신
@@ -177,6 +191,14 @@ public static class TCPMessageHandler
                                 channelControlInstance.EnterRoom();
                                 GameObject.FindObjectOfType<JoinRoomManager>().ReceiveData(data);
                             }
+                        }
+                    }
+                    // 채팅 연결 실패
+                    if ( eventName == "channelIn")
+                    {
+                        if ((string)data["dataHeader"]["msg"] == "fail")
+                        {
+                            Debug.LogError("채팅 연결 실패");
                         }
                     }
                 }

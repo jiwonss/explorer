@@ -6,6 +6,8 @@ public class ServerConfigLoader : MonoBehaviour
     public static string serverIp;
     public static string serverPort;
 
+    public static string URL;
+
     private void Awake()
     {
         LoadServerConfig();
@@ -22,6 +24,7 @@ public class ServerConfigLoader : MonoBehaviour
 
             serverIp = serverConfig.server_ip;
             serverPort = serverConfig.server_port.ToString();
+            URL = serverConfig.URL;
 
         }
         else
@@ -34,6 +37,7 @@ public class ServerConfigLoader : MonoBehaviour
     {
         public string server_ip;
         public int server_port;
+        public string URL;
     }
 
 }
