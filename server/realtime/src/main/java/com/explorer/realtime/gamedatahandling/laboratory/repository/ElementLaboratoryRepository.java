@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveListOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -32,6 +33,17 @@ public class ElementLaboratoryRepository {
         return listOperations.range(elementKey, 0, -1)
                 .cast(Integer.class)
                 .collectList();
+    }
+
+    public Mono<Boolean> findElement(String channelId, String info, int cnt) {
+        String[] elementInfo = info.split(":");
+        String elementKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
+        int index = Integer.parseInt(elementInfo[1]);
+
+        return listOperations.index(elementKey, index)
+                .cast(Integer.class)
+                .map(value -> value >= cnt)
+                .defaultIfEmpty(false);
     }
 
     public Mono<Void> updateValueAtIndex(String channelId, String response) {
