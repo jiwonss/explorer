@@ -17,11 +17,13 @@ public class WaitingRoomFirstRender : MonoBehaviour
     private TCPClientManager tcpClientManager;
     public string nowTeamCode;
 
+    private CharacterMove characterMove; 
 
     [Header("TextField")]
     public TextMeshProUGUI playerCount;
     public TextMeshProUGUI teamCode;
-    public TextMeshProUGUI chat;
+    public TMP_InputField chatInputField;
+    public TMP_Text chatDisplay; 
 
     [Header("Button")]
     public Button exitBtn;
@@ -38,6 +40,10 @@ public class WaitingRoomFirstRender : MonoBehaviour
         {
             StartGame();
         }
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            ActivateChatInputField();
+        }
     }
 
     void Start()
@@ -48,6 +54,23 @@ public class WaitingRoomFirstRender : MonoBehaviour
 
         exitBtn.onClick.AddListener(DeleteWaitingRoom);
         TCPMessageHandler.SetWaitingRoomFirstRender(this);
+        
+        chatInputField.onEndEdit.AddListener(HandleChatInputSubmit);
+        // 채팅 메시지 표시 컴포넌트 초기화
+        if (chatDisplay == null)
+        {
+            Debug.LogError("ChatDisplay is not assigned in the inspector!");
+        }
+
+        characterMove = FindObjectOfType<CharacterMove>();
+        if (characterMove != null)
+        {
+            characterMove.StartChatting();
+        }
+        else
+        {
+            Debug.LogError("CharacterMove 스크립트의 인스턴스를 찾을 수 없습니다.");
+        }
     }
 
     // 방 삭제(방장이 나가는 경우)
@@ -78,7 +101,6 @@ public class WaitingRoomFirstRender : MonoBehaviour
 
     public void UpdateCountValue(string count)
     {
-        Debug.Log("count = " + count);
         playerCount.text = count;
     }
     public class UpdateCount
@@ -153,28 +175,83 @@ public class WaitingRoomFirstRender : MonoBehaviour
             this.isLeader = isLeader;
         }
     }
+    private void ActivateChatInputField()
+    {
+        // 채팅 입력 필드가 비활성화 상태라면 활성화
+        if (!chatInputField.gameObject.activeSelf)
+        {
+            chatInputField.gameObject.SetActive(true);
+        }
+
+        // 채팅 입력 필드에 포커스
+        chatInputField.Select();
+        chatInputField.ActivateInputField();
+    }
+
+    // 채팅 전송
+    private void HandleChatInputSubmit(string input)
+{
+    if (!string.IsNullOrEmpty(input) && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+    {
+        SubmitChatMessage(input);
+
+        characterMove.StartChatting();
+    }
+}
+    private void SubmitChatMessage(string message)
+    {
+        if (!string.IsNullOrEmpty(message))
+        {
+            int userId = UserInfoManager.Instance.GetUserId();
+            chatMessage request = new chatMessage("chat", nowTeamCode, userId, message);
+            string json = JsonConvert.SerializeObject(request);
+            TCPClientManager.Instance.SendTCPRequest(json);
+
+            chatInputField.text = ""; // 입력 필드 초기화
+            chatInputField.ActivateInputField(); // 입력 필드 재활성화
+        }
+    }
+    // 채팅 수신
+    public void RenderChat(string nickname, string content)
+    {
+        if (chatDisplay != null)
+        {
+            chatDisplay.text += $"{nickname}: {content}\n"; // 새로운 메시지를 기존 텍스트에 추가
+        }
+    }
+
+    public class chatMessage
+    {
+        public string type;
+        public string teamCode;
+        public int userId;
+        public string content;
+        public chatMessage(string type, string teamCode, int userId, string content)
+        {
+            this.type = type;
+            this.teamCode = teamCode;
+            this.userId = userId;
+            this.content = content;
+        }
+    }
 
     public bool isVaildTCP()
+{
+    // TCP Check
+    tcpClientManager = TCPClientManager.Instance;
+    if (tcpClientManager == null)
     {
-        // TCP Check
-        tcpClientManager = TCPClientManager.Instance;
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-            return false;
-        }
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-            return false;
-        }
-        NetworkStream stream = tcpClientManager.GetStream();
-        if (stream == null)
-        {
-            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-            return false;
-        }
-
-        return true;
+        Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
+        return false;
     }
+
+    NetworkStream stream = tcpClientManager.GetStream();
+    if (stream == null)
+    {
+        Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
+        return false;
+    }
+
+    return true;
+}
 }

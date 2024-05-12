@@ -22,6 +22,8 @@ public class CharacterMove : MonoBehaviour
     private float sendTimer = 0f;
     private float sendInterval = 0.08f; 
 
+    private bool isChatting = false; 
+
 
 
     void Start()
@@ -50,6 +52,10 @@ public class CharacterMove : MonoBehaviour
 
     void Update()
     {
+
+        if (isChatting)
+            return;
+
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
@@ -140,6 +146,19 @@ public class CharacterMove : MonoBehaviour
 
         // 서버로 데이터 전송
         tcpClientManager.SendTCPRequest(json);
+    }
+
+    public void StartChatting()
+    {
+        if(isChatting)
+        {
+            isChatting = false;
+        }
+        else
+        {
+            isChatting = true;
+        }
+        
     }
 
     public class playerMovement
