@@ -1,7 +1,7 @@
 package com.explorer.realtime.sessionhandling.disconnect.event;
 
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryInfoRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.global.common.dto.Message;
@@ -37,7 +37,7 @@ public class LeaveGame {
     private final Broadcasting broadcasting;
     private final SessionManager sessionManager;
     private final PlayerInfoRepository playerInfoRepository;
-    private final InventoryInfoRepository inventoryInfoRepository;
+    private final InventoryRepository inventoryInfoRepository;
     private final InventoryDataMongoRepository inventoryDataMongoRepository;
     private final SaveLabData saveLabData;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
