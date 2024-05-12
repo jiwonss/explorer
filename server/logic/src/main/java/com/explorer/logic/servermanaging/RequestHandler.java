@@ -2,6 +2,7 @@ package com.explorer.logic.servermanaging;
 
 import com.explorer.logic.farm.FarmHandler;
 import com.explorer.logic.laboratory.extract.LabExtractHandler;
+import com.explorer.logic.laboratory.synthesize.LabSynthesizeHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import reactor.netty.http.server.HttpServerResponse;
 public class RequestHandler {
 
     private final LabExtractHandler labExtractHandler;
+    private final LabSynthesizeHandler synthesizeHandler;
     private final FarmHandler farmHandler;
 
     public Mono<Void> handleRequest(HttpServerRequest request, HttpServerResponse response) {
@@ -26,6 +28,9 @@ public class RequestHandler {
                 case "lab/extract":
                     log.info("POST :: lab/extract");
                     return labExtractHandler.labExtractHandler(request, response);
+                case "laboratory/synthesize":
+                    log.info("POST :: lab/synthesize");
+                    return synthesizeHandler.labSynthesizeHandler(request, response);
                 case "farm":
                     log.info("POST :: farm");
                     return farmHandler.farmHandler(request, response);
