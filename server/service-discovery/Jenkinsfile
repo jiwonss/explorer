@@ -119,7 +119,7 @@ pipeline {
         stage('SonarQube analysis') {
              steps {
                  withSonarQubeEnv('SonarQube') {
-                     sh 'mvn sonar:sonar'
+                     sh './gradlew sonarqube -Dsonar.projectKey=service-discovery -Dsonar.host.url=http://k10c201.p.ssafy.io:9000'
                  }
              }
          }
