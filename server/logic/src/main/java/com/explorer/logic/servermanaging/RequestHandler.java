@@ -28,7 +28,7 @@ public class RequestHandler {
                 case "lab/extract":
                     log.info("POST :: lab/extract");
                     return labExtractHandler.labExtractHandler(request, response);
-                case "laboratory/synthesize":
+                case "lab/synthesize":
                     log.info("POST :: lab/synthesize");
                     return synthesizeHandler.labSynthesizeHandler(request, response);
                 case "farm":
