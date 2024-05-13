@@ -40,15 +40,21 @@ public class StartGame {
     public Mono<Void> process(String teamCode, String channelName) {
         log.info("Processing game start for teamCode: {}", teamCode);
 
+        /*
+         * [Mongo에 channelId-User 정보 저장]
+         */
         Mono<String> saveChannelMono = saveChannel(teamCode, channelName);
 //        int mapId = 1;
         saveChannelMono.subscribe(channelId -> {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
-                        elementLaboratoryRepository.initialize(channelId).subscribe();
-                        initializeMapObject.initializeMapObject(channelId, 2).subscribe();
-                        initializeMapObject.initializeMapObject(channelId, 3).subscribe();
-                        setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
+                        /*
+                         * [redis-game에 데이터 추가]
+                         */
+                        elementLaboratoryRepository.initialize(channelId).subscribe();                  // 1) 연구소 저장 상태(element, compoud) 초기화
+                        initializeMapObject.initializeMapObject(channelId, 2).subscribe();       // 2) 금성 map 초기화
+                        initializeMapObject.initializeMapObject(channelId, 3).subscribe();       // 3) 수성 map 초기화
+                        setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();            // 4) playerInfo(nickname/avatar/inventoryCnt/tool)
 
                         Map<String, String> map = new HashMap<>();
                         map.put("channelId", channelId);
