@@ -11,6 +11,7 @@ import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
 import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.sessionhandling.ingame.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class StartGame {
     private final UserRepository userRepository;
     private final Broadcasting broadcasting;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
+    private final LaboratoryLevelRepository laboratoryLevelRepository;
     private final InitializeMapObject initializeMapObject;
     private final SetInitialPlayerInfo setInitialPlayerInfo;
 
@@ -52,6 +54,7 @@ public class StartGame {
                          * [redis-game에 데이터 추가]
                          */
                         elementLaboratoryRepository.initialize(channelId).subscribe();                  // 1) 연구소 저장 상태(element, compoud) 초기화
+                        laboratoryLevelRepository.initialize(channelId).subscribe();                    // 2) 원소 연구소 레벨(0) 초기화
                         initializeMapObject.initializeMapObject(channelId, 2).subscribe();       // 2) 금성 map 초기화
                         initializeMapObject.initializeMapObject(channelId, 3).subscribe();       // 3) 수성 map 초기화
                         setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();            // 4) playerInfo(nickname/avatar/inventoryCnt/tool)
