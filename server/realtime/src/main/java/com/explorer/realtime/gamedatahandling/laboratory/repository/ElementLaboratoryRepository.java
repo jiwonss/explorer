@@ -1,6 +1,8 @@
 package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveListOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -12,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Repository("elementLaboratoryRepositoryInExtract")
 public class ElementLaboratoryRepository {
 
@@ -27,11 +30,59 @@ public class ElementLaboratoryRepository {
         this.objectMapper = new ObjectMapper();
     }
 
-    public Mono<List<Integer>> findAllElements(String channelId) {
+    public Mono<List<Integer>> findAllElements(JSONObject json) {
+        String channelId = json.getString("channelId");
         String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
         return listOperations.range(elementKey, 0, -1)
                 .cast(Integer.class)
                 .collectList();
+    }
+
+    public Mono<List<Integer>> findAllCompounds(JSONObject json) {
+        String channelId = json.getString("channelId");
+        String elementKey = KEY_PREFIX+channelId+COMPOUND_SUFFIX;
+        return listOperations.range(elementKey, 0, -1)
+                .cast(Integer.class)
+                .collectList();
+    }
+
+    public Mono<Boolean> findElement(String channelId, String info, int cnt) {
+        String[] elementInfo = info.split(":");
+        String elementKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
+        int index = Integer.parseInt(elementInfo[1]);
+
+        return listOperations.index(elementKey, index)
+                .cast(Integer.class)
+                .map(value -> value >= cnt)
+                .defaultIfEmpty(false);
+    }
+
+    public Mono<Void> useElement(String channelId, String info, int cnt) {
+        String[] elementInfo = info.split(":");
+        String elementKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
+        int index = Integer.parseInt(elementInfo[1]);
+
+        return listOperations.index(elementKey, index)
+                .cast(Integer.class)
+                .doOnNext(currentValue -> log.info("[channelId:{}] Before using element - itemCategory:{}, index: {}, value:{}", channelId, elementInfo[0], index, currentValue))
+                .flatMap(currentValue -> {
+                    return listOperations.set(elementKey, index, currentValue - cnt)
+                            .doOnSuccess(done -> log.info("[channelId:{}] After using element - itemCategory:{}, index: {}, value:{}", channelId, elementInfo[0], index, currentValue-cnt));
+                })
+                .then();
+    }
+
+    public Mono<Void> createCompound(String channelId, String itemCategory, int itemId) {
+        String compoundKey = KEY_PREFIX+channelId+COMPOUND_SUFFIX;
+
+        return listOperations.index(compoundKey, itemId)
+                .cast(Integer.class)
+                .doOnNext(currentValue -> log.info("[channelId:{}] Before create compound - itemCategory:{}, index: {}, value:{}", channelId, itemCategory, itemId, currentValue))
+                .flatMap(currentValue -> {
+                    return listOperations.set(compoundKey, itemId, currentValue + 1)
+                            .doOnSuccess(done -> log.info("[channelId:{}] After using element - itemCategory:{}, index: {}, value:{}", channelId, itemCategory, itemId, currentValue + 1));
+                })
+                .then();
     }
 
     public Mono<Void> updateValueAtIndex(String channelId, String response) {

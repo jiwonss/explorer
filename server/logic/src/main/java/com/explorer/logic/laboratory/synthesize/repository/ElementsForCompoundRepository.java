@@ -1,4 +1,4 @@
-package com.explorer.logic.laboratory.extract.repository;
+package com.explorer.logic.laboratory.synthesize.repository;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,14 +11,13 @@ import java.util.Map;
 
 @Slf4j
 @Repository
-public class ExtractionMaterialRepository {
+public class ElementsForCompoundRepository {
 
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
+    private static final String KEY_PREFIX = "synthesize:compound:";
 
-    private static final String KEY_PREFIX = "extractionMaterial:";
-
-    public ExtractionMaterialRepository(@Qualifier("stringReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ElementsForCompoundRepository(@Qualifier("stringReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
 
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();

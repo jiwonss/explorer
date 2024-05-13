@@ -39,7 +39,7 @@ public class RedisConfig {
         return createConnectionFactory(host, port, password);
     }
 
-    @Bean
+    @Bean("reactiveRedisTemplate")
     public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
         return new ReactiveRedisTemplate<>(
                 factory,
@@ -51,7 +51,7 @@ public class RedisConfig {
                         .build());
     }
 
-    @Bean
+    @Bean("stringReactiveRedisTemplate")
     public ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
         RedisSerializationContext<String, Object> serializationContext =
                 RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
