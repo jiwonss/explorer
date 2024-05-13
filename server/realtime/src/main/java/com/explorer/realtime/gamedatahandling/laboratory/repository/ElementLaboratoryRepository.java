@@ -20,6 +20,7 @@ public class ElementLaboratoryRepository {
 
     private final ReactiveListOperations<String, Object> listOperations;
     private final ObjectMapper objectMapper;
+    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
 
     private static final String KEY_PREFIX = "labData:";
     private static final String ELEMENT_SUFFIX = ":0:element";
@@ -28,6 +29,7 @@ public class ElementLaboratoryRepository {
     public ElementLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.listOperations = reactiveRedisTemplate.opsForList();
         this.objectMapper = new ObjectMapper();
+        this.reactiveRedisTemplate = reactiveRedisTemplate;
     }
 
     public Mono<List<Integer>> findAllElements(JSONObject json) {
@@ -138,5 +140,16 @@ public class ElementLaboratoryRepository {
 
     private Integer convertToInt(Object data) {
         return Integer.parseInt(data.toString());
+    }
+
+    public Mono<Void> save(String key, List<Integer> itemCntList) {
+        return Flux.fromIterable(itemCntList)
+                .flatMap(value -> listOperations.rightPush(key, value))
+                .then();
+    }
+
+    public Mono<Boolean> exist(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+        return reactiveRedisTemplate.hasKey(elementKey);
     }
 }

@@ -60,4 +60,8 @@ public class InventoryRepository {
         return reactiveHashOperations.entries(key)
                 .collectMap(Map.Entry::getKey,entry -> (String)entry.getValue());
     }
+
+    public Mono<Boolean> put(String key, String field, String value) {
+        return reactiveHashOperations.put(key, field, value);
+    }
 }

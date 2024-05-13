@@ -1,5 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.event.SetInitialPlayerInfo;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
@@ -24,23 +26,32 @@ public class RestartGame {
     private final SessionManager sessionManager;
     private final ChannelRepository channelRepository;
     private final Unicasting unicasting;
+    private final LabDataMongoToRedis labDataMongoToRedis;
+    private final SetInitialPlayerInfo setInitialPlayerInfo;
+    private final InventoryDataMongoToRedis inventoryDataMongoToRedis;
 
     public Mono<Void> process(String channelId, UserInfo userInfo, Connection connection) {
         // 사용자 정보를 Redis에 저장
-        createConnectionInfo(channelId, (userInfo.getUserId()), connection);
-//        channelRepository.save(channel, userInfo.getUserId()).subscribe();
+        log.info("restart initial");
+//        (existChannel(channelId))
+        labDataMongoToRedis.process(channelId, "element").subscribe();
+        labDataMongoToRedis.process(channelId, "compound").subscribe();
+        inventoryDataMongoToRedis.process(channelId, userInfo.getUserId()).subscribe();
+        createConnectionInfo(channelId, userInfo, connection).subscribe();
         userRepository.save(userInfo, channelId, "1").subscribe();
-        unicasting.unicasting(
-                channelId,
-                userInfo.getUserId(),
-                MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING))
-        );
+//        setInitialPlayerInfo.process(channelId, 8).subscribe();
         return Mono.empty();
     }
 
-    private void createConnectionInfo(String teamCode, Long userId, Connection connection) {
-        sessionManager.setConnection(userId, connection);
-        channelRepository.save(teamCode, userId, 0).subscribe();
+    private Mono<Void> createConnectionInfo(String teamCode, UserInfo userInfo, Connection connection) {
+        sessionManager.setConnection(userInfo.getUserId(), connection);
+        return channelRepository.save(teamCode, userInfo.getUserId(), 0)
+                .then(setInitialPlayerInfo.process(teamCode, 8))
+                .then( unicasting.unicasting(teamCode,
+                        userInfo.getUserId(),
+                        MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING)))
+   );
     }
+
 }
 
