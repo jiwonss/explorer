@@ -9,7 +9,7 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
-      - ./redis_data:/data
+      - ./redis_channel_data:/data
     networks:
       explorer:
         ipv4_address: 172.21.0.3
@@ -24,7 +24,7 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
-      - ./redis_data:/data
+      - ./redis_game_data:/data
     networks:
       explorer:
         ipv4_address: 172.21.0.4
@@ -39,7 +39,7 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
-      - ./redis_data:/data
+      - ../logic/redis_staticgame_data:/data
     networks:
       explorer:
         ipv4_address: 172.21.0.5
@@ -56,7 +56,7 @@ services:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
     volumes:
-      - ./rabbitmq_data:/var/lib/rabbitmq
+      - ../chat/rabbitmq_data:/var/lib/rabbitmq
     networks:
       explorer:
         ipv4_address: 172.21.0.6
@@ -68,9 +68,6 @@ services:
       - redis-channel
       - redis-game
       - redis-staticgame
-    build:
-      context: ./
-      dockerfile: ./Dockerfile
     ports:
       - "9001:9001"
       - "1370:1370"
@@ -84,9 +81,6 @@ services:
     depends_on:
       - rabbitmq
       - redis-channel
-    build:
-      context: ../chat
-      dockerfile: ./Dockerfile
     ports:
       - "9002:9002"
       - "1371:1371"
@@ -99,9 +93,6 @@ services:
     container_name: logic
     depends_on:
       - redis-staticgame
-    build:
-      context: ../logic
-      dockerfile: ./Dockerfile
     ports:
       - "9003:9003"
     networks:
