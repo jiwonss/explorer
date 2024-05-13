@@ -61,6 +61,8 @@ public class GetItemFromMap {
                 .flatMap(result -> {
                     log.info("[process] result : {}", result);
 
+                    mapInfoRepository.deleteByPosition(channelId, mapId, position).subscribe();
+
                     unicasting.unicasting(
                             channelId,
                             userId,

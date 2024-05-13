@@ -34,6 +34,11 @@ public class MapInfoRepository {
         return reactiveHashOperations.get(key, position).map(Object::toString);
     }
 
+    public Mono<Void> deleteByPosition(String channelId, int mapId, String position) {
+        String key = KEY_PREFIX + channelId + ":" + String.valueOf(mapId);
+        return reactiveHashOperations.remove(key, position).then();
+    }
+
     public Mono<Void> deleteOldPosition(FarmingItemInfo droppedItemInfo) {
         String key = KEY_PREFIX + droppedItemInfo.getChannelId() + ":" + droppedItemInfo.getMapId();
         return reactiveHashOperations.remove(key, droppedItemInfo.getOldPosition()).then();
