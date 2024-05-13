@@ -1,7 +1,7 @@
 package com.explorer.realtime.gamedatahandling.inventory.event;
 
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.inventory.dto.InventoryResponse;
 import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryErrorCode;

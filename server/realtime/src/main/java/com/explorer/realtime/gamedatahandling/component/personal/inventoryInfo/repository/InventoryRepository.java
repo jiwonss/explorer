@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
