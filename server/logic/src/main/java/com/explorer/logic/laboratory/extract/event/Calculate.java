@@ -33,9 +33,24 @@ public class Calculate {
                             .doOnNext(entry -> {
 
                                 int maxCnt = Integer.parseInt(entry.getValue().toString());
-                                int randomCount = random.nextInt(maxCnt + 1);  // 랜덤 카운트 생성
 
-                                responseJson.put(entry.getKey().toString(), randomCount);
+                                /*
+                                 * [지수 분포]
+                                 * lambda
+                                 *  - 값이 작을수록 0에 가까운 값들이 자주 발생
+                                 *  - 값이 클수록 maxCnt에 가까운 값들이 자주 발생
+                                 *
+                                 */
+                                double lambda = 3.0 / maxCnt;  // 'lambda' 값을 조정하여 분포의 형태를 조절
+                                double exponentialValue = Math.log(1 - random.nextDouble()) / -lambda;
+                                int exponentialRandomCount = (int) Math.min(maxCnt, exponentialValue);
+
+                                /*
+                                 * [선형분포]
+                                 */
+//                                int randomCount = random.nextInt(maxCnt + 1);
+
+                                responseJson.put(entry.getKey().toString(), exponentialRandomCount);
                             })
                     )
                     .then(Mono.fromCallable(() -> {
