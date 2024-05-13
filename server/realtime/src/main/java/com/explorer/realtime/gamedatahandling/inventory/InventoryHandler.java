@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.inventory;
 
 import com.explorer.realtime.gamedatahandling.inventory.event.MoveItemInInventory;
+import com.explorer.realtime.gamedatahandling.inventory.event.UseItemInInventory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 public class InventoryHandler {
 
     private final MoveItemInInventory moveItemInInventory;
+    private final UseItemInInventory useItemInInventory;
 
     public Mono<Void> inventoryHandler(JSONObject json) {
         String eventName = json.getString("eventName");
@@ -21,6 +23,11 @@ public class InventoryHandler {
             case "moveItemInInventory":
                 log.info("eventName : {}", eventName);
                 moveItemInInventory.process(json).subscribe();
+                break;
+
+            case "useItemInInventory":
+                log.info("eventName : {}", eventName);
+                useItemInInventory.process(json).subscribe();
                 break;
         }
 

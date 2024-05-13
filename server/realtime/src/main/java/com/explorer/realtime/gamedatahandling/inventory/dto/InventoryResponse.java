@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling.inventory.dto;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

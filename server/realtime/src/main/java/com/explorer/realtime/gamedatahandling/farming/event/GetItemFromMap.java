@@ -2,7 +2,7 @@ package com.explorer.realtime.gamedatahandling.farming.event;
 
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.farming.exception.FarmingErrorCode;
 import com.explorer.realtime.gamedatahandling.farming.exception.FarmingException;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;

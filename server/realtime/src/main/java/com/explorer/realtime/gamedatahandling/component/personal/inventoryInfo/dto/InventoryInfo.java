@@ -1,4 +1,4 @@
-package com.explorer.realtime.gamedatahandling.farming.dto;
+package com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto;
 
 
 import lombok.*;
