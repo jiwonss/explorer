@@ -4,6 +4,7 @@ import com.explorer.realtime.channeldatahandling.dto.ChannelDetailsInfo;
 import com.explorer.realtime.channeldatahandling.dto.ChannelInfo;
 import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
+import com.explorer.realtime.sessionhandling.ingame.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
@@ -30,7 +31,8 @@ public class ChannelService {
                 .andExpression("name").as("channelName");
 
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.match(Criteria.where("playerList").is(userId)),
+                Aggregation.match(Criteria.where("playerList.userId").is(userId)),
+                Aggregation.match(Criteria.where("status").is(Status.IN_PROGRESS)),
                 project
         );
 
