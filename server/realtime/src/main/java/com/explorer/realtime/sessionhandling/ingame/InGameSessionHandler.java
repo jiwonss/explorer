@@ -1,6 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
 import com.explorer.realtime.sessionhandling.ingame.event.EndGame;
+import com.explorer.realtime.sessionhandling.ingame.event.IngameBroadcastPosition;
 import com.explorer.realtime.sessionhandling.ingame.event.RestartGame;
 import com.explorer.realtime.sessionhandling.ingame.event.StartGame;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
@@ -22,6 +23,7 @@ public class InGameSessionHandler {
     private final StartGame startGame;
     private final RestartGame restartGame;
     private final EndGame endGame;
+    private final IngameBroadcastPosition ingameBroadcastPosition;
 
     public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -42,6 +44,10 @@ public class InGameSessionHandler {
             case "endGame":
                 log.info("end game");
                 return endGame.process(channelId, json);
+
+            case "broadcastPosition":
+                log.info("broadcastPosition");
+                return ingameBroadcastPosition.process(json);
         }
 
         return Mono.empty();
