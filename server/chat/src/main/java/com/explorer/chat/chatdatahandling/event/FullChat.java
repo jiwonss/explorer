@@ -5,6 +5,8 @@ import com.explorer.chat.global.common.dto.Message;
 import com.explorer.chat.global.common.enums.CastingType;
 import com.explorer.chat.global.component.broadcasting.Broadcasting;
 import com.explorer.chat.global.util.MessageConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -12,12 +14,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FullChat {
     private final UserRepository userRepository;
     private final Broadcasting broadcasting;
+    private final ObjectMapper objectMapper;
 
     private static final String eventName = "chat";
 
@@ -30,14 +36,19 @@ public class FullChat {
         return userRepository.findAll(userId)
                 .flatMap(map -> {
                     String nickname = (String) map.get("nickname");
-                    JSONObject messageDataBody = new JSONObject();
+                    Map<String, Object> messageDataBody = new HashMap<>();
                     messageDataBody.put("nickname", nickname);
                     messageDataBody.put("content", content);
 
-                    JSONObject jsonMessage = MessageConverter.convert(
-                            Message.success(eventName, CastingType.BROADCASTING, messageDataBody));
-
-                    return broadcasting.broadcasting(teamCode, jsonMessage);
+                    try {
+                        String jsonMessage = objectMapper.writeValueAsString(
+                                Message.success(eventName, CastingType.BROADCASTING, messageDataBody)
+                        );
+                        return broadcasting.broadcasting(teamCode, jsonMessage);
+                    } catch (JsonProcessingException e) {
+                        log.error("JSON writing error", e);
+                        return Mono.error(e);
+                    }
                 })
                 .then();
     }
