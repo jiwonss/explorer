@@ -1,6 +1,6 @@
 package com.explorer.chat.servermanaging;
 
-import com.explorer.chat.chatdatahandling.ChatDataHandler;
+import com.explorer.chat.chathandling.ChatHandler;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,7 +17,7 @@ public class RequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
-    private final ChatDataHandler chatDataHandler;
+    private final ChatHandler chatHandler;
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
@@ -38,7 +38,7 @@ public class RequestHandler {
 
                                 case "chat":
                                     log.info("type : {}", type);
-                                    chatDataHandler.chatDataHandler(json, connection);
+                                    chatHandler.chatDataHandler(json, connection);
                                     break;
                             }
                         });
