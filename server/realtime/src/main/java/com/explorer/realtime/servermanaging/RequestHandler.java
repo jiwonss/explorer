@@ -5,6 +5,7 @@ import com.explorer.realtime.gamedatahandling.GameDataHandler;
 import com.explorer.realtime.initializing.event.InitializeHandler;
 import com.explorer.realtime.sessionhandling.ingame.InGameSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
+import com.explorer.realtime.staticdatahandling.StaticDataHandler;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +27,7 @@ public class RequestHandler {
     private final GameDataHandler gameDataHandler;
     private final ChannelDataHandler channelDataHandler;
     private final InitializeHandler initializeHandler;
+    private final StaticDataHandler staticDataHandler;
 
     public Mono<Void> handleRequest(NettyInbound inbound, NettyOutbound outbound) {
 
@@ -69,6 +71,11 @@ public class RequestHandler {
                                 case "initialize":
                                     log.info("initialize map");
                                     initializeHandler.initializeHandler(json).subscribe();
+                                    break;
+
+                                case "staticdata":
+                                    log.info("type: {}", type);
+                                    staticDataHandler.staticDataHandler(json);
                                     break;
 
                             }
