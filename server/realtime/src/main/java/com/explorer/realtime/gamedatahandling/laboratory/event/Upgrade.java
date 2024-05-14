@@ -47,7 +47,7 @@ public class Upgrade {
      *
      * 파라미터
      * - 타입 : JSONObject
-     * - 값 : {..., "channelId":{channelId}, "userId":{userId}}
+     * - 값 : {..., "channelId":{channelId}, "userId":{userId}, "labId":{labId}}
      *
      * 반환값
      * - 타입 : Mono<Object>
@@ -59,7 +59,8 @@ public class Upgrade {
      */
     private Mono<Integer> checkLabLevel(JSONObject json) {
         String channelId = json.getString("channelId");
-        return inventoryLevelRepository.findLabLevel(channelId, 0)
+        int labId = json.getInt("labId");
+        return inventoryLevelRepository.findLabLevel(channelId, labId)
                 .map(levelStr -> {
                     try {
                         return Integer.parseInt(levelStr.toString());
@@ -73,18 +74,30 @@ public class Upgrade {
     /*
      * [LOGIC 서버에 요청 : 합성에 필요한 element 데이터 요청]
      * 파라미터
-     * - JSONObject json : { .. , "channelId" : {channelId}, "userId": "{userId}"}
+     * - JSONObject json : { .. , "channelId" : {channelId}, "userId" : {userId}, "labId" : {labId}}
      * - int labLevel : {level}
+     *
+     * Logic Server :: POST data (String)
+     * {"labId":{labId}, "labLevel":{labLevel}}
+     *
+     * Logic Server :: GET data (String)
+     * {
+     *  {itemCategory}:{itemId}  :  {itemCnt},
+     *  {itemCategory}:{itemId}  :  {itemCnt},
+     *                ...
+     * }
+     *
      * 반환값 :
      *  - 타입 : Mono<String>
      *  - 값 :  { {itemCategory}:{itemId} : {itemCnt}, {itemCategory}:{itemId} : {itemCnt}, .... }
      */
     private Mono<String> requestMaterialsForUpgrade(JSONObject json, int labLevel) {
 
-        log.info("Logic server Request Data: {}", labLevel);
+        JSONObject request = new JSONObject().put("labId", 0).put("labLevel",labLevel);
+        log.info("Logic server Request Data: {}", request);
 
         return Mono.create(sink -> {
-            toLogicServer.sendRequestToHttpServer(String.valueOf(labLevel), upgradeUrl)
+            toLogicServer.sendRequestToHttpServer(String.valueOf(request), upgradeUrl)
                     .subscribe(response -> {
                         log.info("Logic server response: {}", response);
                         sink.success(response);
@@ -98,7 +111,7 @@ public class Upgrade {
     /*
      * [Unicasting : fail output data]
      * 파라미터
-     * - JSONObject json : {..., "channelId":{channelId}, "userId":{userId}}
+     * - JSONObject json : {..., "channelId":{channelId}, "userId":{userId}, "labId" : {labId}}
      * - String msg : "cannotUpgrade" 또는 "noItem"
      */
     private Mono<Void> unicastingFailData(JSONObject json, String msg) {
