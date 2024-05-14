@@ -10,8 +10,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
-import java.nio.charset.StandardCharsets;
-
 @Component
 public class Broadcasting {
 
@@ -23,7 +21,7 @@ public class Broadcasting {
         this.channelRepository = channelRepository;
         this.sessionManager = sessionManager;
     }
-    public Mono<Void> broadcasting(String teamCode, String msg) {
+    public Mono<Void> broadcasting(String teamCode, JSONObject msg) {
         log.info("start broadcasting to {}", teamCode);
         return channelRepository.findAll(teamCode)
                 .flatMapMany(hashTable -> {
@@ -32,7 +30,7 @@ public class Broadcasting {
                                 Connection connection = sessionManager.getConnection(Long.valueOf(key.toString()));
                                 if (connection != null) {
                                     log.info("sending message to {}", key);
-                                    return connection.outbound().sendString(Mono.just(msg + '\n'), StandardCharsets.UTF_8).then();
+                                    return connection.outbound().sendString(Mono.just(msg.toString()+'\n')).then();
                                 } else {
                                     log.warn("No connection found for {}", key);
                                     return Mono.empty();
