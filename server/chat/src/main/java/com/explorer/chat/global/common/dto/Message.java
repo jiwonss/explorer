@@ -31,31 +31,11 @@ public class Message<T> {
                     .build();
         }
 
-        private static DataHeader success(String eventName, String castingType, String resultCode, String resultMessage) {
-            return DataHeader.builder()
-                    .msg("success")
-                    .eventName(eventName)
-                    .castingType(castingType)
-                    .resultCode(resultCode)
-                    .resultMessage(resultMessage)
-                    .build();
-        }
-
         private static DataHeader fail(String eventName, String castingType) {
             return DataHeader.builder()
                     .msg("fail")
                     .eventName(eventName)
                     .castingType(castingType)
-                    .build();
-        }
-
-        private static DataHeader fail(String eventName, String castingType, String resultCode, String resultMessage) {
-            return DataHeader.builder()
-                    .msg("fail")
-                    .eventName(eventName)
-                    .castingType(castingType)
-                    .resultCode(resultCode)
-                    .resultMessage(resultMessage)
                     .build();
         }
     }
