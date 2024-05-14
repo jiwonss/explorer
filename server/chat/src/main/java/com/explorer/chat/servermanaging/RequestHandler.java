@@ -43,7 +43,7 @@ public class RequestHandler {
                             }
                         });
 
-                        return outbound.sendString(Mono.just(msg));
+                        return Mono.empty();
                     } catch (JSONException e) {
                         log.error("ERROR: {}", e.getMessage());
                         return Mono.empty();
