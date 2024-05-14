@@ -34,10 +34,10 @@ public class LeaveChattingRoom {
 
         return userRepository.findAll(userId)
                 .flatMap(map -> {
+                    String nickname = (String) map.get("nickname");
+
                     return removeConnectionInfo(userId)
                             .then(Mono.fromRunnable(() -> {
-                                String nickname = (String) map.get("nickname");
-
                                 Map<String, String> msg = new HashMap<>();
                                 msg.put("nickname", nickname);
                                 msg.put("content", nickname+"님이 채팅방을 퇴장했습니다.");
