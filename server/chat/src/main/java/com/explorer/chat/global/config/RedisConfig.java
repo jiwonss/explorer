@@ -1,6 +1,5 @@
 package com.explorer.chat.global.config;
 
-import com.explorer.chat.global.redis.CustomJsonSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,21 +42,28 @@ public class RedisConfig {
 
     @Bean
     public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
-        RedisSerializationContext.SerializationPair<Object> valueSerializer =
-                RedisSerializationContext.SerializationPair.fromSerializer(new CustomJsonSerializer());
-
         return new ReactiveRedisTemplate<>(
                 factory,
-                RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
-                        .value(valueSerializer)
+                RedisSerializationContext.<String, Object>newSerializationContext()
+                        .key(new StringRedisSerializer())
+                        .value(new GenericJackson2JsonRedisSerializer())
                         .hashKey(new StringRedisSerializer())
-                        .hashValue(valueSerializer)
+                        .hashValue(new GenericJackson2JsonRedisSerializer())
                         .build());
     }
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return createConnectionFactory(host, port, password);
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        redisTemplate.setConnectionFactory(redisConnectionFactory());
+        return redisTemplate;
     }
 
 }
