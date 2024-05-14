@@ -1,4 +1,4 @@
-package com.explorer.chat.chatdatahandling.exception;
+package com.explorer.chat.chathandling.exception;
 
 import lombok.Getter;
 

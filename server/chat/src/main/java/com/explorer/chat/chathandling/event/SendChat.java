@@ -1,6 +1,6 @@
-package com.explorer.chat.chatdatahandling.event;
+package com.explorer.chat.chathandling.event;
 
-import com.explorer.chat.chatdatahandling.repository.UserRepository;
+import com.explorer.chat.chathandling.repository.UserRepository;
 import com.explorer.chat.global.common.dto.Message;
 import com.explorer.chat.global.common.enums.CastingType;
 import com.explorer.chat.global.component.broadcasting.Broadcasting;
@@ -15,16 +15,16 @@ import reactor.netty.Connection;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FullChat {
+public class SendChat {
     private final UserRepository userRepository;
     private final Broadcasting broadcasting;
 
-    private static final String eventName = "chat";
+    private static final String eventName = "sendChat";
 
     public Mono<Void> process(JSONObject json, Connection connection) {
+        String teamCode = json.getString("teamCode");
         Long userId = json.getLong("userId");
         String content = json.getString("content");
-        String teamCode = json.getString("teamCode");
         log.info("[process] userId : {}, connection : {}", userId, connection);
 
         return userRepository.findAll(userId)
