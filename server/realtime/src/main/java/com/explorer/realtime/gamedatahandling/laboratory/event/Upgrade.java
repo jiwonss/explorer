@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
 import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryLevelRepository;
+import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
@@ -25,17 +26,18 @@ public class Upgrade {
 
     private final InventoryLevelRepository inventoryLevelRepository;
     private final Unicasting unicasting;
+    private final ToLogicServer toLogicServer;
 
     public Mono<Void> process(JSONObject json) {
 
-        return checkLabLevel(json)                                                  // 1) 연구소 레벨 확인
-                .flatMap(possible -> {
-                    if(!possible) {                                                 // 2-1) 업그레이드 불가 레벨
-                        log.info("fail");
-                        return unicastingFailData(json, "cannotUpgrade");
-                    } else {                                                        // 2-2) 업그레이드 가능 레벨
-                        log.info("success");
-                        return Mono.empty();
+        return checkLabLevel(json)                                                  // 1) 연구소 레벨 조회
+                .flatMap(labLevel -> {
+                    if (labLevel<0 || labLevel>=3) {                                      // 2-1) 업그레이드 불가능한 레벨인 경우
+                        return unicastingFailData(json, "cannotUpdate");
+                    } else {                                                        // 2-2) 업그레이드 가능한 레벨인 경우
+                        return requestMaterialsForUpgrade(json, labLevel)
+                                .doOnNext(response -> log.info("Logic Server Response: {}", response))
+                                .then();
                     }
                 });
     }
@@ -55,19 +57,42 @@ public class Upgrade {
      * key : labLevel:{channelId}:{labId}
      * value: {level}
      */
-    private Mono<Boolean> checkLabLevel(JSONObject json) {
+    private Mono<Integer> checkLabLevel(JSONObject json) {
         String channelId = json.getString("channelId");
-
         return inventoryLevelRepository.findLabLevel(channelId, 0)
                 .map(levelStr -> {
                     try {
-                        int level = Integer.parseInt(levelStr.toString());
-                        return level>=0 && level<3;
+                        return Integer.parseInt(levelStr.toString());
                     } catch (NumberFormatException e) {
-                        log.error("Failed to parse lab level: {}", levelStr, e);
-                        return false;
+                        log.error("Failed to parse lab leve: {}", levelStr, e);
+                        return -1;
                     }
                 });
+    }
+
+    /*
+     * [LOGIC 서버에 요청 : 합성에 필요한 element 데이터 요청]
+     * 파라미터
+     * - JSONObject json : { .. , "channelId" : {channelId}, "userId": "{userId}"}
+     * - int labLevel : {level}
+     * 반환값 :
+     *  - 타입 : Mono<String>
+     *  - 값 :  { {itemCategory}:{itemId} : {itemCnt}, {itemCategory}:{itemId} : {itemCnt}, .... }
+     */
+    private Mono<String> requestMaterialsForUpgrade(JSONObject json, int labLevel) {
+
+        log.info("Logic server Request Data: {}", labLevel);
+
+        return Mono.create(sink -> {
+            toLogicServer.sendRequestToHttpServer(String.valueOf(labLevel), upgradeUrl)
+                    .subscribe(response -> {
+                        log.info("Logic server response: {}", response);
+                        sink.success(response);
+                    }, error -> {
+                        log.error("Error in retrieving data from logic server");
+                        sink.error(error);
+                    });
+        });
     }
 
     /*
