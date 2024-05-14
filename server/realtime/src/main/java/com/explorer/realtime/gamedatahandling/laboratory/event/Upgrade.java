@@ -21,7 +21,7 @@ public class Upgrade {
     public Mono<Void> process(JSONObject json) {
 
         return checLabLevel(json)
-                .doOnNext(level -> log.info("Lab level: {}", level))
+                .doOnNext(possible -> log.info("upgrade possibility: {}", possible))
                 .then();
     }
 
@@ -40,9 +40,19 @@ public class Upgrade {
      * key : labLevel:{channelId}:{labId}
      * value: {level}
      */
-    private Mono<Object> checLabLevel(JSONObject json) {
+    private Mono<Boolean> checLabLevel(JSONObject json) {
         String channelId = json.getString("channelId");
-        return inventoryLevelRepository.findLabLevel(channelId, 0);
+
+        return inventoryLevelRepository.findLabLevel(channelId, 0)
+                .map(levelStr -> {
+                    try {
+                        int level = Integer.parseInt(levelStr.toString());
+                        return level>=0 && level<3;
+                    } catch (NumberFormatException e) {
+                        log.error("Failed to parse lab level: {}", levelStr, e);
+                        return false;
+                    }
+                });
     }
 
 }
