@@ -1,4 +1,4 @@
-package com.explorer.chat.chatdatahandling.repository;
+package com.explorer.chat.chathandling.repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
