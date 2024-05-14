@@ -51,7 +51,7 @@ public class StartGame {
                         setInitialPlayerInfo.process(channelId, INVENTORY_CNT).subscribe();
 
                         Map<String, String> map = new HashMap<>();
-                        map.put("teamCode", channelId);
+                        map.put("channelId", channelId);
                         return broadcasting.broadcasting(
                                 channelId,
                                 MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map))
