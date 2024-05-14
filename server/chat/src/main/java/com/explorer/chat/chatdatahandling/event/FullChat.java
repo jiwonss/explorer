@@ -28,14 +28,14 @@ public class FullChat {
         log.info("[process] userId : {}, connection : {}", userId, connection);
 
         return userRepository.findAll(userId)
-                .flatMap(userMap -> {
-                    String nickname = (String) userMap.get("nickname");
+                .flatMap(map -> {
+                    String nickname = (String) map.get("nickname");
                     JSONObject messageDataBody = new JSONObject();
                     messageDataBody.put("nickname", nickname);
                     messageDataBody.put("content", content);
 
-                    Message<JSONObject> message = Message.success(eventName, CastingType.BROADCASTING, messageDataBody);
-                    JSONObject jsonMessage = MessageConverter.convert(message);
+                    JSONObject jsonMessage = MessageConverter.convert(
+                            Message.success(eventName, CastingType.BROADCASTING, messageDataBody));
 
                     return broadcasting.broadcasting(teamCode, jsonMessage);
                 })
