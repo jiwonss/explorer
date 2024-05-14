@@ -55,8 +55,8 @@ public class InventoryRepository {
         return reactiveHashOperations.delete(key);
     }
 
-    public Mono<Map<String, String>> findInventoryData(String channeId, Long userId) {
-        String key = KEY_PREFIX + channeId + ":" + userId;
+    public Mono<Map<String, String>> findInventoryData(String channelId, Long userId) {
+        String key = KEY_PREFIX + channelId + ":" + userId;
         return reactiveHashOperations.entries(key)
                 .collectMap(Map.Entry::getKey,entry -> (String)entry.getValue());
     }
