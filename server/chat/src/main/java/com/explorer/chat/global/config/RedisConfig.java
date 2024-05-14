@@ -44,26 +44,10 @@ public class RedisConfig {
     public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
         return new ReactiveRedisTemplate<>(
                 factory,
-                RedisSerializationContext.<String, Object>newSerializationContext()
-                        .key(new StringRedisSerializer())
+                RedisSerializationContext.<String, Object>newSerializationContext(new StringRedisSerializer())
                         .value(new GenericJackson2JsonRedisSerializer())
-                        .hashKey(new StringRedisSerializer())
-                        .hashValue(new GenericJackson2JsonRedisSerializer())
                         .build());
-    }
 
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return createConnectionFactory(host, port, password);
-    }
-
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        redisTemplate.setConnectionFactory(redisConnectionFactory());
-        return redisTemplate;
     }
 
 }
