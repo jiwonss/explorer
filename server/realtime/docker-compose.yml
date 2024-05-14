@@ -84,6 +84,8 @@ services:
     ports:
       - "9002:9002"
       - "1371:1371"
+    environment:
+      - JAVA_OPTS=-Dfile.encoding=UTF-8
     networks:
       explorer:
         ipv4_address: 172.21.0.8
