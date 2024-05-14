@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,12 +33,13 @@ public class SendChat {
         return userRepository.findAll(userId)
                 .flatMap(map -> {
                     String nickname = (String) map.get("nickname");
-                    JSONObject messageDataBody = new JSONObject();
-                    messageDataBody.put("nickname", nickname);
-                    messageDataBody.put("content", content);
+
+                    Map<String, String> msg = new HashMap<>();
+                    msg.put("nickname", nickname);
+                    msg.put("content", content);
 
                     JSONObject jsonMessage = MessageConverter.convert(
-                            Message.success(eventName, CastingType.BROADCASTING, messageDataBody));
+                            Message.success(eventName, CastingType.BROADCASTING, msg));
 
                     return broadcasting.broadcasting(teamCode, jsonMessage);
                 })

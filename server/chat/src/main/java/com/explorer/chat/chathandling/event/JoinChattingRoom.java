@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,12 +37,13 @@ public class JoinChattingRoom {
                     return createConnectionInfo(teamCode, userId, connection)
                             .then(Mono.fromRunnable(() -> {
                                 String nickname = (String) map.get("nickname");
-                                JSONObject messageDataBody = new JSONObject();
-                                messageDataBody.put("nickname", nickname);
-                                messageDataBody.put("content", nickname+"님이 채팅방에 입장했습니다.");
+
+                                Map<String, String> msg = new HashMap<>();
+                                msg.put("nickname", nickname);
+                                msg.put("content", nickname+"님이 채팅방에 입장했습니다.");
 
                                 JSONObject jsonMessage = MessageConverter.convert(
-                                        Message.success(eventName, CastingType.BROADCASTING, messageDataBody));
+                                        Message.success(eventName, CastingType.BROADCASTING, msg));
 
                                 broadcasting.broadcasting(teamCode, jsonMessage).subscribe();
                             }));
