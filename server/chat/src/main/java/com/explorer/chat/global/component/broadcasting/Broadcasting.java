@@ -1,5 +1,7 @@
 package com.explorer.chat.global.component.broadcasting;
 
+import com.explorer.chat.chathandling.exception.ChattingErrorCode;
+import com.explorer.chat.chathandling.exception.ChattingException;
 import com.explorer.chat.global.component.session.SessionManager;
 import com.explorer.chat.global.redis.ChannelRepository;
 import org.json.JSONObject;
@@ -33,7 +35,7 @@ public class Broadcasting {
                                     return connection.outbound().sendString(Mono.just(msg.toString()+'\n')).then();
                                 } else {
                                     log.warn("No connection found for {}", key);
-                                    return Mono.empty();
+                                    return Mono.error(new ChattingException(ChattingErrorCode.FAILED_SEND_CHAT));
                                 }
                             });
                 })
