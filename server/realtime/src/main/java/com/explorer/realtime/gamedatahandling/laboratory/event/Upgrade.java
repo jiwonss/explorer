@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
+import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.LaboratoryLevelRepository;
@@ -37,22 +38,27 @@ public class Upgrade {
 
     public Mono<Void> process(JSONObject json) {
 
-        return checkLabLevel(json)                                                  // 1) 연구소 레벨 조회
+        return checkLabLevel(json) // 1) 연구소 레벨 조회
                 .flatMap(labLevel -> {
-                    if (labLevel<0 || labLevel>=3) {                                // 2-1) 업그레이드 불가능한 레벨인 경우
+                    if (labLevel < 0 || labLevel >= 3) { // 2-1) 업그레이드 불가능한 레벨인 경우
                         return unicastingFailData(json, "cannotUpdate");
-                    } else {                                                        // 2-2) 업그레이드 가능한 레벨인 경우
-                        return requestMaterialsForUpgrade(json, labLevel)
-                                .flatMap(response -> hasRequiredMaterials(json, response))
-                                .flatMap(hasMaterials -> {
-                                    if (!hasMaterials) {
-                                        // 재료 부족으로 인한 실패 처리
-                                        return unicastingFailData(json, "noItem");
-                                    } else {
-                                        // 재료가 충분한 경우 성공 로직 처리 (예시)
-                                        return Mono.fromRunnable(() -> log.info("Upgrade can proceed."));
-                                    }
-                                });
+                    } else { // 2-2) 업그레이드 가능한 레벨인 경우
+                        return requestMaterialsForUpgrade(labLevel)
+                                .flatMap(response ->
+                                        hasRequiredMaterials(json, response)
+                                                .flatMap(hasMaterials -> {
+                                                    if (!hasMaterials) {
+                                                        // 재료 부족으로 인한 실패 처리
+                                                        return unicastingFailData(json, "noItem");
+                                                    } else {
+                                                        // 재료가 충분한 경우 성공 로직 처리
+                                                        return useMaterialsForUpgrade(json, response)
+                                                                .then(upgradeLaboratory(json))
+                                                                .then(getLaboratoryInventoryInfo(json))
+                                                                .flatMap(dataBody -> unicastingSuccessData(json, dataBody));
+                                                    }
+                                                })
+                                );
                     }
                 });
     }
@@ -106,7 +112,7 @@ public class Upgrade {
      *  - 타입 : Mono<String>
      *  - 값 :  { {itemCategory}:{itemId} : {itemCnt}, {itemCategory}:{itemId} : {itemCnt}, .... }
      */
-    private Mono<String> requestMaterialsForUpgrade(JSONObject json, int labLevel) {
+    private Mono<String> requestMaterialsForUpgrade(int labLevel) {
 
         JSONObject request = new JSONObject().put("labId", 0).put("labLevel",labLevel);
         log.info("Logic server Request Data: {}", request);
@@ -157,8 +163,108 @@ public class Upgrade {
         // 모든 재료가 충분한지 여부를 확인
         return Flux.merge(checks)
                 .all(result -> result) // 모든 결과가 true인 경우에만 true 반환
-                .doOnError(error -> log.error("[ERROR] checking materials : {}", error.getMessage()))
-                .doOnSuccess(success -> log.info("[SUCCESS] Checking material {}", success));
+                .doOnError(error -> log.error("[ERROR] checking materials : {}", error.getMessage()));
+    }
+
+    /*
+     * [연구소 upgrade 성공 -> 인벤토리 및 연구소에 있는 재료 소진 :: redis-game 업데이트]
+     */
+    private Mono<Void> useMaterialsForUpgrade(JSONObject json, String materialList) {
+
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+        JSONObject materialListJson = new JSONObject(materialList);
+
+        List<Mono<Void>> useMaterialMonos = new ArrayList<>();
+
+        materialListJson.keys().forEachRemaining(key -> {
+            String itemCategory = key.split(":")[0];
+            int itemCnt = Integer.parseInt(materialListJson.get(key).toString());
+            if (itemCategory.equals("element") || itemCategory.equals("compound")) {
+                useMaterialMonos.add(elementLaboratoryRepository.useMaterial(channelId, key, itemCnt));
+            } else {
+                useMaterialMonos.add(inventoryRepository.useMaterial(channelId, userId, key, itemCnt));
+            }
+        });
+        // 모든 재료 사용 명령을 실행하고 모두 완료되기를 기다립니다.
+        return Flux.concat(useMaterialMonos).then();
+    }
+
+    /*
+     * [연구소 레벨업 후 redis-game에 업데이트]
+     * 파라미터
+     * - 타입 : JSONObject
+     * - 값 : {..., "channelId":{channelId}, "userId":{userId}, "labId":{labId}}
+     *
+     * 연구소 레벨 데이터 (redis-game)
+     * key : labLevel:{channelId}:{labId}
+     * value: {level}
+     */
+    private Mono<Void> upgradeLaboratory(JSONObject json) {
+        return laboratoryLevelRepository.incLabLevel(json);
+    }
+
+    /*
+     * [연구소 정보 조회]
+     * 연구소 입장 시 전송되는 연구소의 정보를 조회한다
+     * - 연구소 레벨
+     * - 연구소 저장 상태::element
+     * - 연구소 저장 상태::compound
+     * - 인벤토리 상태
+     */
+    private Mono<Map<Object, Object>> getLaboratoryInventoryInfo(JSONObject json) {
+
+        Map<Object, Object> dataBody = new HashMap<>();
+        String channelId = json.getString("channelId");
+        int labId = json.getInt("labId");
+        UserInfo userInfo = UserInfo.of(json);
+
+        // 각 항목의 Mono를 생성
+        Mono<List<Integer>> elementsMono = elementLaboratoryRepository.findAllElements(json); // 연구소 저장 상태 :: element 조회
+        Mono<List<Integer>> compoundsMono = elementLaboratoryRepository.findAllCompounds(json); // 연구소 저장 상태 :: compound 조회
+
+        // 모든 Mono를 결합하여 하나의 Map에 저장
+        // elements와 compounds를 먼저 합친 후, labLevel 정보를 추가
+        return Mono.zip(elementsMono, compoundsMono, (elements, compounds) -> {
+            dataBody.put("element", elements);
+            dataBody.put("compound", compounds);
+            return dataBody;
+        })
+                .flatMap(combinedData ->
+                laboratoryLevelRepository.findLabLevel(channelId, labId).map(Object::toString).map(labLevel -> {
+                    combinedData.put("labLevel", labLevel);
+                    return combinedData;
+                }))
+                .flatMap(combinedData ->
+                        inventoryRepository.findAll(userInfo).map(inventoryInfo -> {
+                            combinedData.put("inventoryData", inventoryInfo);
+                            return combinedData;
+                        })
+        );
+    }
+
+    /*
+     * [UNICASTING : 변경된 연구소 element/compound 저장 상태 및 인벤토리 상태]
+     * 파라미터
+     * - JSONObject json : { .. , "channelId" : {channelId}, "userId" : {userId}, "labId" : {labId}}
+     *
+     * 파라미터
+     * - Map dataBody :
+     *  "element" : [ {itemCnt}, {itemCnt}, ... ],
+     *  "compound" : [ {itemCnt}, {itemCnt}, ... ],
+     *  "inventoryData" : {
+     *              {inventoryId} : {itemCategory}:{itemId}:{itemCnt},
+     *              {inventoryId} : {itemCategory}:{itemId}:{itemCnt}
+     *                              ...
+     *              }
+     */
+    private Mono<Void> unicastingSuccessData(JSONObject json, Map<Object, Object> dataBody) {
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+
+        return unicasting.unicasting(channelId, userId,
+                MessageConverter.convert(Message.success("upgrade", CastingType.UNICASTING, dataBody)))
+                .then();
     }
 
     /*
@@ -177,5 +283,4 @@ public class Upgrade {
                 MessageConverter.convert(Message.fail("upgrade", CastingType.UNICASTING, dataBody)))
                 .then();
     }
-
 }
