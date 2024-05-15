@@ -17,7 +17,6 @@ import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
-import com.explorer.realtime.sessionhandling.ingame.repository.ChannelTest;
 import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,13 +40,11 @@ public class StartGame {
     private final InitializeMapObject initializeMapObject;
     private final SetInitialPlayerInfo setInitialPlayerInfo;
     private final InitializeSaveLabData initializeSaveLabData;
-    private final InitializeSaveInventoryData initializeSaveInventoryData;
     private final InventoryRepository inventoryRepository;
     private final InventoryDataMongoRepository inventoryDataMongoRepository;
     private final MapObjectRepository mapObjectRepository;
     private final MapDataMongoRepository mapDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
-    private final ChannelTest channelTest; //  리스트 테스트
 
 
     private static final int INVENTORY_CNT = 8;
@@ -76,6 +73,7 @@ public class StartGame {
                     .then(saveMapData(channelId))
                     .then(currentMapRepository.save(channelId, 1))
 //                    .then(initializeSaveInventoryData.process(channelId))
+                    .then(position(channelId))
                     .subscribe();
         });
 
@@ -86,8 +84,7 @@ public class StartGame {
         return channelRepository.findAll(teamCode)
                 .flatMapMany(entries -> Flux.fromIterable(entries.entrySet()))
                 .flatMap(entry -> channelRepository.save(channelId, Long.parseLong(entry.getKey().toString()), Integer.parseInt(entry.getValue().toString()))
-                        .then(channelTest.save(channelId, Long.parseLong(entry.getKey().toString()))))
-                .then(channelRepository.deleteAll(teamCode))
+                .then(channelRepository.deleteAll(teamCode)))
                 .then();
     }
 
@@ -172,5 +169,24 @@ public class StartGame {
                             mapData.setPositions(positions);
                             return mapDataMongoRepository.save(mapData);
                         })).then();
+    }
+
+    private Mono<Void> position(String channelId) {
+        return channelRepository.findAllFields(channelId)
+                .flatMap(field -> {
+                    Long userId = Long.parseLong(String.valueOf(field));
+                    String position = getNewPosition(userId);
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("position", position);
+                    map.put("userId", userId);
+                    map.put("mapId", 1);
+                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
+                }).then();
+    }
+
+    private String getNewPosition(Long userId) {
+        String[] positions = {"1:0:1", "2:0:2", "3:0:3", "1:0:2", "2:0:3", "1:0:3"};
+        int index = Math.abs(userId.hashCode()) % positions.length;
+        return positions[index];
     }
 }
