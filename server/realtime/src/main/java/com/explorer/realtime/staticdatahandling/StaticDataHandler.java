@@ -22,10 +22,6 @@ public class StaticDataHandler {
                 log.info("eventName : {}", eventName);
                 saveStaticDataToMongoDB.process(json).subscribe();
                 break;
-
-            case "saveStaticDataToRedis":
-                log.info("eventName : {}", eventName);
-                break;
         }
 
         return Mono.empty();
