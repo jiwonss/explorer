@@ -1,6 +1,4 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
-
-import com.explorer.realtime.gamedatahandling.farming.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.global.mongo.entity.Laboratory;
 import com.explorer.realtime.global.mongo.repository.LaboratoryDataMongoRepository;
