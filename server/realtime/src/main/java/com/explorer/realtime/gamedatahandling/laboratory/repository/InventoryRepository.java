@@ -66,13 +66,28 @@ public class InventoryRepository {
 
         String itemCategory = info.split(":")[0];
         String itemId = info.split(":")[1];
+        AtomicInteger remainingCnt = new AtomicInteger(cnt);
 
-        return reactiveHashOperations
-                .entries(redisKey)
-                .map(entry -> entry.getValue().toString().split(":"))
-                .filter(items -> items.length > 2 && items[0].equals(itemCategory) && items[1].equals(itemId) && Integer.parseInt(items[2]) >= cnt)
-                .hasElements()
-                .doOnError(error -> log.error("Error checking materials in inventory: {}", error.getMessage()));
+        return reactiveHashOperations.entries(redisKey)
+                .map(entry -> {
+                    String[] parts = entry.getValue().toString().split(":");
+                    return new Object[]{entry.getKey(), parts[0], parts[1], Integer.parseInt(parts[2])};
+                })
+                .filter(items -> items[1].equals(itemCategory) && items[2].equals(itemId))
+                .sort((a, b) -> Integer.compare((int) b[3], (int) a[3])) // itemCnt를 기준으로 내림차순 정렬
+                .collectList()
+                .flatMap(items -> {
+                    for (Object[] item : items) {
+                        log.info("item: {}", item);
+                        if (remainingCnt.get() <= 0) {
+                            return Mono.just(true); // 종료 조건을 만족하면 반복 중단
+                        }
+                        int currentQty = (int) item[3];
+                        remainingCnt.addAndGet(-currentQty);
+                    }
+                    return Mono.just(remainingCnt.get() <= 0); // 남은 수량이 0 이하인지 여부 반환
+                })
+                .doOnError(error -> log.error("Error checking material from inventory: {}", error.getMessage()));
     }
 
     /*
@@ -114,6 +129,6 @@ public class InventoryRepository {
                     return result;
                 })
                 .doOnError(error -> log.error("Error using material from inventory: {}", error.getMessage()))
-                .then(); // Ensure the operation completes
+                .then();
     }
 }
