@@ -52,8 +52,6 @@ public class UseLaboratoryRepository {
      * [연구소를 사용 중인 플레이어 정보 저장]
      * 파라미터 json : channelId, userId, labId
      *
-     *
-     *
      * key:  useLab:{channelId}:{labId}
      * field:  {userId}
      * value:  {nickname}
@@ -84,5 +82,24 @@ public class UseLaboratoryRepository {
         return reactiveHashOperations.get(redisKey, "nickname")
                 .doOnSuccess(nickname -> log.info("Successfully retrieved nickname: {}", nickname))
                 .doOnError(error -> log.error("Error retrieving nickname: {}", error.getMessage()));
+    }
+
+    /*
+     * [연구소를 사용 중인 플레이어 정보 삭제]
+     * 파라미터 json : channelId, userId, labId
+     *
+     * key:  useLab:{channelId}:{labId}
+     * field:  {userId}
+     * value:  {nickname}
+     */
+    public Mono<Void> deletePlayer(JSONObject json) {
+
+        String channelId = json.getString("channelId");
+        int labId = json.getInt("labId");
+        String userId = String.valueOf(json.getLong("userId"));
+
+        String redisKey = KEY_PREFIX + channelId + ":" + labId;
+
+        return reactiveHashOperations.remove(redisKey, userId).then();
     }
 }
