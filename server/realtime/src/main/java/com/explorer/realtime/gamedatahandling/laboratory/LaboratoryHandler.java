@@ -28,6 +28,9 @@ public class LaboratoryHandler {
                 log.info("eventName : {}", eventName);
                 synthesize.process(json).subscribe();
                 break;
+            case "enterLab":
+                log.info("eventName : {}", eventName);
+                break;
         }
         return Mono.empty();
     }
