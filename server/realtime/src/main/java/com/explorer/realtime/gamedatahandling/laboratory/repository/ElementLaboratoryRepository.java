@@ -59,7 +59,7 @@ public class ElementLaboratoryRepository {
                 .defaultIfEmpty(false);
     }
 
-    public Mono<Void> useElement(String channelId, String info, int cnt) {
+    public Mono<Void> useMaterial(String channelId, String info, int cnt) {
         String[] elementInfo = info.split(":");
         String elementKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
         int index = Integer.parseInt(elementInfo[1]);
