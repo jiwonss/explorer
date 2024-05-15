@@ -4,17 +4,22 @@ import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.even
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Multicasting;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomErrorCode;
+import com.explorer.realtime.sessionhandling.waitingroom.exception.WaitingRoomException;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
+
+import java.util.List;
 
 
 @Slf4j
@@ -26,6 +31,7 @@ public class RestartGame {
     private final SessionManager sessionManager;
     private final ChannelRepository channelRepository;
     private final Unicasting unicasting;
+    private final Multicasting multicasting;
     private final LabDataMongoToRedis labDataMongoToRedis;
     private final SetInitialPlayerInfo setInitialPlayerInfo;
     private final InventoryDataMongoToRedis inventoryDataMongoToRedis;
@@ -43,15 +49,41 @@ public class RestartGame {
         return Mono.empty();
     }
 
-    private Mono<Void> createConnectionInfo(String teamCode, UserInfo userInfo, Connection connection) {
+    private Mono<Void> createConnectionInfo(String channelId, UserInfo userInfo, Connection connection) {
         sessionManager.setConnection(userInfo.getUserId(), connection);
-        return channelRepository.save(teamCode, userInfo.getUserId(), 0)
-                .then(setInitialPlayerInfo.process(teamCode, 8))
-                .then( unicasting.unicasting(teamCode,
-                        userInfo.getUserId(),
-                        MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING)))
+        setInitialPlayerInfo.process(channelId, 8).subscribe();
+        return check(channelId)
+                .flatMap(count ->  channelRepository.save(channelId, userInfo.getUserId(), 0)
+                    .then((Mono.defer(() -> multicasting.multicasting(channelId, String.valueOf(userInfo.getUserId()), MessageConverter.convert(Message.success("restartGame", CastingType.MULTICASTING, userInfo))))))
+                        .then(findAllUserInfoByChannelId(channelId, userInfo.getUserId()))
+                    .flatMap(userInfoList ->{
+                        return unicasting.unicasting(channelId, userInfo.getUserId(), MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING, userInfoList)));
+                        })
    );
     }
 
+    private Mono<Long> check(String channelId) {
+        return channelRepository.count(channelId)
+                .flatMap(count -> {
+                    log.info("count {}", count);
+                    return Mono.just(count);
+                });
+    }
+
+    private Mono<List<UserInfo>> findAllUserInfoByChannelId(String channelId, Long userId) {
+        return channelRepository.findAllFields(channelId)
+                .flatMap(id -> {
+                    if (!Long.valueOf(String.valueOf(id)).equals(userId)) {
+                        return userRepository.findAll(Long.valueOf(String.valueOf(id)))
+                                .map(userInfo -> UserInfo.of(
+                                        Long.valueOf(String.valueOf(id)),
+                                        (String) userInfo.get("nickname"),
+                                        Integer.parseInt(String.valueOf(userInfo.get("avatar")))
+                                ));
+                    } else {
+                        return Mono.empty();
+                    }
+                }).collectList();
+    }
 }
 
