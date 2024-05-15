@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.UseLaboratoryRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -22,6 +24,7 @@ public class EnterLab {
 
     private final UseLaboratoryRepository useLaboratoryRepository;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
+    private final LaboratoryLevelRepository laboratoryLevelRepository;
     private final Unicasting unicasting;
 
     public Mono<Void> process(JSONObject json) { // json: channelId, userId, labId
@@ -91,15 +94,24 @@ public class EnterLab {
     private Mono<Map<Object, Object>> getLaboratoryInfo(JSONObject json) {
 
         Map<Object, Object> dataBody = new HashMap<>();
+        String channelId = json.getString("channelId");
+        int labId = json.getInt("labId");
 
-        return Mono.zip(
-                elementLaboratoryRepository.findAllElements(json),  // 연구소 저장 상태 :: element 조회
-                elementLaboratoryRepository.findAllCompounds(json), // 연구소 저장 상태 :: compound 조회
-                (elements, compounds) -> {
-                    dataBody.put("element", elements);
-                    dataBody.put("compound", compounds);
-                    return dataBody;
-                }
+        // 각 항목의 Mono를 생성
+        Mono<List<Integer>> elementsMono = elementLaboratoryRepository.findAllElements(json); // 연구소 저장 상태 :: element 조회
+        Mono<List<Integer>> compoundsMono = elementLaboratoryRepository.findAllCompounds(json); // 연구소 저장 상태 :: compound 조회
+
+        // 모든 Mono를 결합하여 하나의 Map에 저장
+        // elements와 compounds를 먼저 합친 후, labLevel 정보를 추가
+        return Mono.zip(elementsMono, compoundsMono, (elements, compounds) -> {
+            dataBody.put("element", elements);
+            dataBody.put("compound", compounds);
+            return dataBody;
+        }).flatMap(combinedData ->
+                laboratoryLevelRepository.findLabLevel(channelId, labId).map(Object::toString).map(labLevel -> {
+                    combinedData.put("labLevel", labLevel);
+                    return combinedData;
+                })
         );
     }
 
