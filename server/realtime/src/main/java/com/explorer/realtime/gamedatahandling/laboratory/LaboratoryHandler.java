@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.laboratory;
 
+import com.explorer.realtime.gamedatahandling.laboratory.event.EnterLab;
 import com.explorer.realtime.gamedatahandling.laboratory.event.Extract;
 import com.explorer.realtime.gamedatahandling.laboratory.event.Synthesize;
 import lombok.RequiredArgsConstructor;
