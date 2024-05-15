@@ -24,12 +24,10 @@ public class LaboratoryHandler {
         switch (eventName) {
             case "extracting":
                 log.info("eventName : {}", eventName);
-                extract.process(json).subscribe();
-                break;
+                return extract.process(json);
             case "synthesizing":
                 log.info("eventName : {}", eventName);
-                synthesize.process(json).subscribe();
-                break;
+                return synthesize.process(json);
             case "enterLab":
                 log.info("eventName : {}", eventName);
                 return enterLab.process(json);
