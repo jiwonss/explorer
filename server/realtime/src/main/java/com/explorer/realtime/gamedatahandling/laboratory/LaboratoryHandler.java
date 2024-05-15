@@ -21,17 +21,20 @@ public class LaboratoryHandler {
     public Mono<Void> laboratoryHandler(JSONObject json) {
         String eventName = json.getString("eventName");
 
-        switch (eventName) {
-            case "extracting":
+        return switch (eventName) {
+            case "extracting" -> {
                 log.info("eventName : {}", eventName);
-                return extract.process(json);
-            case "synthesizing":
+                yield extract.process(json);
+            }
+            case "synthesizing" -> {
                 log.info("eventName : {}", eventName);
-                return synthesize.process(json);
-            case "enterLab":
+                yield synthesize.process(json);
+            }
+            case "enterLab" -> {
                 log.info("eventName : {}", eventName);
-                return enterLab.process(json);
-        }
-        return Mono.empty();
+                yield enterLab.process(json);
+            }
+            default -> Mono.empty();
+        };
     }
 }
