@@ -40,53 +40,37 @@ public class JoinWaitingRoom {
         log.info("[process] teamCode : {}, userInfo : {}", teamCode, userInfo);
 
         return existByTeamCode(teamCode)
-                .flatMap(isExist -> check(teamCode)
-                        .flatMap(count -> createConnectionInfo(teamCode, userInfo.getUserId(), connection)
-                                .then(userRepository.save(userInfo, teamCode, "0"))
-                                .then(Mono.defer(() -> multicasting.multicasting(
-                                        teamCode,
-                                        String.valueOf(userInfo.getUserId()),
-                                        MessageConverter.convert(Message.success(eventName, CastingType.MULTICASTING, userInfo))
-                                )))
-                                .then(findAllUserInfoByTeamCode(teamCode, userInfo.getUserId()))
-                                .flatMap(userInfoList -> {
-                                    log.info("[process] userInfoList : {}", userInfoList);
-                                    return unicasting.unicasting(
-                                            teamCode,
-                                            userInfo.getUserId(),
-                                            MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, userInfoList))
-                                    );
-                                })
-                                .onErrorResume(WaitingRoomException.class, error -> {
-                                    switch (error.getErrorCode()) {
-                                        case EXIST_USER:
-                                            unicasting.unicasting(
-                                                    connection,
-                                                    userInfo.getUserId(),
-                                                    MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
-                                            ).subscribe();
-                                            return Mono.empty();
-                                        case EXCEEDING_CAPACITY:
-                                            unicasting.unicasting(
-                                                    teamCode,
-                                                    userInfo.getUserId(),
-                                                    MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
-                                            ).subscribe();
-                                            return Mono.empty();
-                                        default:
-                                            return Mono.empty();
-                                    }
-                                })))
+                .flatMap(isExist -> check(teamCode))
+                .flatMap(count -> createConnectionInfo(teamCode, userInfo.getUserId(), connection)
+                        .then(userRepository.save(userInfo, teamCode, "0"))
+                        .then(Mono.defer(() -> multicasting.multicasting(
+                                teamCode,
+                                String.valueOf(userInfo.getUserId()),
+                                MessageConverter.convert(Message.success(eventName, CastingType.MULTICASTING, userInfo))
+                        )))
+                        .then(findAllUserInfoByTeamCode(teamCode, userInfo.getUserId()))
+                        .flatMap(userInfoList -> {
+                            log.info("[process] userInfoList : {}", userInfoList);
+                            return unicasting.unicasting(
+                                    teamCode,
+                                    userInfo.getUserId(),
+                                    MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, userInfoList))
+                            );
+                        })
+                )
                 .onErrorResume(WaitingRoomException.class, error -> {
-                    if (Objects.requireNonNull(error.getErrorCode()) == WaitingRoomErrorCode.NOT_EXIST_TEAMCODE) {
-                        unicasting.unicasting(
-                                connection,
-                                userInfo.getUserId(),
-                                MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
-                        ).subscribe();
-                        return Mono.empty();
-                    }
-                    return Mono.empty();
+                    log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
+                    return switch (error.getErrorCode()) {
+                        case EXIST_USER, EXCEEDING_CAPACITY, NOT_EXIST_TEAMCODE -> {
+                            unicasting.unicasting(
+                                    connection,
+                                    userInfo.getUserId(),
+                                    MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
+                            ).subscribe();
+                            yield Mono.empty();
+                        }
+                        default -> Mono.empty();
+                    };
                 });
     }
 
