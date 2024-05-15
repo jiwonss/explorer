@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.disconnect.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.CurrentMapRepository;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
@@ -40,6 +41,7 @@ public class LeaveGame {
     private final SaveLabDatatest saveLabData;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final LaboratoryDataMongoRepository laboratoryDataMongoRepository;
+    private final CurrentMapRepository currentMapRepository;
 
     public Mono<Void> process(String channelId, Long userId) {
         log.info("Leave game");
@@ -56,7 +58,8 @@ public class LeaveGame {
                     if (count == 1) {
                         log.info("Only one user in channel {}", channelId);
                         return deleteData(channelId, userId)
-                                .then(deleteUserData(channelId, userId));
+                                .then(deleteUserData(channelId, userId))
+                                .then(currentMapRepository.delete(channelId));
 
                     } else {
                         log.info("More than one user in channel {}", channelId);
