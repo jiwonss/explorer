@@ -1,9 +1,11 @@
 package com.explorer.realtime.gamedatahandling.component.common.mapinfo.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.CurrentMapRepository;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.initializing.repository.MapRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -23,6 +23,8 @@ public class AsteroidMapObject {
     private final MapRepository mapRepository;
     private final MapObjectRepository mapObjectRepository;
     private final Broadcasting broadcasting;
+    private final CurrentMapRepository currentMapRepository;
+    private final ChannelRepository channelRepository;
 
 
     public Mono<Void> asteroidMapObject(String channelId) {
@@ -51,7 +53,8 @@ public class AsteroidMapObject {
 
                     mapObjectRepository.saveMapData(channelId, mapId, selectData, itemCategory, itemId)
                             .then(saveSpaceSheep).subscribe();
-
+                    currentMapRepository.save(channelId, mapId).subscribe();
+                    position(channelId).subscribe();
                     return mapObjectRepository.findMapData(channelId, mapId)
                             .flatMap(mapData -> broadcasting.broadcasting(channelId,
                                     MessageConverter.convert(Message.success("asteroidMapObject", CastingType.BROADCASTING, mapData))));
@@ -62,5 +65,25 @@ public class AsteroidMapObject {
         List<String> selectedEntries = new ArrayList<>(positions);
         Collections.shuffle(selectedEntries);  // 리스트를 무작위로 섞음
         return selectedEntries.subList(0, Math.min(selectedEntries.size(), count));  // 랜덤하게 count개의 요소를 선택
+    }
+
+    private Mono<Void> position(String channelId) {
+        return channelRepository.findAllFields(channelId)
+                .flatMap(field -> {
+                    Long userId = Long.parseLong(String.valueOf(field));
+                    String position = getNewPosition(userId);
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("position", position);
+                    map.put("userId", userId);
+                    map.put("mapId", 4);
+
+                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
+                }).then();
+    }
+
+    private String getNewPosition(Long userId) {
+        String[] positions = {"1:0:1", "2:0:2", "3:0:3", "1:0:2", "2:0:3", "1:0:3"};
+        int index = Math.abs(userId.hashCode()) % positions.length;
+        return positions[index];
     }
 }
