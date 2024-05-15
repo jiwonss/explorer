@@ -57,10 +57,6 @@ public class SaveStaticDataTorRedis {
                     return Flux.fromIterable(droppedItemList)
                             .flatMap(item -> droppedItemRepository.save(droppedItem.getCategory(), droppedItem.getId(), item));
                 })
-                .onErrorResume(error -> {
-                    log.error("[saveDroppedItemList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
-                })
                 .then();
     }
 
@@ -71,30 +67,18 @@ public class SaveStaticDataTorRedis {
                     return Flux.fromIterable(materialList)
                             .flatMap(item -> extractionMaterialRepository.save(extractionMaterial.getId(), item));
                 })
-                .onErrorResume(error -> {
-                    log.error("[saveExtractionMaterialList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
-                })
                 .then();
     }
 
     private Mono<Void> saveFarmableCategoryList() {
         return mongoService.findAllFarmableCategory()
                 .flatMap(farmableCategory -> farmableCategoryRepository.save(farmableCategory.getCategory()))
-                .onErrorResume(error -> {
-                    log.error("[saveFarmableCategoryList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
-                })
                 .then();
     }
 
     private Mono<Void> saveLabEfficiencyList() {
         return mongoService.findAllLabEfficiency()
                 .flatMap(labEfficiency -> labEfficiencyRepository.save(labEfficiency.getLevel(), labEfficiency.getEfficiency()))
-                .onErrorResume(error -> {
-                    log.error("[saveLabEfficiencyList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
-                })
                 .then();
     }
 
@@ -104,10 +88,6 @@ public class SaveStaticDataTorRedis {
                     List<ItemInfo> itemList = staticItem.getItemList();
                     return Flux.fromIterable(itemList)
                             .flatMap(item -> staticItemRepository.save(staticItem.getCategory(), item));
-                })
-                .onErrorResume(error -> {
-                    log.error("[saveItemList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
                 })
                 .then();
     }
@@ -119,10 +99,6 @@ public class SaveStaticDataTorRedis {
                     return Flux.fromIterable(materialList)
                             .flatMap(item -> synthesizedMaterialRepository.save(synthesizedMaterial.getId(), item));
                 })
-                .onErrorResume(error -> {
-                    log.error("[saveSynthesizedMaterialList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
-                })
                 .then();
     }
 
@@ -132,10 +108,6 @@ public class SaveStaticDataTorRedis {
                     List<MaterialItemInfo> materialList = upgradeMaterial.getMaterialList();
                     return Flux.fromIterable(materialList)
                             .flatMap(item -> upgradeMaterialRepository.save(upgradeMaterial.getLevel(), item));
-                })
-                .onErrorResume(error -> {
-                    log.error("[saveUpgradeMaterialList] mongoDB에서 데이터를 가져올 수 없습니다.", error);
-                    return Mono.empty();
                 })
                 .then();
     }
