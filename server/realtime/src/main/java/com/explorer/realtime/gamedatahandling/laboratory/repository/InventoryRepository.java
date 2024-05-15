@@ -13,15 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Repository
-public class InventoryRepositoryForLab {
+@Repository("InventoryRepositoryForLab")
+public class InventoryRepository {
     private final ReactiveRedisTemplate<String,Object> stringReactiveRedisTemplate;
-
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
     private static final String KEY_PREFIX = "inventoryData:";
 
-    public InventoryRepositoryForLab(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate) {
+    public InventoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate) {
         this.stringReactiveRedisTemplate = stringReactiveRedisTemplate;
         this.reactiveHashOperations = stringReactiveRedisTemplate.opsForHash();
     }
@@ -54,5 +53,27 @@ public class InventoryRepositoryForLab {
                 .then()
                 .doOnError(error -> log.error("Error deleting fields: {}", error.getMessage()))
                 .doOnSuccess(success -> log.info("Successfully deleted specified fields from {}", redisKey));
+    }
+
+    /*
+     * [인벤토리에 특정 아이템이 있는지 확인]
+     * redis-game의 inventory 데이터 (hash)
+     * key: inventoryData:{channelId}:{userId}
+     * field: {inventoryIdx}
+     * value: {itemCategory}:{itemId}:{itemCnt}:{isFull}
+     */
+    public Mono<Boolean> findMaterial(String channelId, Long userId, String info, int cnt) {
+        String redisKey = KEY_PREFIX + channelId + ":" + userId;
+
+        String itemCategory = info.split(":")[0];
+        String itemId = info.split(":")[1];
+
+        return reactiveHashOperations
+                .entries(redisKey)
+                .map(entry -> entry.getValue().toString().split(":"))
+                .filter(items -> items.length > 2 && items[0].equals(itemCategory) && items[1].equals(itemId) && Integer.parseInt(items[2]) >= cnt)
+                .hasElements()
+                .doOnError(error -> log.error("Error checking materials in inventory: {}", error.getMessage()))
+                .doOnSuccess(hasMaterial -> log.info("Checking material {}:{} in inventory resulted in: {}", itemCategory, itemId, hasMaterial));
     }
 }
