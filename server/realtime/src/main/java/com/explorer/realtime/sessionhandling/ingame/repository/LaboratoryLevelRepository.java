@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 
-@Repository
+@Repository("LaboratoryLevelRepositoryForInitializing")
 public class LaboratoryLevelRepository {
 
     private final ReactiveValueOperations<String, Object> valueOperations;
