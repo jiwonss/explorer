@@ -3,6 +3,7 @@ package com.explorer.realtime.gamedatahandling;
 import com.explorer.realtime.gamedatahandling.component.common.boxinfo.InstallHandler;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.MapDataHandler;
 import com.explorer.realtime.gamedatahandling.craft.CraftHandler;
+import com.explorer.realtime.gamedatahandling.ending.EndingHandler;
 import com.explorer.realtime.gamedatahandling.farming.FarmingHandler;
 import com.explorer.realtime.gamedatahandling.inventory.InventoryHandler;
 import com.explorer.realtime.gamedatahandling.laboratory.LaboratoryHandler;
@@ -27,6 +28,7 @@ public class GameDataHandler {
     private final InventoryHandler inventoryHandler;
     private final ToolHandler toolHandler;
     private final CraftHandler craftHandler;
+    private final EndingHandler endingHandler;
 
     public Mono<Void> gameDataHandler(JSONObject json) {
         String category = json.getString("category");
@@ -49,7 +51,7 @@ public class GameDataHandler {
 
             case "laboratory":
                 log.info("category : {}", category);
-                laboratoryHandler.laboratoryHandler(json);
+                laboratoryHandler.laboratoryHandler(json).subscribe();
                 break;
 
             case "install":
@@ -70,6 +72,11 @@ public class GameDataHandler {
             case "craft":
                 log.info("category : {}", category);
                 craftHandler.craftHandler(json);
+                break;
+
+            case "ending":
+                log.info("category : {}", category);
+                endingHandler.endingHandler(json);
                 break;
         }
 

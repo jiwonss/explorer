@@ -23,14 +23,14 @@ public class LabDataMongoToRedis {
         return elementLaboratoryRepository.exist(channelId)
                 .flatMap(isExist -> {
                     log.info("isExist {}", isExist);
-                    if (!isExist) {
-                        log.info("process start");
-                        mapDataMongoToRedis.process(channelId).subscribe();
-                        return findMongoData(channelId, itemCategory);
-                    }
                     return Mono.empty();
-                });
-
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("process start");
+                    mapDataMongoToRedis.process(channelId).subscribe();
+                    return findMongoData(channelId, itemCategory);
+                }))
+                .then();
     }
 
     private Mono<Void> saveToRedis(String key, List<Integer> itemCntList) {
@@ -41,7 +41,7 @@ public class LabDataMongoToRedis {
         log.info("mongo {}", laboratoryDataMongoRepository.findByChannelIdAndItemCategory(channelId, itemCategory).subscribe());
         return laboratoryDataMongoRepository.findByChannelIdAndItemCategory(channelId, itemCategory)
                 .flatMap(laboratory -> {
-                    String key = "labData" + channelId + ":" + 0 + ":" + itemCategory;
+                    String key = "labData:" + channelId + ":" + 0 + ":" + itemCategory;
                     log.info("dataSave");
                     return saveToRedis(key, laboratory.getItemCnt());
 //                    return Mono.empty();

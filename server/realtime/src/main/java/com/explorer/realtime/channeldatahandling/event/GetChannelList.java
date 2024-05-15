@@ -23,19 +23,20 @@ public class GetChannelList {
     private final Unicasting unicasting;
 
     private static final String TOKEN_PREFIX = "Bearer ";
+    private static final String eventName = "getChannelList";
 
     public Mono<Void> process(JSONObject json, Connection connection) {
         Long userId = json.getLong("userId");
         log.info("[process] userId : {}, connection : {}", userId, connection);
 
-        return channelService.findAllChannelInfoByUserId(userId)
+        return channelService.findAllInProgressChannelInfoByUserId(userId)
                 .doOnNext(channels -> {
                     log.info("[process] channels : {}", channels);
                     unicasting.unicasting(
                             connection,
                             userId,
                             MessageConverter.convert(
-                                    Message.success("getChannelList", CastingType.UNICASTING, channels)
+                                    Message.success(eventName, CastingType.UNICASTING, channels)
                             )
                     ).subscribe();
                 })

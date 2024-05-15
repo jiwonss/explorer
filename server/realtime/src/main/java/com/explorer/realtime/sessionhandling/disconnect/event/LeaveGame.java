@@ -1,5 +1,6 @@
 package com.explorer.realtime.sessionhandling.disconnect.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.CurrentMapRepository;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
@@ -8,11 +9,9 @@ import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.component.session.SessionManager;
-import com.explorer.realtime.global.mongo.entity.Inventory;
-import com.explorer.realtime.global.mongo.entity.InventoryData;
-import com.explorer.realtime.global.mongo.entity.MapData;
-import com.explorer.realtime.global.mongo.entity.PositionData;
+import com.explorer.realtime.global.mongo.entity.*;
 import com.explorer.realtime.global.mongo.repository.InventoryDataMongoRepository;
+import com.explorer.realtime.global.mongo.repository.LaboratoryDataMongoRepository;
 import com.explorer.realtime.global.mongo.repository.MapDataMongoRepository;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
@@ -37,59 +36,40 @@ public class LeaveGame {
     private final Broadcasting broadcasting;
     private final SessionManager sessionManager;
     private final PlayerInfoRepository playerInfoRepository;
-    private final InventoryRepository inventoryInfoRepository;
+    private final InventoryRepository inventoryRepository;
     private final InventoryDataMongoRepository inventoryDataMongoRepository;
-    private final SaveLabData saveLabData;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
+    private final LaboratoryDataMongoRepository laboratoryDataMongoRepository;
+    private final CurrentMapRepository currentMapRepository;
 
     public Mono<Void> process(String channelId, Long userId) {
         log.info("Leave game");
         List<Integer> mapIds = Arrays.asList(1, 2, 3);
         Map<String, String> map = new HashMap<>();
         map.put("userId", String.valueOf(userId));
-        saveInventoryData(channelId, userId).subscribe();
-        saveLabData.process(channelId).subscribe();
 
-        return Flux.fromIterable(mapIds)
-                .flatMap(mapId -> mapObjectRepository.findMapData(channelId, mapId)
-                        .switchIfEmpty(Mono.defer(() -> {
-                            log.warn("No data found");
-                            return Mono.empty();
-                        }))
-                        .doOnNext(data -> log.info("data found for mapId {}: {}", mapId, data))
-                        .doOnError(error -> log.error("error {} : {}", mapId, error))
-                        .flatMap(data -> {
-                            MapData mapData = new MapData();
-                            mapData.setChannelId(channelId);
-                            mapData.setMapId(mapId);
-                            List<PositionData> positions = new ArrayList<>();
-                            log.info("Leave game start {}", positions);
-                            data.forEach((position, value) -> {
-                                String[] parts = value.split(":");
-                                String itemCategory = parts[0];
-                                String isFarmable = parts[1];
-                                Integer itemId = Integer.parseInt(parts[2]);
-                                positions.add(new PositionData(position, itemCategory, isFarmable, itemId));
-                            });
-
-                            mapData.setPositions(positions);
-                            log.info("Leave game end {}", mapData);
-                            return mapDataMongoRepository.save(mapData);
-                        }))
+        return saveInventory(channelId, userId)
+                .then(saveElementData(channelId))
+                .then(saveCompoundData(channelId))
+                .then(saveMapData(channelId))
                 .then(userCount(channelId))
                 .flatMap(count -> {
-                            if (count == 1) {
-                                log.info("Only one user in channel {}", channelId);
-                                deleteData(channelId, userId).subscribe();
-                                deleteUserData(channelId, userId).subscribe();
-                            } else {
-                                log.info("More than one user in channel {}", channelId);
-                                deleteData(channelId, userId).subscribe();
-                                return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("leaveGame", CastingType.BROADCASTING, map)));
-                            }
-                            return Mono.empty();
-                        }
-                );
+                    if (count == 1) {
+                        log.info("Only one user in channel {}", channelId);
+                        return deleteData(channelId, userId)
+                                .then(deleteUserData(channelId, userId))
+                                .then(currentMapRepository.delete(channelId));
+
+                    } else {
+                        log.info("More than one user in channel {}", channelId);
+                        return deleteData(channelId, userId)
+                                .then(broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("leaveGame", CastingType.BROADCASTING, map))));
+
+                    }
+
+                }
+                )
+                .then();
     }
 
     private Mono<Long> userCount(String channelId) {
@@ -97,11 +77,10 @@ public class LeaveGame {
     }
 
     private Mono<Boolean> deleteData(String channelId, Long userId) {
-        playerInfoRepository.deleteUserChannelInfo(channelId, userId).subscribe();
-        userRepository.delete(userId).subscribe();
-        inventoryInfoRepository.deleteUserInventory(channelId, userId).subscribe();
-        channelRepository.deleteByUserId(channelId, userId).subscribe();
-        return Mono.empty();
+        return playerInfoRepository.deleteUserChannelInfo(channelId, userId)
+                        .then(userRepository.delete(userId))
+                                 .then(channelRepository.deleteByUserId(channelId, userId))
+                                        .then(inventoryRepository.deleteUserInventory(channelId, userId));
     }
 
     private Mono<Void> deleteUserData(String channelId, Long userId) {
@@ -112,33 +91,75 @@ public class LeaveGame {
         return Mono.empty();
     }
 
-    private Mono<Boolean> saveInventoryData(String channelId, Long userId) {
-        return inventoryInfoRepository.findInventoryData(channelId, userId)
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("No data found");
-                    return Mono.empty();
-                }))
-                .doOnNext(data -> log.info("data found for mapId {}: {}", channelId, data))
-                .doOnError(error -> log.error("error {} : {}", channelId, error))
-                .flatMap(data -> {
-                    Inventory inventory = new Inventory();
-                    inventory.setChannelId(channelId);
-                    inventory.setUserId(userId);
-                    List<InventoryData> inventoryDataList = new ArrayList<>();
-                    log.info("Leave game start {}", inventoryDataList);
-                    data.forEach((inventoryIdx, value) -> {
-                        String[] parts = value.split(":");
-                        String itemCategory = parts[0];
-                        Integer itemId = Integer.parseInt(parts[1]);
-                        Integer itemCnt = Integer.parseInt(parts[2]);
-                        String isFull = parts[3];
-                        inventoryDataList.add(new InventoryData(Integer.parseInt(inventoryIdx), itemCategory, itemId, itemCnt, isFull));
-                    });
-
-                    inventory.setInventoryData(inventoryDataList);
-                    log.info("Leave game end {}", inventoryDataList);
-                    inventoryDataMongoRepository.save(inventory).subscribe();
-                    return Mono.empty();
+    private Mono<Laboratory> saveElementData(String channelId) {
+        return laboratoryDataMongoRepository.findByChannelIdAndItemCategory(channelId, "element")
+                .flatMap(laboratory -> {
+                    log.info("Id is exist");
+                    return elementLaboratoryRepository.findElementData(channelId)
+                            .flatMap(elements -> {
+                                // 이 시점에서 elements는 실제 데이터 리스트입니다.
+                                log.info("elements {}", elements);
+                                laboratory.setItemCnt(elements);
+                                return laboratoryDataMongoRepository.save(laboratory);
+                            });
                 });
+    }
+
+    private Mono<Laboratory> saveCompoundData(String channelId) {
+        return laboratoryDataMongoRepository.findByChannelIdAndItemCategory(channelId, "compound")
+                .flatMap(laboratory -> {
+                    log.info("Id is exist");
+                    return elementLaboratoryRepository.findCompoundData(channelId)
+                            .flatMap(compounds -> {
+                                // 이 시점에서 elements는 실제 데이터 리스트입니다.
+                                log.info("compound {}", compounds);
+                                laboratory.setItemCnt(compounds);
+                                return laboratoryDataMongoRepository.save(laboratory);
+                            });
+                });
+    }
+
+    private Mono<Void> saveInventory(String channelId, Long userId) {
+        return inventoryDataMongoRepository.findByChannelIdAndUserId(channelId, userId)
+                .flatMap(inventory -> {
+                    return inventoryRepository.findInventoryData(channelId, userId)
+                            .flatMap(data -> {
+                                List<InventoryData> inventoryDataList = new ArrayList<>();
+                                data.forEach((inventoryIdx, value) -> {
+                                    String[] parts = value.split(":");
+                                    String itemCategory = parts[0];
+                                    Integer itemId = Integer.parseInt(parts[1]);
+                                    Integer itemCnt = Integer.parseInt(parts[2]);
+                                    String isFull = parts[3];
+                                    inventoryDataList.add(new InventoryData(Integer.parseInt(inventoryIdx), itemCategory, itemId, itemCnt, isFull));
+                                });
+                                inventory.setInventoryData(inventoryDataList);
+                                return inventoryDataMongoRepository.save(inventory);
+                            });
+
+                })
+                .then();
+    }
+
+    private Mono<Void> saveMapData(String channelId) {
+        List<Integer> mapIds = Arrays.asList(1, 2, 3);
+        return Flux.fromIterable(mapIds)
+                .flatMap(mapId -> mapDataMongoRepository.findByChannelIdAndMapId(channelId, mapId)
+                        .flatMap(mapData -> {
+                            return mapObjectRepository.findMapData(channelId, mapId)
+                                    .flatMap(data -> {
+                                        List<PositionData> positionData = new ArrayList<>();
+                                        data.forEach((position, value) -> {
+                                            String[] parts = value.split(":");
+                                            String itemCategory = parts[0];
+                                            String isFarmable = parts[1];
+                                            Integer itemId = Integer.parseInt(parts[2]);
+                                            positionData.add(new PositionData(position, itemCategory, isFarmable, itemId));
+                                        });
+                                        mapData.setPositions(positionData);
+                                        return mapDataMongoRepository.save(mapData);
+                                    });
+                        }))
+                .then();
     }
 }

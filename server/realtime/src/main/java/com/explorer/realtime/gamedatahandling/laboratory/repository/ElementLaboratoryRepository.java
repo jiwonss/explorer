@@ -152,4 +152,18 @@ public class ElementLaboratoryRepository {
         String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
         return reactiveRedisTemplate.hasKey(elementKey);
     }
+
+    public Mono<List<Integer>> findElementData(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+        return listOperations.range(elementKey, 0, -1)
+                .map(this::convertToInt)
+                .collectList();
+    }
+
+    public Mono<List<Integer>> findCompoundData(String channelId) {
+        String elementKey = KEY_PREFIX+channelId+COMPOUND_SUFFIX;
+        return listOperations.range(elementKey, 0, -1)
+                .map(this::convertToInt)
+                .collectList();
+    }
 }
