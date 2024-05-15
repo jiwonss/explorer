@@ -1,5 +1,6 @@
 package com.explorer.realtime.gamedatahandling.laboratory;
 
+import com.explorer.realtime.gamedatahandling.laboratory.event.EnterLab;
 import com.explorer.realtime.gamedatahandling.laboratory.event.Extract;
 import com.explorer.realtime.gamedatahandling.laboratory.event.Synthesize;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class LaboratoryHandler {
 
     private final Extract extract;
     private final Synthesize synthesize;
+    private final EnterLab enterLab;
 
     public Mono<Void> laboratoryHandler(JSONObject json) {
         String eventName = json.getString("eventName");
@@ -30,7 +32,7 @@ public class LaboratoryHandler {
                 break;
             case "enterLab":
                 log.info("eventName : {}", eventName);
-                break;
+                return enterLab.process(json);
         }
         return Mono.empty();
     }
