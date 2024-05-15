@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Repository("InventoryRepositoryForLab")
@@ -29,7 +30,6 @@ public class InventoryRepository {
      * [특정 플레이어의 인벤토리를 반환한다]
      */
     public Mono<Map<Object, Object>> findAll(UserInfo userInfo) {
-        log.info("InventoryRepositoryForLab findAll : {}", KEY_PREFIX + userInfo.getChannelId() + ":" + userInfo.getUserId());
         return reactiveHashOperations
                 .entries(KEY_PREFIX + userInfo.getChannelId() + ":" + userInfo.getUserId())
                 .collectMap(Map.Entry::getKey, Map.Entry::getValue)
@@ -51,8 +51,7 @@ public class InventoryRepository {
                 .filter(entry -> hasItemInventoryIds.contains(entry.getKey().toString()))
                 .flatMap(entry -> reactiveHashOperations.remove(redisKey, entry.getKey()))
                 .then()
-                .doOnError(error -> log.error("Error deleting fields: {}", error.getMessage()))
-                .doOnSuccess(success -> log.info("Successfully deleted specified fields from {}", redisKey));
+                .doOnError(error -> log.error("Error deleting fields: {}", error.getMessage()));
     }
 
     /*
@@ -73,7 +72,48 @@ public class InventoryRepository {
                 .map(entry -> entry.getValue().toString().split(":"))
                 .filter(items -> items.length > 2 && items[0].equals(itemCategory) && items[1].equals(itemId) && Integer.parseInt(items[2]) >= cnt)
                 .hasElements()
-                .doOnError(error -> log.error("Error checking materials in inventory: {}", error.getMessage()))
-                .doOnSuccess(hasMaterial -> log.info("Checking material {}:{} in inventory resulted in: {}", itemCategory, itemId, hasMaterial));
+                .doOnError(error -> log.error("Error checking materials in inventory: {}", error.getMessage()));
+    }
+
+    /*
+     * [인벤토리에서 필요한 재료 소진]
+     * redis-game의 inventory 데이터 (hash)
+     * key: inventoryData:{channelId}:{userId}
+     * field: {inventoryIdx}
+     * value: {itemCategory}:{itemId}:{itemCnt}:{isFull}
+     */
+    public Mono<Void> useMaterial(String channelId, Long userId, String info, int cnt) {
+        String redisKey = KEY_PREFIX + channelId + ":" + userId;
+        String itemCategory = info.split(":")[0];
+        String itemId = info.split(":")[1];
+        AtomicInteger remainingCnt = new AtomicInteger(cnt);
+
+        return reactiveHashOperations.entries(redisKey)
+                .map(entry -> {
+                    String[] parts = entry.getValue().toString().split(":");
+                    return new Object[]{entry.getKey(), parts[0], parts[1], Integer.parseInt(parts[2])};
+                })
+                .filter(items -> items[1].equals(itemCategory) && items[2].equals(itemId) && (int) items[3] >= 0)
+                .sort((a, b) -> Integer.compare((int) b[3], (int) a[3])) // itemCnt를 기준으로 내림차순 정렬
+                .collectList()
+                .flatMap(items -> {
+                    Mono<Void> result = Mono.empty();
+                    for (Object[] item : items) {
+                        if (remainingCnt.get() <= 0) break; // 재료 모두 사용
+                        int currentQty = (int) item[3];
+                        if (currentQty > remainingCnt.get()) {
+                            // 인벤토리에서 아이템 개수 감소
+                            result = result.then(reactiveHashOperations.put(redisKey, item[0], item[1] + ":" + item[2] + ":" + (currentQty - remainingCnt.get()) + ":" + item[4]).then());
+                            remainingCnt.set(0);
+                        } else {
+                            // 아이템 완전히 제거
+                            result = result.then(reactiveHashOperations.remove(redisKey, item[0]).then());
+                            remainingCnt.addAndGet(-currentQty);
+                        }
+                    }
+                    return result;
+                })
+                .doOnError(error -> log.error("Error using material from inventory: {}", error.getMessage()))
+                .then(); // Ensure the operation completes
     }
 }
