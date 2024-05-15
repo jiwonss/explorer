@@ -30,6 +30,7 @@ public class GetMaterials {
             int labId = json.getInt("labId");
             int labLevel = json.getInt("labLevel");
 
+            // redis-staticgame에서 labLevel -> labLevel+1 로 upgrade하기 위한 재료 조회
             return upgradeMaterialRepository.findAll(labId, labLevel+1)
                     .flatMapMany(map -> Flux.fromIterable(map.entrySet())
                             .doOnNext(entry -> {
@@ -38,7 +39,7 @@ public class GetMaterials {
                     )
                     .then(Mono.fromCallable(() -> {
                         log.info("responseJson: {}", responseJson);
-                        return responseJson.toString();
+                        return responseJson.toString(); // realtime 서버에 upgrade 재료 데이터 전송
                     }));
 
         } catch (Exception e) {
