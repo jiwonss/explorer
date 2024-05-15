@@ -4,9 +4,7 @@ import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repositor
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
-import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
-import com.explorer.realtime.initializing.repository.PlayerPositionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
