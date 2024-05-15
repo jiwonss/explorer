@@ -35,14 +35,16 @@ public class Synthesize {
     private String synthesizeUrl;
 
 
+    /*
+     * 파라미터
+     * JSONObject json : {"userId":{userId}, "channelId":{channelId}, "itemCategory" : {itemCategory}, "itemId" : {itemId}}
+     */
     public Mono<Void> process(JSONObject json) {
 
         UserInfo userInfo = UserInfo.of(json);
 
         return requestElementsForSynthesize(json) // Logic 서버에 합성에 필요한 element 데이터 요청
-                .doOnNext(response -> {
-                    checkElementsInLaboratory(response, userInfo, json).subscribe();  // 현재 원소 연구소에 element가 있는지 조회
-                })
+                .flatMap(response -> checkElementsInLaboratory(response, userInfo, json))  // 현재 원소 연구소에 element가 있는지 조회
                 .then();
     }
 
@@ -88,42 +90,46 @@ public class Synthesize {
                 .flatMap(key ->
                         elementLaboratoryRepository.findElement(userInfo.getChannelId(), key, responseJson.optInt(key, 0))
                                 .flatMap(found -> {
+                                    log.info("Key: {}, Required Count: {}, Found: {}", key, responseJson.optInt(key, 0), found);
+
                                     // 특정 원소가 연구소에 없는 경우
                                     if (!found) {
-                                        log.info("Fail: Key {} with required count {} is not sufficient", key, responseJson.optInt(key, 0));
+                                        log.warn("Fail: Key {} with required count {} is not sufficient", key, responseJson.optInt(key, 0));
 
                                         Map<String, String> dataBody = new HashMap<>();
                                         dataBody.put("msg", "noItem");
 
                                         // [Unicasting] 합성 실패 : 재료 부족
-                                        unicasting.unicasting(
+                                        return unicasting.unicasting(
                                                 userInfo.getChannelId(), userInfo.getUserId(),
-                                                MessageConverter.convert(Message.fail("synthesizing", CastingType.UNICASTING, dataBody))).subscribe();
+                                                MessageConverter.convert(Message.fail("synthesizing", CastingType.UNICASTING, dataBody)))
+                                                .then(Mono.just(false));
 
-                                        return Mono.error(new IllegalStateException("Insufficient elements"));
+//                                        return Mono.error(new IllegalStateException("Insufficient elements"));
                                     }
                                     return Mono.just(true);
                                 })
                 )
-                .then()
-                // 합성에 필요한 모든 원소가 있는 경우
-                .doOnSuccess(unused -> {
-                    log.info("Success: All elements are sufficient");
-                    // 1) 사용한 원소 : redis-game에 연구소-원소 저장 상태 update
-                    Mono<Void> useElements = useElementsInLaboratory(responseJson, userInfo);
+                .collectList() // Collect all results to ensure all elements are checked
+                .flatMap(results -> {
+                    // 모든 요소가 충분한 경우
+                    if (results.contains(Boolean.FALSE)) {
+                        // 요소가 충분하지 않으면 Mono.empty()를 반환
+                        return Mono.empty();
+                    } else {
+                        log.info("Success: All elements are sufficient");
 
-                    // 2) 생성한 화합물 : redis-game에 연구소-compound 상태 update
-                    Mono<Void> createCompound = createCompoundInLaboratory(json);
+                        Mono<Void> useElements = useElementsInLaboratory(responseJson, userInfo);
 
-                    // 3) 연구소 상태 broadcasting
-                    Mono.when(useElements, createCompound)
-                            .doOnSuccess(done -> {
-                                broadcastingLaboratory(json).subscribe();
-                            })
-                            .subscribe();
+                        // 2) 생성한 화합물 : redis-game에 연구소-compound 상태 update
+                        Mono<Void> createCompound = createCompoundInLaboratory(json);
+
+                        return Mono.when(useElements, createCompound)
+                                .then(broadcastingLaboratory(json));
+                    }
                 })
                 .onErrorResume(e -> {
-                    log.info("Failure: Some elements are not sufficient");
+                    log.error("Failure: check Elements In Laboratory for Synthesize", e);
                     return Mono.empty();
                 });
     }
@@ -137,7 +143,6 @@ public class Synthesize {
      *  - 타입 : Mono<Void>
      */
     private Mono<Void> useElementsInLaboratory(JSONObject json, UserInfo userInfo) {
-        log.info("json:{}, userInfo:{}", json, userInfo);
 
         return Flux.fromIterable(json.keySet())
                 .flatMap(key ->
