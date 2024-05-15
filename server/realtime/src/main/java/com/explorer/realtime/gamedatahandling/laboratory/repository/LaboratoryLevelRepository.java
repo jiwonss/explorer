@@ -51,10 +51,9 @@ public class LaboratoryLevelRepository {
         // Get the current level from Redis, increment it, and save it back
         return reactiveValueOperations
                 .get(redisKey)
-                .defaultIfEmpty("0") // If there's no current level, start from "0"
+                .defaultIfEmpty("0")  // 기본값 : 0 (레벨이 없는 경우)
                 .map(value -> Integer.parseInt(value.toString()))
-                .flatMap(level -> reactiveValueOperations.set(redisKey, level+1)) // Save the new level back to Redis
-                .then(); // Return an empty Mono<Void> to signal completion
+                .flatMap(level -> reactiveValueOperations.set(redisKey, level + 1)) // 레벨 1 증가시키고 저장
+                .then();
     }
-
 }
