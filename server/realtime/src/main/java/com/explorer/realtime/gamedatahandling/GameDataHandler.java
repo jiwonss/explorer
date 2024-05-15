@@ -51,8 +51,7 @@ public class GameDataHandler {
 
             case "laboratory":
                 log.info("category : {}", category);
-                laboratoryHandler.laboratoryHandler(json);
-                break;
+                return laboratoryHandler.laboratoryHandler(json);
 
             case "install":
                 log.info("category : {}", category);
