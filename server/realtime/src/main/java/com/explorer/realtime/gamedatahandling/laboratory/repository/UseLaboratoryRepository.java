@@ -19,6 +19,7 @@ public class UseLaboratoryRepository {
     private final ReactiveHashOperations<String, Object, Object> reactiveHashOperations;
 
     private static final String KEY_PREFIX = "useLab:";
+    private static final String PLAYERINFO_KEY_PREFIX = "playerInfoData:";
 
     public UseLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> stringReactiveRedisTemplate) {
         this.stringReactiveRedisTemplate = stringReactiveRedisTemplate;
@@ -47,4 +48,41 @@ public class UseLaboratoryRepository {
                 .doOnError(error -> log.error("FAIL to find players using a {} laboratory: {}", labId, error.getMessage()));
     }
 
+    /*
+     * [연구소를 사용 중인 플레이어 정보 저장]
+     * 파라미터 json : channelId, userId, labId
+     *
+     *
+     *
+     * key:  useLab:{channelId}:{labId}
+     * field:  {userId}
+     * value:  {nickname}
+     */
+    public Mono<Void> savePlayer(JSONObject json, String nickname) {
+
+        String channelId = json.getString("channelId");
+        int labId = json.getInt("labId");
+        Long userId = json.getLong("userId");
+
+        String redisKey = KEY_PREFIX + channelId + ":" + labId;
+
+        return reactiveHashOperations.put(redisKey, userId.toString(), nickname).then();
+    }
+
+    /*
+     * [플레이어의 nickname 조회]
+     * key: playerInfoData:{channelId}:{userId}
+     * value:
+     */
+    public Mono<Object> getNickname(JSONObject json) {
+
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+
+        String redisKey = PLAYERINFO_KEY_PREFIX + channelId + ":" + userId;
+
+        return reactiveHashOperations.get(redisKey, "nickname")
+                .doOnSuccess(nickname -> log.info("Successfully retrieved nickname: {}", nickname))
+                .doOnError(error -> log.error("Error retrieving nickname: {}", error.getMessage()));
+    }
 }
