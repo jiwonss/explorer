@@ -38,7 +38,6 @@ public class LeaveGame {
     private final PlayerInfoRepository playerInfoRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryDataMongoRepository inventoryDataMongoRepository;
-    private final SaveLabDatatest saveLabData;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final LaboratoryDataMongoRepository laboratoryDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
