@@ -1,6 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
@@ -30,18 +31,29 @@ public class LaboratoryLevelRepository {
      * value: {level}
      */
     public Mono<Object> findLabLevel(String channelId, int labId) {
-        log.info("find {} Lab LEVEL", labId);
         String redisKey = KEY_PREFIX + channelId + ":" + labId;
         return reactiveValueOperations.get(redisKey)
-                .doOnSuccess(value -> {
-                    if (value != null) {
-                        log.info("Found LabLevel for channel {} : {}", channelId, value);
-                    } else {
-                        log.warn("No LabLevel for channel {}", channelId);
-                    }
-                })
                 .doOnError(error -> log.error("Failed to find LabLevel for channel {}", channelId, error));
 
     }
 
+    /*
+     * [연구소 레벨업]
+     * 연구소 레벨 데이터
+     * key : labLevel:{channelId}:{labId}
+     * value: {level}
+     */
+    public Mono<Void> incLabLevel(JSONObject json) {
+        String channelId = json.getString("channelId");
+        int labId = json.getInt("labId");
+        String redisKey = KEY_PREFIX + channelId + ":" + labId;
+
+        // Get the current level from Redis, increment it, and save it back
+        return reactiveValueOperations
+                .get(redisKey)
+                .defaultIfEmpty("0")  // 기본값 : 0 (레벨이 없는 경우)
+                .map(value -> Integer.parseInt(value.toString()))
+                .flatMap(level -> reactiveValueOperations.set(redisKey, level + 1)) // 레벨 1 증가시키고 저장
+                .then();
+    }
 }

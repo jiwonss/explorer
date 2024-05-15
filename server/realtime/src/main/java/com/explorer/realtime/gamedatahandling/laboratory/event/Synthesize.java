@@ -88,7 +88,7 @@ public class Synthesize {
         // 합성에 필요한 재료 하나씩 원소 연구소에 있는지 확인
         return Flux.fromIterable(responseJson.keySet())
                 .flatMap(key ->
-                        elementLaboratoryRepository.findElement(userInfo.getChannelId(), key, responseJson.optInt(key, 0))
+                        elementLaboratoryRepository.findMaterial(userInfo.getChannelId(), key, responseJson.optInt(key, 0))
                                 .flatMap(found -> {
                                     log.info("Key: {}, Required Count: {}, Found: {}", key, responseJson.optInt(key, 0), found);
 
@@ -146,7 +146,7 @@ public class Synthesize {
 
         return Flux.fromIterable(json.keySet())
                 .flatMap(key ->
-                        elementLaboratoryRepository.useElement(userInfo.getChannelId(), key, json.optInt(key, 0))
+                        elementLaboratoryRepository.useMaterial(userInfo.getChannelId(), key, json.optInt(key, 0))
                 )
                 .then();
     }
