@@ -1,5 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
+import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
@@ -11,9 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -25,6 +30,8 @@ public class Upgrade {
     private String upgradeUrl;
 
     private final LaboratoryLevelRepository laboratoryLevelRepository;
+    private final ElementLaboratoryRepository elementLaboratoryRepository;
+    private final InventoryRepository inventoryRepository;
     private final Unicasting unicasting;
     private final ToLogicServer toLogicServer;
 
@@ -32,12 +39,20 @@ public class Upgrade {
 
         return checkLabLevel(json)                                                  // 1) 연구소 레벨 조회
                 .flatMap(labLevel -> {
-                    if (labLevel<0 || labLevel>=3) {                                      // 2-1) 업그레이드 불가능한 레벨인 경우
+                    if (labLevel<0 || labLevel>=3) {                                // 2-1) 업그레이드 불가능한 레벨인 경우
                         return unicastingFailData(json, "cannotUpdate");
                     } else {                                                        // 2-2) 업그레이드 가능한 레벨인 경우
                         return requestMaterialsForUpgrade(json, labLevel)
-                                .doOnNext(response -> log.info("Logic Server Response: {}", response))
-                                .then();
+                                .flatMap(response -> hasRequiredMaterials(json, response))
+                                .flatMap(hasMaterials -> {
+                                    if (!hasMaterials) {
+                                        // 재료 부족으로 인한 실패 처리
+                                        return unicastingFailData(json, "noItem");
+                                    } else {
+                                        // 재료가 충분한 경우 성공 로직 처리 (예시)
+                                        return Mono.fromRunnable(() -> log.info("Upgrade can proceed."));
+                                    }
+                                });
                     }
                 });
     }
@@ -106,6 +121,44 @@ public class Upgrade {
                         sink.error(error);
                     });
         });
+    }
+
+    /*
+     * [upgrade 재료가 있는지 확인]
+     * 파리미터 : json
+     * - 값 :  { ..., channelId, userId, labId }
+     *
+     *  파라미터 : MaterialList
+     *  - 값 :  { {itemCategory}:{itemId} : {itemCnt}, {itemCategory}:{itemId} : {itemCnt}, .... }
+     */
+    private Mono<Boolean> hasRequiredMaterials(JSONObject json, String materialList) {
+
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+        JSONObject materialListJson = new JSONObject(materialList);
+        List<Mono<Boolean>> checks = new ArrayList<>();
+
+        materialListJson.keys().forEachRemaining(key -> {
+            String itemCategory = key.split(":")[0];
+            int itemCnt = Integer.parseInt(materialListJson.get(key).toString());
+            switch (itemCategory) {
+                // 재료가 연구소의 element/compound 인 경우
+                case "element":
+                case "compound":
+                    checks.add(elementLaboratoryRepository.findMaterial(channelId, key, itemCnt));
+                    break;
+                // 재료가 인벤토리에 있는 아이템인 경우
+                default:
+                    checks.add(inventoryRepository.findMaterial(channelId, userId, key, itemCnt));
+                    break;
+            }
+        });
+
+        // 모든 재료가 충분한지 여부를 확인
+        return Flux.merge(checks)
+                .all(result -> result) // 모든 결과가 true인 경우에만 true 반환
+                .doOnError(error -> log.error("[ERROR] checking materials : {}", error.getMessage()))
+                .doOnSuccess(success -> log.info("[SUCCESS] Checking material {}", success));
     }
 
     /*
