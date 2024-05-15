@@ -61,33 +61,25 @@ public class GetItemFromMap {
                 .flatMap(result -> {
                     log.info("[process] result : {}", result);
 
-                    mapInfoRepository.deleteByPosition(channelId, mapId, position).subscribe();
-
-                    unicasting.unicasting(
-                            channelId,
-                            userId,
-                            MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, result))
-                    ).subscribe();
-
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("position", position);
-
-                    broadcasting.broadcasting(
-                            channelId,
-                            MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, map))
-                    ).subscribe();
-                    return Mono.empty();
+                    return mapInfoRepository.deleteByPosition(channelId, mapId, position)
+                            .then(unicasting.unicasting(
+                                    channelId,
+                                    userId,
+                                    MessageConverter.convert(Message.success(eventName, CastingType.UNICASTING, result))
+                            ))
+                            .then(broadcasting.broadcasting(
+                                    channelId,
+                                    MessageConverter.convert(Message.success(eventName, CastingType.BROADCASTING, Map.of("position", position)))
+                            ));
                 })
                 .onErrorResume(FarmingException.class, error -> {
                     log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
-                    unicasting.unicasting(
+                    return unicasting.unicasting(
                             channelId,
                             userId,
                             MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
-                    ).subscribe();
-                    return Mono.empty();
-                })
-                .then();
+                    ).then();
+                });
     }
 
     private Mono<Map<String, Object>> getItemInfoByPosition(String channelId, int mapId, String position) {
