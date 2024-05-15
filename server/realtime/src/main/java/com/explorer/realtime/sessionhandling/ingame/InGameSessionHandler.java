@@ -47,7 +47,8 @@ public class InGameSessionHandler {
 
             case "broadcastPosition":
                 log.info("broadcastPosition");
-                return ingameBroadcastPosition.process(json);
+                ingameBroadcastPosition.process(json).subscribe();
+                return Mono.empty();
         }
 
         return Mono.empty();
