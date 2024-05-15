@@ -1,6 +1,6 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
-import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryLevelRepository;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
@@ -24,7 +24,7 @@ public class Upgrade {
     @Value("${logic.laboratory.upgrade-url}")
     private String upgradeUrl;
 
-    private final InventoryLevelRepository inventoryLevelRepository;
+    private final LaboratoryLevelRepository laboratoryLevelRepository;
     private final Unicasting unicasting;
     private final ToLogicServer toLogicServer;
 
@@ -60,7 +60,7 @@ public class Upgrade {
     private Mono<Integer> checkLabLevel(JSONObject json) {
         String channelId = json.getString("channelId");
         int labId = json.getInt("labId");
-        return inventoryLevelRepository.findLabLevel(channelId, labId)
+        return laboratoryLevelRepository.findLabLevel(channelId, labId)
                 .map(levelStr -> {
                     try {
                         return Integer.parseInt(levelStr.toString());
