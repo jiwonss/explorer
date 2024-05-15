@@ -146,7 +146,7 @@ public class Synthesize {
 
         return Flux.fromIterable(json.keySet())
                 .flatMap(key ->
-                        elementLaboratoryRepository.useElement(userInfo.getChannelId(), key, json.optInt(key, 0))
+                        elementLaboratoryRepository.useMaterial(userInfo.getChannelId(), key, json.optInt(key, 0))
                 )
                 .then();
     }
