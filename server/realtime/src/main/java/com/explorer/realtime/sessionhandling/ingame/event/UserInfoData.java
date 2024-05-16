@@ -4,7 +4,6 @@ import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.r
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
-import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.mongo.entity.Inventory;
 import com.explorer.realtime.global.mongo.entity.InventoryData;
 import com.explorer.realtime.global.mongo.repository.InventoryDataMongoRepository;
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.netty.Connection;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,13 +30,14 @@ public class UserInfoData {
     private final InventoryDataMongoRepository inventoryDataMongoRepository;
     private final UserRepository userRepository;
     private final Unicasting unicasting;
-    private final SessionManager sessionManager;
+    private final ChannelRepository channelRepository;
 
-    public Mono<Void> process(JSONObject json, Connection connection) {
+    public Mono<Void> process(JSONObject json) {
         String channelId = json.getString("channelId");
         Long userId = json.getLong("userId");
+        Integer mapId = json.getInt("mapId");
         saveInventory(channelId, userId).subscribe();
-        position(channelId, userId, connection).subscribe();
+        positions(channelId, userId, mapId).subscribe();
         return Mono.empty();
     }
 
@@ -64,20 +63,30 @@ public class UserInfoData {
                 });
     }
 
-    private Mono<Void> position(String channelId, Long userId, Connection connection) {
-        sessionManager.setConnection(userId, connection);
-        String position = getNewPosition(userId);
-        return userRepository.findAvatarAndNickname(userId)
-                .map(userDetail -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("userId", userId);
-                    map.put("mapId", 1);
-                    map.put("nickname", userDetail.get("nickname"));
-                    map.put("avatar", userDetail.get("avatar"));
-                    map.put("position", position);
-                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("getUserPosition", CastingType.UNICASTING, map))).subscribe();
+    private Mono<Void> positions(String channelId, Long userId, Integer mapId) {
+        return channelRepository.findAllFields(channelId)
+                .flatMap(field -> {
+                    Long userIds = Long.parseLong(String.valueOf(field));
+                    String position = getNewPosition(userIds);
+
+                    return userRepository.findAvatarAndNickname(userIds)
+                            .flatMap(userDetail -> {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("position", position);
+                                map.put("userId", userIds);
+                                map.put("mapId", mapId);
+                                map.put("nickname", userDetail.get("nickname"));
+                                map.put("avatar", userDetail.get("avatar"));
+                                return Mono.just(map);
+                            });
+                })
+                .collectList()
+                .flatMap(allUsers -> {
+                    Map<String, Object> unicastMap = new HashMap<>();
+                    unicastMap.put("positions", allUsers);
+                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("getUserPosition", CastingType.UNICASTING, unicastMap))).subscribe();
                     return Mono.empty();
-                }).then();
+                });
     }
 
     private String getNewPosition(Long userId) {
