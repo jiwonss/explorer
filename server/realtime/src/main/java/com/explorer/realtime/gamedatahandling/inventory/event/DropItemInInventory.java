@@ -64,13 +64,13 @@ public class DropItemInInventory {
                     int result = inventoryInfo.getItemCnt() - 1;
                     if (result <= 0) {
                         return inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdx)
-                                .then(mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId, 1))
+                                .then(mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId, 0))
                                 .then(unicasting(channelId, userId, InventoryInfo.ofString(inventoryIdx, "")))
                                 .then(broadcasting(channelId, position, ItemInfo.of(itemCategory, itemId)));
                     } else {
                         inventoryInfo.setItemCnt(result);
                         return inventoryRepository.save(channelId, userId, inventoryInfo)
-                                .then(mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId,1))
+                                .then(mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId,result))
                                 .then(unicasting(channelId, userId, inventoryInfo))
                                 .then(broadcasting(channelId, position, ItemInfo.of(itemCategory, itemId)));
                     }
