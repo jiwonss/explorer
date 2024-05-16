@@ -56,8 +56,10 @@ public class FindUserData {
                     }
                 }).collectList()
                 .flatMap(userInfoList -> {
+                    Map<String, Object> unicastMap = new HashMap<>();
+                    unicastMap.put("positions", userInfoList);
                     log.info("userInfo {}", userInfoList);
-                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("ingameUserInfo", CastingType.UNICASTING, userInfoList))).subscribe();
+                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("ingameUserInfo", CastingType.UNICASTING, unicastMap))).subscribe();
                     return Mono.empty();
                 });
     }
