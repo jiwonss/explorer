@@ -1,6 +1,5 @@
 package com.explorer.realtime.gamedatahandling.farming.event;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.FarmingItemInfo;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
