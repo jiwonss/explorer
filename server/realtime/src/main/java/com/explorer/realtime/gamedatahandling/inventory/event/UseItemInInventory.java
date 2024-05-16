@@ -3,6 +3,8 @@ package com.explorer.realtime.gamedatahandling.inventory.event;
 import com.explorer.realtime.gamedatahandling.component.common.boxinfo.dto.InventoryItemInfo;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
+import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryErrorCode;
+import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryException;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
@@ -33,8 +35,12 @@ public class UseItemInInventory {
         log.info("[process] channelId : {}, userId : {}, inventoryIdx : {}", channelId, userId, inventoryIdx);
 
         return inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdx)
-                .flatMap(itemInfo -> {
-                    InventoryInfo inventoryInfo = InventoryInfo.ofString(inventoryIdx, String.valueOf(itemInfo));
+                .flatMap(inventory -> {
+                    if (String.valueOf(inventory).isEmpty()) {
+                        return Mono.error(new InventoryException(InventoryErrorCode.EMPTY_INVENTORY));
+                    }
+
+                    InventoryInfo inventoryInfo = InventoryInfo.ofString(inventoryIdx, String.valueOf(inventory));
                     log.info("[process] inventoryInfo : {}", inventoryInfo);
 
                     int result = inventoryInfo.getItemCnt() - 1;
@@ -61,7 +67,16 @@ public class UseItemInInventory {
                                     ).then();
                                 });
                     }
-                });
+                })
+                .onErrorResume(InventoryException.class, error -> {
+                    log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
+                    unicasting.unicasting(
+                            channelId,
+                            userId,
+                            MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
+                    ).subscribe();
+                    return Mono.empty();
+                }).then();
     }
 
 }
