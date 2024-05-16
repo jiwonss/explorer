@@ -1,6 +1,5 @@
 package com.explorer.realtime.gamedatahandling.laboratory.event;
 
-import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.LaboratoryLevelRepository;
@@ -217,7 +216,6 @@ public class Upgrade {
         Map<Object, Object> dataBody = new HashMap<>();
         String channelId = json.getString("channelId");
         int labId = json.getInt("labId");
-        UserInfo userInfo = UserInfo.of(json);
 
         // 각 항목의 Mono를 생성
         Mono<List<Integer>> elementsMono = elementLaboratoryRepository.findAllElements(json); // 연구소 저장 상태 :: element 조회
@@ -236,7 +234,7 @@ public class Upgrade {
                     return combinedData;
                 }))
                 .flatMap(combinedData ->
-                        inventoryRepository.findAll(userInfo).map(inventoryInfo -> {
+                        inventoryRepository.findAll(json).map(inventoryInfo -> {
                             combinedData.put("inventoryData", inventoryInfo);
                             return combinedData;
                         })
