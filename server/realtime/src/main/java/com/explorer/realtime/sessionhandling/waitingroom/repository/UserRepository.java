@@ -7,6 +7,9 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -44,5 +47,18 @@ public class UserRepository {
                 reactiveHashOperations.put(KEY_PREFIX + userId, "channelId", channelId),
                 reactiveHashOperations.put(KEY_PREFIX + userId, "mapId", mapId)
         ).then();
+    }
+
+    public Mono<Map<String, String >> findAvatarAndNickname(Long userId) {
+        List<Object> fields = Arrays.<Object>asList("nickname", "avatar");
+        return reactiveHashOperations.multiGet(KEY_PREFIX + userId, fields)
+                .map(values -> {
+                    Map<String, String> userDetails = new HashMap<>();
+                    if (values.size() == fields.size()) {
+                        userDetails.put("nickname", String.valueOf(values.get(0)));
+                        userDetails.put("avatar", String.valueOf(values.get(1)));
+                    }
+                    return userDetails;
+                });
     }
 }
