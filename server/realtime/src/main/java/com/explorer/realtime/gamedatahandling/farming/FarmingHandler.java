@@ -2,7 +2,7 @@ package com.explorer.realtime.gamedatahandling.farming;
 
 import com.explorer.realtime.gamedatahandling.farming.event.Farm;
 import com.explorer.realtime.gamedatahandling.farming.event.GetItemFromMap;
-import com.explorer.realtime.gamedatahandling.farming.event.ItemDropped;
+import com.explorer.realtime.gamedatahandling.farming.event.DropItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -16,7 +16,7 @@ public class FarmingHandler {
 
     private final GetItemFromMap getItemFromMap;
     private final Farm farm;
-    private final ItemDropped itemDropped;
+    private final DropItem dropItem;
 
     public Mono<Void> farmingHandler(JSONObject json) {
         String eventName = json.getString("eventName");
@@ -30,9 +30,9 @@ public class FarmingHandler {
                 log.info("eventName : {}", eventName);
                 farm.process(json).subscribe();
                 break;
-            case "itemDropped":
+            case "dropItem":
                 log.info("eventName : {}", eventName);
-                itemDropped.process(json).subscribe();
+                dropItem.process(json).subscribe();
                 break;
         }
 
