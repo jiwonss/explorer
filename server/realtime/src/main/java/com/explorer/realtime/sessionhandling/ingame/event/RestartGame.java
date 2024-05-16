@@ -1,5 +1,7 @@
 package com.explorer.realtime.sessionhandling.ingame.event;
 
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.CurrentMapRepository;
+import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repository.MapObjectRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.event.SetInitialPlayerInfo;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.global.common.dto.Message;
@@ -19,7 +21,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -35,6 +39,8 @@ public class RestartGame {
     private final LabDataMongoToRedis labDataMongoToRedis;
     private final SetInitialPlayerInfo setInitialPlayerInfo;
     private final InventoryDataMongoToRedis inventoryDataMongoToRedis;
+    private final MapObjectRepository mapObjectRepository;
+    private final CurrentMapRepository currentMapRepository;
 
     public Mono<Void> process(String channelId, UserInfo userInfo, Connection connection) {
         // 사용자 정보를 Redis에 저장
@@ -45,45 +51,37 @@ public class RestartGame {
         inventoryDataMongoToRedis.process(channelId, userInfo.getUserId()).subscribe();
         createConnectionInfo(channelId, userInfo, connection).subscribe();
         userRepository.save(userInfo, channelId, "1").subscribe();
+        channelRepository.save(channelId, userInfo.getUserId(), 0).subscribe();
 //        setInitialPlayerInfo.process(channelId, 8).subscribe();
         return Mono.empty();
     }
 
-    private Mono<Void> createConnectionInfo(String channelId, UserInfo userInfo, Connection connection) {
+    private Mono<Map<String, Object>> createConnectionInfo(String channelId, UserInfo userInfo, Connection connection) {
         sessionManager.setConnection(userInfo.getUserId(), connection);
         setInitialPlayerInfo.process(channelId, 8).subscribe();
-        return check(channelId)
-                .flatMap(count ->  channelRepository.save(channelId, userInfo.getUserId(), 0)
-                    .then((Mono.defer(() -> multicasting.multicasting(channelId, String.valueOf(userInfo.getUserId()), MessageConverter.convert(Message.success("restartGame", CastingType.MULTICASTING, userInfo))))))
-                        .then(findAllUserInfoByChannelId(channelId, userInfo.getUserId()))
-                    .flatMap(userInfoList ->{
-                        return unicasting.unicasting(channelId, userInfo.getUserId(), MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING, userInfoList)));
-                        })
-   );
+        Map<String, Object> map = new HashMap<>();
+        return currentMapRepository.findMapId(channelId)
+                .flatMap(field -> {
+                    Integer mapId = Integer.parseInt(String.valueOf(field));
+                    return mapObjectRepository.findMapData(channelId, mapId)
+                            .flatMap(mapData -> {
+                                map.put("mapId", mapId);
+                                map.put("mapData", mapData);
+                                unicasting.unicasting(channelId, userInfo.getUserId(), MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING, map))).subscribe();
+                                return Mono.just(map);
+                            });
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    Integer mapId = 1;
+                    return mapObjectRepository.findMapData(channelId, 1)
+                            .flatMap(mapData -> {
+                                map.put("mapId", mapId);
+                                map.put("mapData", mapData);
+                                unicasting.unicasting(channelId, userInfo.getUserId(), MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING, map))).subscribe();
+                                return Mono.just(map);
+                            });
+                }));
     }
 
-    private Mono<Long> check(String channelId) {
-        return channelRepository.count(channelId)
-                .flatMap(count -> {
-                    log.info("count {}", count);
-                    return Mono.just(count);
-                });
-    }
-
-    private Mono<List<UserInfo>> findAllUserInfoByChannelId(String channelId, Long userId) {
-        return channelRepository.findAllFields(channelId)
-                .flatMap(id -> {
-                    if (!Long.valueOf(String.valueOf(id)).equals(userId)) {
-                        return userRepository.findAll(Long.valueOf(String.valueOf(id)))
-                                .map(userInfo -> UserInfo.of(
-                                        Long.valueOf(String.valueOf(id)),
-                                        (String) userInfo.get("nickname"),
-                                        Integer.parseInt(String.valueOf(userInfo.get("avatar")))
-                                ));
-                    } else {
-                        return Mono.empty();
-                    }
-                }).collectList();
-    }
 }
 
