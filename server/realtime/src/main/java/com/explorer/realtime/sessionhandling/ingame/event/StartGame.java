@@ -9,6 +9,7 @@ import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.even
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
+import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.mongo.entity.*;
 import com.explorer.realtime.global.mongo.repository.InventoryDataMongoRepository;
 import com.explorer.realtime.global.mongo.repository.MapDataMongoRepository;
@@ -45,6 +46,7 @@ public class StartGame {
     private final MapObjectRepository mapObjectRepository;
     private final MapDataMongoRepository mapDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
+    private final Unicasting unicasting;
 
 
     private static final int INVENTORY_CNT = 8;
@@ -125,6 +127,7 @@ public class StartGame {
                     });
                     inventory.setInventoryData(inventoryDataList);
                     inventoryDataMongoRepository.save(inventory).subscribe();
+                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("startInventory", CastingType.UNICASTING, inventory))).subscribe();
                     return Mono.empty();
                 });
     }
@@ -180,8 +183,15 @@ public class StartGame {
                     map.put("position", position);
                     map.put("userId", userId);
                     map.put("mapId", 1);
-                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
-                }).then();
+                    return Mono.just(map);
+//                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
+                })
+                .collectList()
+                .flatMap(allUsers -> {
+                    Map<String, Object> broadcastMap = new HashMap<>();
+                    broadcastMap.put("positions", allUsers);
+                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startPosition", CastingType.BROADCASTING, broadcastMap)));
+                });
     }
 
     private String getNewPosition(Long userId) {
