@@ -36,9 +36,12 @@ public class ReturnMainMap {
     public Mono<Void> returnMainMap(JSONObject json) {
         String channelId = json.getString("channelId");
         Integer mapId = json.getInt("mapId");
+        currentMapRepository.save(channelId, 1).subscribe();
         log.info("returnMain start");
         if (mapId == 4) {
             mapObjectRepository.resetMapData(channelId, mapId).subscribe();
+            return mapObjectRepository.findMapData(channelId, 1)
+                    .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mapData))));
         } else { // else mongodb에 데이터 저장하기
             log.info("returnMap else");
             return mapObjectRepository.findMapData(channelId, mapId)
@@ -57,45 +60,10 @@ public class ReturnMainMap {
 
                     });
         }
-        log.info("before broadcasting");
-        position(channelId).subscribe();
-        currentMapRepository.save(channelId, 1).subscribe();
-        return mapObjectRepository.findMapData(channelId, 1)
-                .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mapData))));
-    }
+            }
 
     private PositionData createPositionData(String position, String value) {
         String[] parts = value.split(":");
         return new PositionData(position, parts[0], parts[1], Integer.parseInt(parts[2]));
-    }
-
-    private Mono<Void> position(String channelId) {
-        return channelRepository.findAllFields(channelId)
-                .flatMap(field -> {
-                    Long userId = Long.parseLong(String.valueOf(field));
-                    String position = getNewPosition(userId);
-                    return userRepository.findAvatarAndNickname(userId)
-                            .map(userDetail -> {
-                                Map<String, Object> map = new HashMap<>();
-                                map.put("position", position);
-                                map.put("userId", userId);
-                                map.put("mapId", 1);
-                                map.put("nickname", userDetail.get("nickname"));
-                                map.put("avatar", userDetail.get("avatar"));
-                                return map;
-                            });
-                })
-                .collectList()
-                .flatMap(allUsers -> {
-                    Map<String, Object> broadcastMap = new HashMap<>();
-                    broadcastMap.put("positions", allUsers);
-                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapPosition", CastingType.BROADCASTING, broadcastMap)));
-                });
-    }
-
-    private String getNewPosition(Long userId) {
-        String[] positions = {"1:0:1", "2:0:2", "3:0:3", "1:0:2", "2:0:3", "1:0:3"};
-        int index = Math.abs(userId.hashCode()) % positions.length;
-        return positions[index];
     }
 }

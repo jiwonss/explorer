@@ -41,7 +41,7 @@ public class MapInfoRepository {
     public Mono<Boolean> save(String channelId, int mapId, String position, String itemCategory, int itemId, int itemCnt) {
         String key = KEY_PREFIX + channelId + ":" + String.valueOf(mapId);
         String field = position;
-        String value = itemCategory + ":notFarmable:" + String.valueOf(itemId) + ":" + String.valueOf(itemCnt);
+        String value = itemCategory + ":notFarmable:" + String.valueOf(itemId);
         return reactiveHashOperations.put(key, field, value);
     }
 
