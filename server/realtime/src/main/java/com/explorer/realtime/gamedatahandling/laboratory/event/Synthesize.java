@@ -95,17 +95,7 @@ public class Synthesize {
                                     // 특정 원소가 연구소에 없는 경우
                                     if (!found) {
                                         log.warn("Fail: Key {} with required count {} is not sufficient", key, responseJson.optInt(key, 0));
-
-                                        Map<String, String> dataBody = new HashMap<>();
-                                        dataBody.put("msg", "noItem");
-
-                                        // [Unicasting] 합성 실패 : 재료 부족
-                                        return unicasting.unicasting(
-                                                userInfo.getChannelId(), userInfo.getUserId(),
-                                                MessageConverter.convert(Message.fail("synthesizing", CastingType.UNICASTING, dataBody)))
-                                                .then(Mono.just(false));
-
-//                                        return Mono.error(new IllegalStateException("Insufficient elements"));
+                                        return unicastingFailData(json, "noItem").then(Mono.just(false));
                                     }
                                     return Mono.just(true);
                                 })
@@ -125,7 +115,7 @@ public class Synthesize {
                         Mono<Void> createCompound = createCompoundInLaboratory(json);
 
                         return Mono.when(useElements, createCompound)
-                                .then(broadcastingLaboratory(json));
+                                .then(unicastingLaboratory(json));
                     }
                 })
                 .onErrorResume(e -> {
@@ -165,13 +155,15 @@ public class Synthesize {
     }
 
     /*
-     * [Broadcasting : 변경된 연구소 element, compound 저장 상태]
+     * [Unicasting : 변경된 연구소 element, compound 저장 상태]
      * 파라미터 : { .. , "channelId" : {channelId}, "userId": "{userId}", "itemCategory" : "compound", "itemId" : {itemId}}
      * 반환값
      *  - 타입 : Mono<Void>
      */
-    private Mono<Void> broadcastingLaboratory(JSONObject json) {
+    private Mono<Void> unicastingLaboratory(JSONObject json) {
 
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
         Map<String, Object> dataBody = new HashMap<>();
         Mono<List<Integer>> getElements = elementLaboratoryRepository.findAllElements(json)
                 .doOnNext(elementList -> {
@@ -183,10 +175,26 @@ public class Synthesize {
                 });
         return Mono.when(getElements, getCompounds)
                 .then(Mono.defer(() ->
-                    broadcasting.broadcasting(
-                            json.getString("channelId"),
-                            MessageConverter.convert(Message.success("synthesizing", CastingType.BROADCASTING, dataBody))
-                    )
-                ));
+                        unicasting.unicasting(
+                                channelId, userId,
+                                MessageConverter.convert(Message.success("synthesizing", CastingType.UNICASTING, dataBody))
+                        )));
+    }
+
+    /*
+     * [Unicasting : fail output data]
+     * 파라미터
+     * - JSONObject json : {..., "channelId":{channelId}, "userId":{userId}, "itemCategory" : "compound", "itemId" : {itemId} }
+     * - String msg : "noItem"
+     */
+    private Mono<Void> unicastingFailData(JSONObject json, String msg) {
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+        Map<String, String> dataBody = new HashMap<>();
+        dataBody.put("msg", msg);
+
+        return unicasting.unicasting(channelId, userId,
+                        MessageConverter.convert(Message.fail("upgrade", CastingType.UNICASTING, dataBody)))
+                .then();
     }
 }
