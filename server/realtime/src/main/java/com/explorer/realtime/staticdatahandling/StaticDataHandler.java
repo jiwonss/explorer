@@ -25,7 +25,7 @@ public class StaticDataHandler {
                 saveStaticDataToMongoDB.process(json).subscribe();
                 break;
 
-            case "saveStaticDataTorRedis":
+            case "saveStaticDataToRedis":
                 log.info("eventName : {}", eventName);
                 saveStaticDataToRedis.process().subscribe();
                 break;
