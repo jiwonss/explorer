@@ -1,6 +1,5 @@
 # 기술 스택
 
----
 
 ## CI/CD
 
@@ -41,7 +40,6 @@
 
 # IP/Port 번호
 
----
 
 ## EC2 (SSAFY 기본 지급)
 
@@ -74,7 +72,6 @@
 
 # 환경 변수
 
----
 
 - 서버 환경 변수는 Spring Cloud Config 사용
 - `src/main/resources/application.yml` 파일에서 profiles을 변경하여 dev, prod 환경에 맞는 환경 변수 세팅 가능
@@ -113,7 +110,6 @@
 
 # 배포 환경 설정
 
----
 
 ## Server
 
@@ -1152,7 +1148,6 @@
 
 # 특이사항
 
----
 
 - SERVER : 2개의 인스턴스로 나누어 배포 진행
 - SERVER : 배포 시 모든 프로젝트의 application.yml profile을 prod로 설정 후 진행
