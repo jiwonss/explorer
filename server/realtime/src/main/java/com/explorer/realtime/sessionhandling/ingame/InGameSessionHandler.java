@@ -1,9 +1,6 @@
 package com.explorer.realtime.sessionhandling.ingame;
 
-import com.explorer.realtime.sessionhandling.ingame.event.EndGame;
-import com.explorer.realtime.sessionhandling.ingame.event.IngameBroadcastPosition;
-import com.explorer.realtime.sessionhandling.ingame.event.RestartGame;
-import com.explorer.realtime.sessionhandling.ingame.event.StartGame;
+import com.explorer.realtime.sessionhandling.ingame.event.*;
 import com.explorer.realtime.sessionhandling.waitingroom.WaitingRoomSessionHandler;
 import com.explorer.realtime.sessionhandling.waitingroom.dto.UserInfo;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +21,8 @@ public class InGameSessionHandler {
     private final RestartGame restartGame;
     private final EndGame endGame;
     private final IngameBroadcastPosition ingameBroadcastPosition;
+    private final FindUserData findUserData;
+    private final UserInfoData userInfoData;
 
     public Mono<Void> inGameHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -49,6 +48,14 @@ public class InGameSessionHandler {
                 log.info("broadcastPosition");
                 ingameBroadcastPosition.process(json).subscribe();
                 return Mono.empty();
+
+            case "findUserData":
+                log.info("findUserData");
+                return findUserData.process(json);
+
+            case "userInfo":
+                log.info("userInfo");
+                return userInfoData.process(json, connection);
         }
 
         return Mono.empty();
