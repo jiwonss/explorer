@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -35,6 +36,7 @@ public class GetItemFromMap {
     private final Broadcasting broadcasting;
 
     private static final String eventName = "getItemFromMap";
+    private static final List<String> invalidInventoryItemCategories = List.of("laboratory", "installation", "debris", "table");
 
     public Mono<Void> process(JSONObject json) {
         String channelId = json.getString("channelId");
@@ -86,13 +88,18 @@ public class GetItemFromMap {
         log.info("[getItemInfoByPosition] channelId : {}, mapId : {}, position : {}", channelId, mapId, position);
 
         return mapInfoRepository.findByPosition(channelId, mapId, position)
-                .map(result -> {
+                .flatMap(result -> {
                     log.info("[getItemInfoByPosition] result : {}", result);
                     String[] itemInfo = String.valueOf(result).split(":");
+
+                    if (invalidInventoryItemCategories.contains(itemInfo[0])) {
+                        return Mono.error(new FarmingException(FarmingErrorCode.INVALID_ITEM_CATEGORY_IN_INVENTORY));
+                    }
+
                     Map<String, Object> map = new HashMap<>();
                     map.put("itemCategory", itemInfo[0]);
                     map.put("itemId", Integer.parseInt(itemInfo[2]));
-                    return map;
+                    return Mono.just(map);
                 });
     }
 
