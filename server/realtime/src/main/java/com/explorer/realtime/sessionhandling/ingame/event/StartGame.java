@@ -65,6 +65,8 @@ public class StartGame {
                     .then(Mono.defer(() -> {
                         return elementLaboratoryRepository.initialize(channelId)
                                 .then(laboratoryLevelRepository.initialize(channelId))
+                                // 아직 맵 정보 update 안되어서 예비로 넣어놈
+                                .then(initializeMapObject.initializeMapObject(channelId, 1))
                                 .then(initializeMapObject.initializeMapObject(channelId, 2))
                                 .then(initializeMapObject.initializeMapObject(channelId, 3))
                                 .then(setInitialPlayerInfo.process(channelId, INVENTORY_CNT))
@@ -74,11 +76,10 @@ public class StartGame {
                                 ));
                     }))
                     .then(initializeSaveLabData.process(channelId))
-                    .then(saveAllPlayerInventory(channelId))
                     .then(saveMapData(channelId))
+                    .then(saveAllPlayerInventory(channelId))
+                    .then(getMapData(channelId))
                     .then(currentMapRepository.save(channelId, 1))
-//                    .then(initializeSaveInventoryData.process(channelId))
-                    .then(position(channelId))
                     .subscribe();
         });
 
@@ -113,48 +114,6 @@ public class StartGame {
                 });
     }
 
-    private Mono<Boolean> saveInventory(String channelId, Long userId) {
-        return inventoryRepository.findInventoryData(channelId, userId)
-                .flatMap(data -> {
-                    Inventory inventory = new Inventory();
-                    inventory.setChannelId(channelId);
-                    inventory.setUserId(userId);
-                    List<InventoryData> inventoryDataList = new ArrayList<>();
-                    data.forEach((inventoryIdx, value) -> {
-                        String[] parts = value.split(":");
-                        String itemCategory = parts[0];
-                        Integer itemId = Integer.parseInt(parts[1]);
-                        Integer itemCnt = Integer.parseInt(parts[2]);
-                        String isFull = parts[3];
-                        inventoryDataList.add(new InventoryData(Integer.parseInt(inventoryIdx), itemCategory, itemId, itemCnt, isFull));
-                    });
-                    inventory.setInventoryData(inventoryDataList);
-                    inventoryDataMongoRepository.save(inventory).subscribe();
-                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("startInventory", CastingType.UNICASTING, inventory))).subscribe();
-                    return Mono.empty();
-                });
-    }
-
-    private Mono<Void> saveAllPlayerInventory(String channelId) {
-        return channelRepository.findAllFields(channelId)
-                .flatMap(field -> {
-                    Long userId = Long.parseLong(String.valueOf(field));
-                    return initializeItem(channelId, userId)
-                            .then(saveInventory(channelId, userId));
-                })
-                .then();
-    }
-
-    private Mono<Void> initializeItem(String channelId, Long userId) {
-        InventoryInfo item1 = InventoryInfo.of(0, "tool", 0, 1, 1);
-        InventoryInfo item2 = InventoryInfo.of(1, "tool", 1, 1, 1);
-//        InventoryInfo item3 = InventoryInfo.of(2, "tool", 2, 1, 1);
-        return inventoryRepository.save(channelId, userId, item1)
-                .then(inventoryRepository.save(channelId, userId, item2))
-//                .then(inventoryRepository.save(channelId, userId, item3))
-                .then();
-    }
-
     private Mono<Void> saveMapData(String channelId) {
         List<Integer> mapIds = Arrays.asList(1, 2, 3);
         return Flux.fromIterable(mapIds)
@@ -177,34 +136,25 @@ public class StartGame {
                         })).then();
     }
 
-    private Mono<Void> position(String channelId) {
+    private Mono<Void> saveAllPlayerInventory(String channelId) {
         return channelRepository.findAllFields(channelId)
                 .flatMap(field -> {
                     Long userId = Long.parseLong(String.valueOf(field));
-                    String position = getNewPosition(userId);
-                    return userRepository.findAvatarAndNickname(userId)
-                            .map(userDetail -> {
-                                Map<String, Object> map = new HashMap<>();
-                                map.put("position", position);
-                                map.put("userId", userId);
-                                map.put("mapId", 1);
-                                map.put("nickname", userDetail.get("nickname"));
-                                map.put("avatar", userDetail.get("avatar"));
-                                return map;
-                            });
-//                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("start", CastingType.BROADCASTING, map)));
+                    return initializeItem(channelId, userId);
                 })
-                .collectList()
-                .flatMap(allUsers -> {
-                    Map<String, Object> broadcastMap = new HashMap<>();
-                    broadcastMap.put("positions", allUsers);
-                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startPosition", CastingType.BROADCASTING, broadcastMap)));
-                });
+                .then();
     }
 
-    private String getNewPosition(Long userId) {
-        String[] positions = {"1:0:1", "2:0:2", "3:0:3", "1:0:2", "2:0:3", "1:0:3"};
-        int index = Math.abs(userId.hashCode()) % positions.length;
-        return positions[index];
+    private Mono<Void> initializeItem(String channelId, Long userId) {
+        InventoryInfo item1 = InventoryInfo.of(0, "tool", 0, 1, 1);
+        InventoryInfo item2 = InventoryInfo.of(1, "tool", 1, 1, 1);
+        return inventoryRepository.save(channelId, userId, item1)
+                .then(inventoryRepository.save(channelId, userId, item2))
+                .then();
+    }
+
+    private Mono<Void> getMapData(String channelId) {
+        return mapObjectRepository.findMapData(channelId, 1)
+                .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapInfo", CastingType.BROADCASTING, mapData))));
     }
 }
