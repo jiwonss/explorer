@@ -42,10 +42,7 @@ public class InitializeMapObject {
                 .flatMap(result -> {
                     if (result) {
                         return mapObjectRepository.findMapData(channelId, mapId)
-                                .flatMap(mapData -> broadcasting.broadcasting(channelId,
-                                        MessageConverter.convert(Message.success("initializeMapObject", CastingType.BROADCASTING, mapData))))
-                                .doOnSuccess(avoid -> log.info("Map data broadcasted successfully for channelId: {}, mapId: {}", channelId, mapId))
-                                .doOnError(error -> log.error("Failed to broadcast map data for channelId: {}, mapId: {}", channelId, mapId));
+                                .then();
                     } else {
                         log.error("Failed to save map data for channelId: {}, mapId: {}", channelId, mapId);
                         return Mono.error(new RuntimeException("Failed to save map data"));
