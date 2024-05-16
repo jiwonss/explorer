@@ -48,12 +48,19 @@ public class ElementLaboratoryRepository {
                 .collectList();
     }
 
+    /*
+     * redis-game의 연구소 저장 상태 데이터
+     * key: labData:{channelId}+:{labId}:{itemCategory}
+     * value (list)
+     *  - index: {itemId}
+     *  - value: {itemCnt}
+     */
     public Mono<Boolean> findMaterial(String channelId, String info, int cnt) {
-        String[] elementInfo = info.split(":");
-        String elementKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
-        int index = Integer.parseInt(elementInfo[1]);
+        String[] elementInfo = info.split(":");  // [0]:itemCategory  [1]:itemId
+        String redisKey = KEY_PREFIX+channelId+":0:"+elementInfo[0];
+        int itemId = Integer.parseInt(elementInfo[1]);
 
-        return reactiveListOperations.index(elementKey, index)
+        return reactiveListOperations.index(redisKey, itemId)
                 .cast(Integer.class)
                 .map(value -> value >= cnt)
                 .defaultIfEmpty(false);
