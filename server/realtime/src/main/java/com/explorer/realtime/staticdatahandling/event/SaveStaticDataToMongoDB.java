@@ -1,6 +1,7 @@
 package com.explorer.realtime.staticdatahandling.event;
 
 import com.explorer.realtime.staticdatahandling.document.*;
+import com.explorer.realtime.staticdatahandling.dto.AvailableInventoryItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.DroppedItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.ItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.MaterialItemInfo;
@@ -20,11 +21,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SaveStaticDataToMongoDB {
 
+    private final AvailableInventoryItemMongoRepository availableInventoryItemMongoRepository;
     private final DroppedItemMongoRepository droppedItemMongoRepository;
     private final ExtractionMaterialMongoRepository extractionMaterialMongoRepository;
     private final FarmableCategoryMongoRepository farmableCategoryMongoRepository;
+    private final InvalidInventoryItemCategoryMongoRepository invalidInventoryItemCategoryMongoRepository;
     private final ItemMongoRepository itemMongoRepository;
     private final LabEfficiencyMongoRepository labEfficiencyMongoRepository;
+    private final NonDiscardableInventoryItemCategoryMongoRepository nonDiscardableInventoryItemCategoryMongoRepository;
     private final SynthesizedMaterialMongoRepository synthesizedMaterialMongoRepository;
     private final UpgradeMaterialMongoRepository upgradeMaterialMongoRepository;
 
@@ -33,6 +37,10 @@ public class SaveStaticDataToMongoDB {
         log.info("[process] documentName : {}", documentName);
 
         switch (documentName) {
+            case "availableInventoryItem":
+                setAvailableInventoryItems(json).subscribe();
+                break;
+
             case "droppedItem":
                 setDroppedItem(json).subscribe();
                 break;
@@ -45,12 +53,20 @@ public class SaveStaticDataToMongoDB {
                 setFarmableCategories(json).subscribe();
                 break;
 
+            case "invalidInventoryItemCategory":
+                setInvalidInventoryItemCategories(json).subscribe();
+                break;
+
             case "item":
                 setItem(json).subscribe();
                 break;
 
             case "labEfficiency":
                 setLabEfficiency(json).subscribe();
+                break;
+
+            case "nonDiscardableInventoryItemCategory":
+                setNonDiscardableInventoryItemCategories(json).subscribe();
                 break;
 
             case "synthesizedMaterial":
@@ -63,6 +79,16 @@ public class SaveStaticDataToMongoDB {
         }
 
         return Mono.empty();
+    }
+    private Mono<Void> setAvailableInventoryItems(JSONObject json) {
+        String[] availableItems = json.getString("availableItems").split(",");
+        List<AvailableInventoryItemInfo> itemList = new ArrayList<>();
+        Arrays.stream(availableItems).forEach(availableItem -> {
+            AvailableInventoryItemInfo availableInventoryItemInfo = AvailableInventoryItemInfo.of(availableItem);
+            itemList.add(availableInventoryItemInfo);
+        });
+        AvailableInventoryItem availableInventoryItem = AvailableInventoryItem.from(itemList);
+        return availableInventoryItemMongoRepository.save(availableInventoryItem).then();
     }
 
     private Mono<Void> setDroppedItem(JSONObject json) {
@@ -100,6 +126,16 @@ public class SaveStaticDataToMongoDB {
         return Mono.when(saveMonos).then();
     }
 
+    private Mono<Void> setInvalidInventoryItemCategories(JSONObject json) {
+        String[] categories = json.getString("categories").split(",");
+        List<Mono<Void>> saveMonos = new ArrayList<>();
+        Arrays.stream(categories).forEach(category -> {
+            InvalidInventoryItemCategory invalidInventoryItemCategory = InvalidInventoryItemCategory.from(category);
+            saveMonos.add(invalidInventoryItemCategoryMongoRepository.save(invalidInventoryItemCategory).then());
+        });
+        return Mono.when(saveMonos).then();
+    }
+
     private Mono<Void> setItem(JSONObject json) {
         String category = json.getString("category");
         int maxId = json.getInt("maxId");
@@ -118,6 +154,16 @@ public class SaveStaticDataToMongoDB {
         float efficiency = json.getFloat("efficiency");
         LabEfficiency labEfficiency = LabEfficiency.from(level, efficiency);
         return labEfficiencyMongoRepository.save(labEfficiency).then();
+    }
+
+    private Mono<Void> setNonDiscardableInventoryItemCategories(JSONObject json) {
+        String[] categories = json.getString("categories").split(",");
+        List<Mono<Void>> saveMonos = new ArrayList<>();
+        Arrays.stream(categories).forEach(category -> {
+            NonDiscardableInventoryItemCategory nonDiscardableInventoryItemCategory = NonDiscardableInventoryItemCategory.from(category);
+            saveMonos.add(nonDiscardableInventoryItemCategoryMongoRepository.save(nonDiscardableInventoryItemCategory).then());
+        });
+        return Mono.when(saveMonos).then();
     }
 
     private Mono<Void> setSynthesizedMaterial(JSONObject json) {

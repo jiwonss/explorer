@@ -12,6 +12,10 @@ public class MongoService {
 
     private final ReactiveMongoTemplate reactiveMongoTemplate;
 
+    public Flux<AvailableInventoryItem> findAllAvailableInventoryItem() {
+        return reactiveMongoTemplate.findAll(AvailableInventoryItem.class);
+    }
+
     public Flux<DroppedItem> findAllDroppedItem() {
         return reactiveMongoTemplate.findAll(DroppedItem.class);
     }
@@ -24,12 +28,20 @@ public class MongoService {
         return reactiveMongoTemplate.findAll(FarmableCategory.class);
     }
 
+    public Flux<InvalidInventoryItemCategory> findAllInvalidInventoryItemCategory() {
+        return reactiveMongoTemplate.findAll(InvalidInventoryItemCategory.class);
+    }
+
     public Flux<Item> findAllItem() {
         return reactiveMongoTemplate.findAll(Item.class);
     }
 
     public Flux<LabEfficiency> findAllLabEfficiency() {
         return reactiveMongoTemplate.findAll(LabEfficiency.class);
+    }
+
+    public Flux<NonDiscardableInventoryItemCategory> findAllNonDiscardableInventoryItemCategory() {
+        return reactiveMongoTemplate.findAll(NonDiscardableInventoryItemCategory.class);
     }
 
     public Flux<SynthesizedMaterial> findAllSynthesizedMaterial() {
