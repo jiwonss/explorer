@@ -1,7 +1,7 @@
 package com.explorer.realtime.gamedatahandling.inventory.event;
 
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.inventory.dto.InventoryResponse;
@@ -17,7 +17,6 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple2;
 
 @Slf4j
 @Service
@@ -91,78 +90,68 @@ public class MoveItemInInventory {
     }
 
     private Mono<Void> checkInventory(String channelId, Long userId, int inventoryIdxFrom, int inventoryIdxTo) {
-        getInventoryCntByUserId(channelId, userId).flatMap(maxCnt -> {
-            if (inventoryIdxFrom < 0 || inventoryIdxFrom >= maxCnt) {
-                return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
-            }
-            if (inventoryIdxTo < 0 || inventoryIdxTo >= maxCnt) {
-                return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
-            }
-            return Mono.empty();
-        });
-
-
-        if (inventoryIdxFrom == inventoryIdxTo) {
-            return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
-        }
-
-        Mono<String> fromMono = inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom).map(Object::toString);
-        Mono<String> toMono = inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo).map(Object::toString);
-
-        Mono<Tuple2<String, String>> tupleMono = Mono.zip(fromMono, toMono);
-
-        return tupleMono.publishOn(Schedulers.boundedElastic()).flatMap(tuple -> {
-            String fromInventory = tuple.getT1();
-            String toInventory = tuple.getT2();
-
-            if (fromInventory.isEmpty()) {
-                log.info("[checkInventory] from에 해당하는 인벤토리가 비어있습니다.");
-                return Mono.error(new InventoryException(InventoryErrorCode.EMPTY_INVENTORY));
-            }
-
-            Mono<Void> resultMono;
-
-            if (toInventory.isEmpty()) {
-                resultMono = Mono.fromRunnable(() -> {
-                    log.info("[checkInventory] to에 해당하는 인벤토리가 비어있습니다.");
-                    inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).block();
-                    inventoryRepository.save(channelId, userId, InventoryInfo.ofString(inventoryIdxTo, String.valueOf(fromInventory))).block();
-                });
-            } else {
-                resultMono = Mono.fromRunnable(() -> {
-                    InventoryInfo fromItem = InventoryInfo.ofString(inventoryIdxFrom, fromInventory);
-                    InventoryInfo toItem = InventoryInfo.ofString(inventoryIdxTo, toInventory);
-
-                    if (fromItem.getItemCategory().equals(toItem.getItemCategory()) && fromItem.getItemId() == toItem.getItemId()) {
-                        log.info("[checkInventory] from, to 아이템 종류가 같습니다.");
-                        int fromItemCnt = fromItem.getItemCnt();
-                        int toItemCnt = toItem.getItemCnt();
-                        getItemMaxCnt(fromItem.getItemCategory(), fromItem.getItemId())
-                                .doOnNext(maxCnt -> {
-                                    int sum = fromItemCnt + toItemCnt;
-                                     log.info("[checkInventory] sum : {}", sum);
-                                    if (sum <= maxCnt) {
-                                        toItem.setItemCnt(sum);
-                                        inventoryRepository.save(channelId, userId, toItem).subscribe();
-                                        inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom).subscribe();
-                                    } else {
-                                        fromItem.setItemCnt(sum - maxCnt);
-                                        toItem.setItemCnt(maxCnt);
-                                        inventoryRepository.save(channelId, userId, toItem).subscribe();
-                                        inventoryRepository.save(channelId, userId, fromItem).subscribe();
-                                    }
-                                }).subscribe();
-                    } else {
-                        log.info("[checkInventory] from, to 아이템 종류가 다릅니다.");
-                        fromItem.setInventoryIdx(inventoryIdxTo);
-                        toItem.setInventoryIdx(inventoryIdxFrom);
-                        inventoryRepository.save(channelId, userId, fromItem).subscribe();
-                        inventoryRepository.save(channelId, userId, toItem).subscribe();
+        return getInventoryCntByUserId(channelId, userId)
+                .flatMap(maxCnt -> {
+                    if (inventoryIdxFrom < 0 || inventoryIdxFrom >= maxCnt || inventoryIdxTo < 0 || inventoryIdxTo >= maxCnt) {
+                        return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
                     }
-                });
-            }
-            return resultMono.then(Mono.empty());
-        });
+
+                    if (inventoryIdxFrom == inventoryIdxTo) {
+                        return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
+                    }
+
+                    return Mono.zip(
+                            inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxFrom),
+                            inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdxTo)
+                    );
+                })
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(tuple -> {
+                    String fromInventory = tuple.getT1() != null ? tuple.getT1().toString() : "";
+                    String toInventory = tuple.getT2() != null ? tuple.getT2().toString() : "";
+
+                    if (fromInventory.isEmpty()) {
+                        log.info("[checkInventory] from에 해당하는 인벤토리가 비어있습니다.");
+                        return Mono.error(new InventoryException(InventoryErrorCode.EMPTY_INVENTORY));
+                    }
+
+                    if (toInventory.isEmpty()) {
+                        return inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom)
+                                .then(inventoryRepository.save(channelId, userId, InventoryInfo.ofString(inventoryIdxTo, fromInventory)))
+                                .then(Mono.empty());
+                    } else {
+                        InventoryInfo fromItem = InventoryInfo.ofString(inventoryIdxFrom, fromInventory);
+                        InventoryInfo toItem = InventoryInfo.ofString(inventoryIdxTo, toInventory);
+
+                        if (fromItem.getItemCategory().equals(toItem.getItemCategory()) && fromItem.getItemId() == toItem.getItemId()) {
+                            log.info("[checkInventory] from, to 아이템 종류가 같습니다.");
+                            int fromItemCnt = fromItem.getItemCnt();
+                            int toItemCnt = toItem.getItemCnt();
+                            return getItemMaxCnt(fromItem.getItemCategory(), fromItem.getItemId())
+                                    .flatMap(maxCnt -> {
+                                        int sum = fromItemCnt + toItemCnt;
+                                        log.info("[checkInventory] sum : {}", sum);
+                                        if (sum <= maxCnt) {
+                                            toItem.setItemCnt(sum);
+                                            return inventoryRepository.save(channelId, userId, toItem)
+                                                    .then(inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdxFrom));
+                                        } else {
+                                            fromItem.setItemCnt(sum - maxCnt);
+                                            toItem.setItemCnt(maxCnt);
+                                            return inventoryRepository.save(channelId, userId, toItem)
+                                                    .then(inventoryRepository.save(channelId, userId, fromItem));
+                                        }
+                                    });
+                        } else {
+                            log.info("[checkInventory] from, to 아이템 종류가 다릅니다.");
+                            fromItem.setInventoryIdx(inventoryIdxTo);
+                            toItem.setInventoryIdx(inventoryIdxFrom);
+                            return inventoryRepository.save(channelId, userId, fromItem)
+                                    .then(inventoryRepository.save(channelId, userId, toItem))
+                                    .then(Mono.empty());
+                        }
+                    }
+                }).then();
     }
 
 }
