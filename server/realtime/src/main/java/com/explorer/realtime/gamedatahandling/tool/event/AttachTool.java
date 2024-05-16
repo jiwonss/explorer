@@ -1,7 +1,10 @@
 package com.explorer.realtime.gamedatahandling.tool.event;
 
-import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
+import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryErrorCode;
+import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryException;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolErrorCode;
 import com.explorer.realtime.gamedatahandling.tool.exception.ToolException;
 import com.explorer.realtime.gamedatahandling.tool.repository.ToolRepository;
@@ -27,6 +30,7 @@ public class AttachTool {
 
     private final InventoryRepository inventoryRepository;
     private final ToolRepository toolRepository;
+    private final PlayerInfoRepository playerInfoRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
@@ -38,9 +42,15 @@ public class AttachTool {
         int inventoryIdx = json.getInt("inventoryIdx");
         log.info("[process] channelId : {}, userId : {}, inventoryIdx : {}", channelId, userId, inventoryIdx);
 
-        return inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdx)
-                .map(Object::toString)
-                .flatMap(value -> {
+        return getInventoryCntByUserId(channelId, userId)
+                .flatMap(maxCnt -> {
+                    if (inventoryIdx < 0 || inventoryIdx >= maxCnt) {
+                        return Mono.error(new ToolException(ToolErrorCode.OUT_OF_RANGE_INDEX));
+                    }
+                    return inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdx);
+                })
+                .flatMap(inventory -> {
+                    String value = String.valueOf(inventory);
                     log.info("[process] value : {}", value);
 
                     if (value.isEmpty()) {
@@ -59,11 +69,15 @@ public class AttachTool {
                             .flatMap(info -> {
                                 if (info != null) {
                                     String[] toolInfo = String.valueOf(info).split(":");
+
+                                    if (inventoryIdx == Integer.parseInt(toolInfo[0])) {
+                                        return Mono.error(new ToolException(ToolErrorCode.ATTACHED_TOOL));
+                                    }
+
                                     preInventoryIdx.set(Integer.parseInt(toolInfo[0]));
                                 }
-                                return Mono.empty();
+                                return Mono.just(preInventoryIdx.get());
                             })
-                            .then(Mono.just(preInventoryIdx.get()))
                             .flatMap(preIdx -> {
                                 log.info("[process] inventoryInfo : {}", inventoryInfo);
                                 return toolRepository.save(channelId, userId, inventoryIdx, inventoryInfo.getItemId())
@@ -73,14 +87,19 @@ public class AttachTool {
                 })
                 .onErrorResume(ToolException.class, error -> {
                     log.info("[process] errorCode : {}, errorMessage : {}", error.getErrorCode(), error.getMessage());
-                    unicasting.unicasting(
+                    return unicasting.unicasting(
                             channelId,
                             userId,
                             MessageConverter.convert(Message.fail(eventName, CastingType.UNICASTING, String.valueOf(error.getErrorCode()), error.getMessage()))
-                    ).subscribe();
-                    return Mono.empty();
-                })
-                .then();
+                    ).then();
+                });
+    }
+
+    private Mono<Integer> getInventoryCntByUserId(String channelId, Long userId) {
+        log.info("[getInventoryCntByUserId] channelId : {}, userId : {}", channelId, userId);
+
+        return playerInfoRepository.findInventoryCnt(channelId, userId)
+                .map(map -> Integer.parseInt(String.valueOf(map)));
     }
 
     private Mono<Void> unicasting(String channelId, Long userId, int inventoryIdx, int preInventoryIdx) {
