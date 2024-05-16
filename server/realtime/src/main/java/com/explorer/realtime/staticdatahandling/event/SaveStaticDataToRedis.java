@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SaveStaticDataTorRedis {
+public class SaveStaticDataToRedis {
 
     private final MongoService mongoService;
     private final DroppedItemRepository droppedItemRepository;

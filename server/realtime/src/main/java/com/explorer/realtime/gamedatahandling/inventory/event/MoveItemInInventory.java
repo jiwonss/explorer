@@ -2,6 +2,7 @@ package com.explorer.realtime.gamedatahandling.inventory.event;
 
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.ItemRepository;
 import com.explorer.realtime.gamedatahandling.inventory.dto.InventoryResponse;
 import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryErrorCode;
@@ -25,6 +26,7 @@ public class MoveItemInInventory {
 
     private final InventoryRepository inventoryRepository;
     private final ItemRepository itemRepository;
+    private final PlayerInfoRepository playerInfoRepository;
     private final Unicasting unicasting;
 
     private static final String eventName = "moveItemInInventory";
@@ -81,7 +83,25 @@ public class MoveItemInInventory {
                 });
     }
 
+    private Mono<Integer> getInventoryCntByUserId(String channelId, Long userId) {
+        log.info("[getInventoryCntByUserId] channelId : {}, userId : {}", channelId, userId);
+
+        return playerInfoRepository.findInventoryCnt(channelId, userId)
+                .map(map -> Integer.parseInt(String.valueOf(map)));
+    }
+
     private Mono<Void> checkInventory(String channelId, Long userId, int inventoryIdxFrom, int inventoryIdxTo) {
+        getInventoryCntByUserId(channelId, userId).flatMap(maxCnt -> {
+            if (inventoryIdxFrom < 0 || inventoryIdxFrom >= maxCnt) {
+                return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
+            }
+            if (inventoryIdxTo < 0 || inventoryIdxTo >= maxCnt) {
+                return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
+            }
+            return Mono.empty();
+        });
+
+
         if (inventoryIdxFrom == inventoryIdxTo) {
             return Mono.error(new InventoryException(InventoryErrorCode.SAME_INDEX));
         }
