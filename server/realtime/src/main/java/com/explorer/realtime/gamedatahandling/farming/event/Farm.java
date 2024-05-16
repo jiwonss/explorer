@@ -1,16 +1,14 @@
 package com.explorer.realtime.gamedatahandling.farming.event;
 
-import com.explorer.realtime.gamedatahandling.farming.dto.FarmingItemInfo;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
-import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
+import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.util.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -23,121 +21,110 @@ import java.util.Map;
 public class Farm {
 
     private final MapInfoRepository mapInfoRepository;
-    private final ToLogicServer toLogicServer;
     private final Unicasting unicasting;
-
-    @Value("${logic.farm.farm-url}")
-    private String farmUrl;
-
-    public Mono<Void> process(JSONObject json) {
-        /*
-         * 1) Parsing, channelId, mapId, position
-         */
-        FarmingItemInfo farmingItemInfo = FarmingItemInfo.of(json);
-
-        /*
-         * 2) redis-ingame에서 현재 map에 파밍할 아이템이 있는지 확인
-         */
-        return checkItemInMap(farmingItemInfo).then();
-
-    }
+    private final Broadcasting broadcasting;
 
     /*
-     * [map의 {position}에 오브젝트가 있는지 확인]
-     * 없는 경우 : empty Mono 반환
-     * 있는 경우 : {itemCategory}:{isFarmable}:{itemId} 반환
+     * 파라미터 JSONObject json: ... channelId, userId, mapId, position
      */
-    private Mono<Void> checkItemInMap(FarmingItemInfo farmingItemInfo) {
+    public Mono<Void> process(JSONObject json) {
 
-        return mapInfoRepository.findByPosition(farmingItemInfo.getChannelId(), farmingItemInfo.getMapId(), farmingItemInfo.getPosition())
-                .flatMap(itemInfo ->
-                    isFarmable(itemInfo)
-                            .flatMap(isFarmable -> {
-                                if (!isFarmable) {
-                                    return FailFarmingUnicasting(farmingItemInfo);
-                                }
-                                return requestDroppedItems(itemInfo)
-                                        .flatMap(response -> successFarmingUnicasting(farmingItemInfo, response));
-                            })
-                )
+        log.info("FARM process start...");
+
+        return checkItemInMap(json)
+                .flatMap(result -> {
+                    if (result) {
+                        // 파밍 성공
+                        return farmItem(json)                           // redis-game map 상태 정보에서 파밍 오브젝트 삭제
+                                .then(broadcastingSuccessData(json));   // BROADCASTING: 파밍 성공
+                    } else {
+                        // 파밍 실패
+                        return unicastingFailData(json, "noItem");  // UNICASTING: 파밍 실패
+                    }
+                })
+                .doOnError(error -> log.error("ERROR farm process: {}", error.getMessage()))
                 .then();
     }
 
     /*
-     * [파밍 가능한 오브젝트인지 확인]
-     * False : 정보가 부족한 경우 또는 notFarmable 한 경우
-     * True : isFarmable 한 경우
+     * [redis-game의 map 상태 데이터에 {position}에 아이템이 있는지 확인]
+     *
+     * redis-game의 map 상태 데이터 형식
+     * - key:  mapData:{channelId}:{mapId}
+     * - value (hash)
+     *   - field: {position}
+     *   - value: {itemCategory}:{isFarmable}:{itemId}:{itemCnt}
      */
-    private Mono<Boolean> isFarmable(String itemInfo) {
+    private Mono<Boolean> checkItemInMap(JSONObject json) {
+        log.info("checkItemInMap");
+        String channelId = json.getString("channelId");
+        int mapId = json.getInt("mapId");
+        String position = json.getString("position");
 
-        log.info("isFarmable start...");
-        String[] parsedItemInfo = itemInfo.split(":");
-
-        boolean isFarmable = parsedItemInfo.length > 1 && parsedItemInfo[1].equals("isFarmable");
-
-        log.info("{} is isFarmable? : {}", parsedItemInfo[1], isFarmable);
-
-        return Mono.just(isFarmable);
+        return mapInfoRepository.findByPosition(channelId, mapId, position)
+                .map(result -> {
+                    log.info("Item found: {}", result);
+                    return true;
+                })
+                .defaultIfEmpty(false)
+                .doOnError(error -> log.error("ERROR finding item in map: {}", error.getMessage()));
     }
 
     /*
-     * [로직 서버에 드랍 아이템 데이터를 요청]
+     * [파밍 오브젝트 데이터 삭제 (redis-game)]
+     *
+     * redis-game의 map 상태 데이터 형식
+     * - key:  mapData:{channelId}:{mapId}
+     * - value (hash)
+     *   - field: {position}
+     *   - value: {itemCategory}:{isFarmable}:{itemId}:{itemCnt}
      */
-    private Mono<String> requestDroppedItems(String itemInfo) {
+    private Mono<Void> farmItem(JSONObject json) {
+        log.info("farmItem");
+        String channelId = json.getString("channelId");
+        int mapId = json.getInt("mapId");
+        String position = json.getString("position");
 
-        log.info("Logic server Request Data : {}", itemInfo);
-
-        return Mono.create(sink -> {
-            toLogicServer.sendRequestToHttpServer(itemInfo, farmUrl)
-                    .subscribe(response -> {
-                        // logic 서버로부터 추출된 원소 데이터 수신
-                        log.info("Logic server response: {}", response);
-
-                        sink.success(response);
-                    }, error -> {
-                        log.error("Error in retrieving data from logic server");
-                        sink.error(error);
-                    });
-        });
-
+        return mapInfoRepository.deleteByPosition(channelId, mapId, position)
+                .doOnSuccess(success -> log.info("SUCCESS delete farming object: {}", success))
+                .doOnError(error -> log.error("ERROR delete farming object: {}", error.getMessage()));
     }
 
-    private Mono<Void> successFarmingUnicasting(FarmingItemInfo farmingItemInfo, String response) {
+    /*
+     * [파밍 성공 시 BROADCASTING]
+     * 파라미터 JSONObject json: ... channelId, userId, mapId, position
+     */
+    private Mono<Void> broadcastingSuccessData(JSONObject json) {
 
-        log.info("SUCCESS TO FARM in position {}", farmingItemInfo.getPosition());
+        String channelId = json.getString("channelId");
+        int mapId = json.getInt("mapId");
+        String position = json.getString("position");
 
-        Map<String, Object> dataBody = new HashMap<>();
-        dataBody.put("map", farmingItemInfo.getMapId());
-        dataBody.put("position", farmingItemInfo.getPosition());
+        Map<Object, Object> dataBody = new HashMap<>();
+        dataBody.put("mapId", mapId);
+        dataBody.put("position", position);
 
-        Map<String, String> droppedItems = new HashMap<>();
-
-        String[] pairs = response.split(",");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split("\":");
-            String key = keyValue[0].split("\"")[1];
-            String value = keyValue[1];
-            droppedItems.put(key, value);
-        }
-
-        dataBody.put("droppedItems", droppedItems);
-
-        return unicasting.unicasting(
-                farmingItemInfo.getChannelId(),
-                farmingItemInfo.getUserId(),
-                MessageConverter.convert(Message.success("farm", CastingType.UNICASTING, dataBody)));
+        return broadcasting.broadcasting(
+                channelId,
+                MessageConverter.convert(Message.success("farm", CastingType.BROADCASTING, dataBody))
+                ).then();
     }
 
-    private Mono<Void> FailFarmingUnicasting(FarmingItemInfo farmingItemInfo) {
+    /*
+     * [Unicasting : fail output data]
+     * 파라미터
+     * - JSONObject json : {..., "channelId":{channelId}, "userId":{userId}, "itemCategory" : "compound", "itemId" : {itemId} }
+     * - String msg : "noItem"
+     */
+    private Mono<Void> unicastingFailData(JSONObject json, String msg) {
+        String channelId = json.getString("channelId");
+        Long userId = json.getLong("userId");
+        Map<String, String> dataBody = new HashMap<>();
+        dataBody.put("msg", msg);
 
-        log.info("FAIL TO FARM in position {}", farmingItemInfo.getPosition());
-
-        Map<String, Object> dataBody = new HashMap<>();
-        dataBody.put("msg", "noItem");
-        return unicasting.unicasting(
-                farmingItemInfo.getChannelId(),
-                farmingItemInfo.getUserId(),
-                MessageConverter.convert(Message.fail("farm", CastingType.UNICASTING, dataBody)));
+        return unicasting.unicasting(channelId, userId,
+                        MessageConverter.convert(Message.fail("farm", CastingType.UNICASTING, dataBody)))
+                .then();
     }
 
 }
