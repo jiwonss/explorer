@@ -10,6 +10,7 @@ import com.explorer.realtime.global.mongo.entity.PositionData;
 import com.explorer.realtime.global.mongo.repository.MapDataMongoRepository;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -30,6 +31,7 @@ public class ReturnMainMap {
     private final MapDataMongoRepository mapDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
     private final ChannelRepository channelRepository;
+    private final UserRepository userRepository;
 
     public Mono<Void> returnMainMap(JSONObject json) {
         String channelId = json.getString("channelId");
@@ -50,14 +52,14 @@ public class ReturnMainMap {
                                 .collect(Collectors.toList()));
                         log.info("mongo save logic");
                         mapDataMongoRepository.save(mapData).subscribe();
-                        currentMapRepository.save(channelId, 1).subscribe();
-                        position(channelId).subscribe();
                         return mapObjectRepository.findMapData(channelId, 1)
                                 .flatMap(mainMapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mainMapData))));
 
                     });
         }
         log.info("before broadcasting");
+        position(channelId).subscribe();
+        currentMapRepository.save(channelId, 1).subscribe();
         return mapObjectRepository.findMapData(channelId, 1)
                 .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("returnMainMap", CastingType.BROADCASTING, mapData))));
     }
@@ -72,12 +74,23 @@ public class ReturnMainMap {
                 .flatMap(field -> {
                     Long userId = Long.parseLong(String.valueOf(field));
                     String position = getNewPosition(userId);
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("position", position);
-                    map.put("userId", userId);
-                    map.put("mapId", 1);
-                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
-                }).then();
+                    return userRepository.findAvatarAndNickname(userId)
+                            .map(userDetail -> {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("position", position);
+                                map.put("userId", userId);
+                                map.put("mapId", 1);
+                                map.put("nickname", userDetail.get("nickname"));
+                                map.put("avatar", userDetail.get("avatar"));
+                                return map;
+                            });
+                })
+                .collectList()
+                .flatMap(allUsers -> {
+                    Map<String, Object> broadcastMap = new HashMap<>();
+                    broadcastMap.put("positions", allUsers);
+                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapPosition", CastingType.BROADCASTING, broadcastMap)));
+                });
     }
 
     private String getNewPosition(Long userId) {
