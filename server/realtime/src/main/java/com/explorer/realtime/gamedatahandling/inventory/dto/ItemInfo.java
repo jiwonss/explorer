@@ -14,13 +14,10 @@ public class ItemInfo {
 
     private String itemCategory;
     private int itemId;
-    private int itemCnt;
-
-    public static ItemInfo of(String itemCategory, int itemId, int itemCnt) {
+    public static ItemInfo of(String itemCategory, int itemId) {
         return ItemInfo.builder()
                 .itemCategory(itemCategory)
                 .itemId(itemId)
-                .itemCnt(itemCnt)
                 .build();
     }
 
