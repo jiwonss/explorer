@@ -95,17 +95,17 @@ public class Synthesize {
                                     // 특정 원소가 연구소에 없는 경우
                                     if (!found) {
                                         log.warn("Fail: Key {} with required count {} is not sufficient", key, responseJson.optInt(key, 0));
-                                        return unicastingFailData(json, "noItem").then(Mono.just(false));
+                                        return unicastingFailData(json, "noItem").then(Mono.empty());
                                     }
                                     return Mono.just(true);
                                 })
                 )
                 .collectList() // Collect all results to ensure all elements are checked
                 .flatMap(results -> {
-                    // 모든 요소가 충분한 경우
-                    if (results.contains(Boolean.FALSE)) {
-                        // 요소가 충분하지 않으면 Mono.empty()를 반환
+                    // 요소가 충분하지 않으면 종료
+                    if (results.isEmpty()) {
                         return Mono.empty();
+                    // 모든 요소가 충분한 경우
                     } else {
                         log.info("Success: All elements are sufficient");
 
@@ -115,6 +115,7 @@ public class Synthesize {
                         Mono<Void> createCompound = createCompoundInLaboratory(json);
 
                         return Mono.when(useElements, createCompound)
+                                .doOnError(error -> log.info("ERROR useElements, createCompound in checkElementsInLaboratory : {}", error.getMessage()))
                                 .then(unicastingLaboratory(json));
                     }
                 })
@@ -194,7 +195,7 @@ public class Synthesize {
         dataBody.put("msg", msg);
 
         return unicasting.unicasting(channelId, userId,
-                        MessageConverter.convert(Message.fail("upgrade", CastingType.UNICASTING, dataBody)))
+                        MessageConverter.convert(Message.fail("synthesizing", CastingType.UNICASTING, dataBody)))
                 .then();
     }
 }
