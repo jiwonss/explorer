@@ -55,7 +55,7 @@ public class InGameSessionHandler {
 
             case "userInfo":
                 log.info("userInfo");
-                return userInfoData.process(json, connection);
+                return userInfoData.process(json);
         }
 
         return Mono.empty();
