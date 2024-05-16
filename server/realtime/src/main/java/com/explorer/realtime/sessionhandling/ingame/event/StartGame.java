@@ -51,7 +51,6 @@ public class StartGame {
     private final LaboratoryLevelRepository laboratoryLevelRepository;
 
 
-
     private static final int INVENTORY_CNT = 8;
 
     public Mono<Void> process(String teamCode, String channelName) {
@@ -149,10 +148,10 @@ public class StartGame {
     private Mono<Void> initializeItem(String channelId, Long userId) {
         InventoryInfo item1 = InventoryInfo.of(0, "tool", 0, 1, 1);
         InventoryInfo item2 = InventoryInfo.of(1, "tool", 1, 1, 1);
-        InventoryInfo item3 = InventoryInfo.of(2, "tool", 2, 1, 1);
+//        InventoryInfo item3 = InventoryInfo.of(2, "tool", 2, 1, 1);
         return inventoryRepository.save(channelId, userId, item1)
                 .then(inventoryRepository.save(channelId, userId, item2))
-                .then(inventoryRepository.save(channelId, userId, item3))
+//                .then(inventoryRepository.save(channelId, userId, item3))
                 .then();
     }
 
@@ -183,12 +182,17 @@ public class StartGame {
                 .flatMap(field -> {
                     Long userId = Long.parseLong(String.valueOf(field));
                     String position = getNewPosition(userId);
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("position", position);
-                    map.put("userId", userId);
-                    map.put("mapId", 1);
-                    return Mono.just(map);
-//                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
+                    return userRepository.findAvatarAndNickname(userId)
+                            .map(userDetail -> {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("position", position);
+                                map.put("userId", userId);
+                                map.put("mapId", 1);
+                                map.put("nickname", userDetail.get("nickname"));
+                                map.put("avatar", userDetail.get("avatar"));
+                                return map;
+                            });
+//                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("start", CastingType.BROADCASTING, map)));
                 })
                 .collectList()
                 .flatMap(allUsers -> {
