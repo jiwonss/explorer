@@ -10,16 +10,13 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Repository("elementLaboratoryRepositoryInExtract")
 public class ElementLaboratoryRepository {
 
     private final ReactiveListOperations<String, Object> reactiveListOperations;
-    private final ObjectMapper objectMapper;
     private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
 
     private static final String KEY_PREFIX = "labData:";
@@ -28,7 +25,6 @@ public class ElementLaboratoryRepository {
 
     public ElementLaboratoryRepository(@Qualifier("gameReactiveRedisTemplate") ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveListOperations = reactiveRedisTemplate.opsForList();
-        this.objectMapper = new ObjectMapper();
         this.reactiveRedisTemplate = reactiveRedisTemplate;
     }
 
@@ -94,37 +90,30 @@ public class ElementLaboratoryRepository {
                 .then();
     }
 
-    public Mono<Void> updateValueAtIndex(String channelId, String response) {
-        try {
-            //
-            String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
+    /*
+     * [원소 추출 후 redis-game 연구소에 저장]
+     *
+     * redis-game 연구소 상태 데이터 형식
+     * - key: labData:{channelId}:0:element
+     * - value: List
+     *   - index: {itemId}
+     *   - value : {itemCnt}
+     */
+    public Mono<Void> UpdateItemCnt(String channelId, String itemCategory, int itemId, int itemCnt) {
 
-            // JSON 문자열을 Map으로 파싱
-            Map<String, Integer> parsedData = objectMapper.readValue(response, Map.class);
+        String suffix = itemCategory.equals("element") ? ELEMENT_SUFFIX : itemCategory.equals("compound") ? COMPOUND_SUFFIX : "";
+        String redisKey = KEY_PREFIX + channelId + suffix;
 
-            // 각 key-value 쌍에 대해 업데이트 수행
-            Iterator<Map.Entry<String, Integer>> iterator = parsedData.entrySet().iterator();
-            Mono<Void> updateChain = Mono.empty();
 
-            while (iterator.hasNext()) {
-                Map.Entry<String, Integer> entry = iterator.next();
-                int itemId = Integer.parseInt(entry.getKey().split(":")[1]);
-                Integer itemCnt = entry.getValue();
-
-                updateChain = updateChain.then(
-                        reactiveListOperations.index(elementKey, itemId)
-                                .defaultIfEmpty(0)
-                                .cast(Integer.class)
-                                .flatMap(existingCnt -> reactiveListOperations.set(elementKey, itemId, Integer.valueOf(existingCnt) + itemCnt))
-                                .then()
-                );
-
-            }
-            return updateChain.then();
-
-        } catch (Exception e) {
-            return Mono.error(new RuntimeException("Error processing JSON data", e));
-        }
+        return reactiveListOperations.index(redisKey, itemId)
+                .defaultIfEmpty(0)
+                .map(existingCnt -> { // 기존의 원소 개수
+                    int currentCount = (existingCnt instanceof Integer) ? (Integer) existingCnt : Integer.parseInt(existingCnt.toString());
+                    return currentCount + itemCnt; // 원소 게수 업데이트
+                })
+                .flatMap(updatedCnt -> reactiveListOperations.set(redisKey, itemId, updatedCnt))
+                .doOnError(error -> log.error("ERROR UpdateItemCnt: {}", error.getMessage()))
+                .then();
     }
 
     public Flux<Integer> findAllElementData(String channelId) {

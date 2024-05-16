@@ -1,7 +1,7 @@
 package com.explorer.realtime.gamedatahandling.laboratory.repository;
 
-import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,10 +27,18 @@ public class InventoryRepository {
 
     /*
      * [특정 플레이어의 인벤토리를 반환한다]
+     *
+     * reids-game inventory 상태 데이터 형식
+     * - key: inventoryData:{channelId}:{userId}
+     * - value(hash)
+     *   - field: {inventoryId}
+     *   - value: {itemCategory}:{itemId}:{itemCnt}:{isFull}
      */
-    public Mono<Map<Object, Object>> findAll(UserInfo userInfo) {
+    public Mono<Map<Object, Object>> findAll(JSONObject json) {
+        String channelId = json.getString("channelId");
+        long userId = json.getLong("userId");
         return reactiveHashOperations
-                .entries(KEY_PREFIX + userInfo.getChannelId() + ":" + userInfo.getUserId())
+                .entries(KEY_PREFIX + channelId + ":" + userId)
                 .collectMap(Map.Entry::getKey, Map.Entry::getValue)
                 .defaultIfEmpty(Collections.emptyMap())
                 .doOnError(error -> log.error("InventoryRepositoryForLab findAll error : {}", error.getMessage()));
@@ -39,19 +46,18 @@ public class InventoryRepository {
 
     /*
      * [추출된 아이템을 inventory에서 삭제]
-     * hasItemInventoryIds 리스트에 포함되어 있는 field 값을 삭제한다
-     * 모든 필드가 삭제되면 해당 키 자체도 자동으로 삭제된다
-     * => 인벤토리에 아이템이 없으면 인벤토리 데이터가 redis-ingame에서 사라진다
+     *
+     * reids-game inventory 상태 데이터 형식
+     * - key: inventoryData:{channelId}:{userId}
+     * - value(hash)
+     *   - field: {inventoryId}
+     *   - value: {itemCategory}:{itemId}:{itemCnt}:{isFull}
      */
-    public Mono<Void> deleteFields(UserInfo userInfo, List<Object> hasItemInventoryIds) {
-        String redisKey = KEY_PREFIX + userInfo.getChannelId() + ":" + userInfo.getUserId();
+    public Mono<Void> deleteField(String channelId, Long userId, int inventoryId) {
+        String redisKey = KEY_PREFIX + channelId+ ":" + userId;
 
-        return reactiveHashOperations
-                .entries(redisKey)
-                .filter(entry -> hasItemInventoryIds.contains(entry.getKey().toString()))
-                .flatMap(entry -> reactiveHashOperations.remove(redisKey, entry.getKey()))
-                .then()
-                .doOnError(error -> log.error("Error deleting fields: {}", error.getMessage()));
+        return reactiveHashOperations.remove(redisKey, String.valueOf(inventoryId)).then()
+                .doOnError(error -> log.error("ERROR deleteField: {}", error.getMessage()));
     }
 
     /*
