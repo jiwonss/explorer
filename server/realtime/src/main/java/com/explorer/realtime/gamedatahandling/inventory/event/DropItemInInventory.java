@@ -2,6 +2,7 @@ package com.explorer.realtime.gamedatahandling.inventory.event;
 
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.dto.InventoryInfo;
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
+import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.farming.repository.MapInfoRepository;
 import com.explorer.realtime.gamedatahandling.inventory.dto.ItemInfo;
 import com.explorer.realtime.gamedatahandling.inventory.exception.InventoryErrorCode;
@@ -27,6 +28,7 @@ public class DropItemInInventory {
 
     private final InventoryRepository inventoryRepository;
     private final MapInfoRepository mapInfoRepository;
+    private final PlayerInfoRepository playerInfoRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
 
@@ -41,7 +43,14 @@ public class DropItemInInventory {
         String position = json.getString("position");
         log.info("[process] channelId : {}, mapId : {} , userId : {}, inventoryIdx : {}, position : {}", channelId, mapId, userId, inventoryIdx, position);
 
-        return inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdx)
+        return getInventoryCntByUserId(channelId, userId)
+                .flatMap(maxCnt -> {
+                    if (inventoryIdx < 0 || inventoryIdx >= maxCnt) {
+                        return Mono.error(new InventoryException(InventoryErrorCode.OUT_OF_RANGE_INDEX));
+                    }
+                    return Mono.empty();
+                })
+                .then(inventoryRepository.findByInventoryIdx(channelId, userId, inventoryIdx))
                 .flatMap(inventory -> {
                     if (String.valueOf(inventory).isEmpty()) {
                         return Mono.error(new InventoryException(InventoryErrorCode.EMPTY_INVENTORY));
@@ -55,12 +64,9 @@ public class DropItemInInventory {
                     int result = inventoryInfo.getItemCnt() - 1;
                     if (result <= 0) {
                         return inventoryRepository.deleteByInventoryIdx(channelId, userId, inventoryIdx)
-                                .then(Mono.just(InventoryInfo.ofString(inventoryIdx, "")))
-                                .flatMap(emptyInventoryInfo -> {
-                                    return mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId)
-                                            .then(unicasting(channelId, userId, emptyInventoryInfo))
-                                            .then(broadcasting(channelId, position, ItemInfo.of(itemCategory, itemId)));
-                                });
+                                .then(mapInfoRepository.save(channelId, mapId, position, itemCategory, itemId))
+                                .then(unicasting(channelId, userId, InventoryInfo.ofString(inventoryIdx, "")))
+                                .then(broadcasting(channelId, position, ItemInfo.of(itemCategory, itemId)));
                     } else {
                         inventoryInfo.setItemCnt(result);
                         return inventoryRepository.save(channelId, userId, inventoryInfo)
@@ -78,6 +84,13 @@ public class DropItemInInventory {
                     ).subscribe();
                     return Mono.empty();
                 }).then();
+    }
+
+    private Mono<Integer> getInventoryCntByUserId(String channelId, Long userId) {
+        log.info("[getInventoryCntByUserId] channelId : {}, userId : {}", channelId, userId);
+
+        return playerInfoRepository.findInventoryCnt(channelId, userId)
+                .map(map -> Integer.parseInt(String.valueOf(map)));
     }
 
     public Mono<Void> unicasting(String channelId, Long userId, InventoryInfo inventoryInfo) {
