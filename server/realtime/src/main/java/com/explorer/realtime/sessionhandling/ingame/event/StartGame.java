@@ -140,7 +140,8 @@ public class StartGame {
         return channelRepository.findAllFields(channelId)
                 .flatMap(field -> {
                     Long userId = Long.parseLong(String.valueOf(field));
-                    return initializeItem(channelId, userId);
+                    return initializeItem(channelId, userId)
+                            .then(saveInventory(channelId, userId));
                 })
                 .then();
     }
@@ -156,5 +157,27 @@ public class StartGame {
     private Mono<Void> getMapData(String channelId) {
         return mapObjectRepository.findMapData(channelId, 1)
                 .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapInfo", CastingType.BROADCASTING, mapData))));
+    }
+
+    private Mono<Boolean> saveInventory(String channelId, Long userId) {
+        return inventoryRepository.findInventoryData(channelId, userId)
+                .flatMap(data -> {
+                    Inventory inventory = new Inventory();
+                    inventory.setChannelId(channelId);
+                    inventory.setUserId(userId);
+                    List<InventoryData> inventoryDataList = new ArrayList<>();
+                    data.forEach((inventoryIdx, value) -> {
+                        String[] parts = value.split(":");
+                        String itemCategory = parts[0];
+                        Integer itemId = Integer.parseInt(parts[1]);
+                        Integer itemCnt = Integer.parseInt(parts[2]);
+                        String isFull = parts[3];
+                        inventoryDataList.add(new InventoryData(Integer.parseInt(inventoryIdx), itemCategory, itemId, itemCnt, isFull));
+                    });
+                    inventory.setInventoryData(inventoryDataList);
+                    inventoryDataMongoRepository.save(inventory).subscribe();
+                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("startInventory", CastingType.UNICASTING, inventory))).subscribe();
+                    return Mono.empty();
+                });
     }
 }
