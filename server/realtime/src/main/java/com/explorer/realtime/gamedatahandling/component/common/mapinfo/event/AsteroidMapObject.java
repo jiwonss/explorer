@@ -8,6 +8,7 @@ import com.explorer.realtime.global.component.broadcasting.Broadcasting;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import com.explorer.realtime.initializing.repository.MapRepository;
+import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class AsteroidMapObject {
     private final Broadcasting broadcasting;
     private final CurrentMapRepository currentMapRepository;
     private final ChannelRepository channelRepository;
+    private final UserRepository userRepository;
 
 
     public Mono<Void> asteroidMapObject(String channelId) {
@@ -72,13 +74,23 @@ public class AsteroidMapObject {
                 .flatMap(field -> {
                     Long userId = Long.parseLong(String.valueOf(field));
                     String position = getNewPosition(userId);
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("position", position);
-                    map.put("userId", userId);
-                    map.put("mapId", 4);
-
-                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("startGame", CastingType.BROADCASTING, map)));
-                }).then();
+                    return userRepository.findAvatarAndNickname(userId)
+                            .map(userDetail -> {
+                                Map<String, Object> map = new HashMap<>();
+                                map.put("position", position);
+                                map.put("userId", userId);
+                                map.put("mapId", 4);
+                                map.put("nickname", userDetail.get("nickname"));
+                                map.put("avatar", userDetail.get("avatar"));
+                                return map;
+                            });
+                })
+                .collectList()
+                .flatMap(allUsers -> {
+                    Map<String, Object> broadcastMap = new HashMap<>();
+                    broadcastMap.put("positions", allUsers);
+                    return broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("asteroidMapPositions", CastingType.BROADCASTING, broadcastMap)));
+                });
     }
 
     private String getNewPosition(Long userId) {
