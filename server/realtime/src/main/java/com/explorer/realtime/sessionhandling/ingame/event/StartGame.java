@@ -19,6 +19,7 @@ import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepository;
 import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.sessionhandling.ingame.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,8 @@ public class StartGame {
     private final MapDataMongoRepository mapDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
     private final Unicasting unicasting;
+    private final LaboratoryLevelRepository laboratoryLevelRepository;
+
 
 
     private static final int INVENTORY_CNT = 8;
@@ -62,6 +65,7 @@ public class StartGame {
             transferAndInitializeChannel(teamCode, channelId)
                     .then(Mono.defer(() -> {
                         return elementLaboratoryRepository.initialize(channelId)
+                                .then(laboratoryLevelRepository.initialize(channelId))
                                 .then(initializeMapObject.initializeMapObject(channelId, 2))
                                 .then(initializeMapObject.initializeMapObject(channelId, 3))
                                 .then(setInitialPlayerInfo.process(channelId, INVENTORY_CNT))

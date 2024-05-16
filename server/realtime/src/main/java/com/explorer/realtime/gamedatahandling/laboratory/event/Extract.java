@@ -2,7 +2,7 @@ package com.explorer.realtime.gamedatahandling.laboratory.event;
 
 import com.explorer.realtime.gamedatahandling.laboratory.dto.UserInfo;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
-import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepositoryForLab;
+import com.explorer.realtime.gamedatahandling.laboratory.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.logicserver.ToLogicServer;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class Extract {
 
-    private final InventoryRepositoryForLab inventoryRepositoryForLab;
+    private final InventoryRepository inventoryRepository;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final Unicasting unicasting;
     private final Broadcasting broadcasting;
@@ -118,7 +118,7 @@ public class Extract {
                                                     })).subscribe();
 
                                                     // redis-ingame에 userId의 inventory 상태 데이터 update
-                                                    inventoryRepositoryForLab.deleteFields(userInfo, hasItemInventoryIds)
+                                                    inventoryRepository.deleteFields(userInfo, hasItemInventoryIds)
                                                             .then(findAllInventoryItemByUserInfo(userInfo)
                                                                     .flatMap(inventory -> {
 
@@ -169,6 +169,6 @@ public class Extract {
     }
 
     private Mono<Map<Object, Object>> findAllInventoryItemByUserInfo(UserInfo userInfo) {
-        return inventoryRepositoryForLab.findAll(userInfo);
+        return inventoryRepository.findAll(userInfo);
     }
 }
