@@ -1,6 +1,7 @@
 package com.explorer.realtime.staticdatahandling;
 
 import com.explorer.realtime.staticdatahandling.event.SaveStaticDataToMongoDB;
+import com.explorer.realtime.staticdatahandling.event.SaveStaticDataTorRedis;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 public class StaticDataHandler {
 
     private final SaveStaticDataToMongoDB saveStaticDataToMongoDB;
+    private final SaveStaticDataTorRedis saveStaticDataTorRedis;
 
     public Mono<Void> staticDataHandler(JSONObject json) {
         String eventName = json.getString("eventName");
@@ -21,6 +23,11 @@ public class StaticDataHandler {
             case "saveStaticDataToMongoDB":
                 log.info("eventName : {}", eventName);
                 saveStaticDataToMongoDB.process(json).subscribe();
+                break;
+
+            case "saveStaticDataTorRedis":
+                log.info("eventName : {}", eventName);
+                saveStaticDataTorRedis.process().subscribe();
                 break;
         }
 
