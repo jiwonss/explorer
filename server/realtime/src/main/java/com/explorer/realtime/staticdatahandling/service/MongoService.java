@@ -54,6 +54,10 @@ public class MongoService {
         return reactiveMongoTemplate.findAll(UpgradeMaterial.class);
     }
 
+    public Flux<Position> findAllPosition() {
+        return reactiveMongoTemplate.findAll(Position.class);
+    }
+
     public Flux<Position> findPositionByMapId(int mapId) {
         Query query = new Query();
         query.addCriteria(Criteria.where("mapId").is(mapId));

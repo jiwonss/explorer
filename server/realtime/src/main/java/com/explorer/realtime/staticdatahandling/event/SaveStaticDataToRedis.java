@@ -18,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -35,6 +36,7 @@ public class SaveStaticDataToRedis {
     private final NonDiscardableInventoryItemCategoryRepository nonDiscardableInventoryItemCategoryRepository;
     private final SynthesizedMaterialRepository synthesizedMaterialRepository;
     private final UpgradeMaterialRepository upgradeMaterialRepository;
+    private final PositionRepository positionRepository;
 
     @PostConstruct
     public void init() {
@@ -55,7 +57,8 @@ public class SaveStaticDataToRedis {
                         saveLabEfficiencyList(),
                         saveNonDiscardableInventoryItemCategoryList(),
                         saveSynthesizedMaterialList(),
-                        saveUpgradeMaterialList()
+                        saveUpgradeMaterialList(),
+                        savePositionList()
                 )
                 .doOnError(error -> log.error("[process] Error processing static data", error))
                 .then();
@@ -141,6 +144,20 @@ public class SaveStaticDataToRedis {
                     List<MaterialItemInfo> materialList = upgradeMaterial.getMaterialList();
                     return Flux.fromIterable(materialList)
                             .flatMap(item -> upgradeMaterialRepository.save(upgradeMaterial.getLevel(), item));
+                })
+                .then();
+    }
+
+    private Mono<Void> savePositionList() {
+        return mongoService.findAllPosition()
+                .flatMap(position -> {
+                    int mapId = position.getMapId();
+                    Set<String> positions = position.getPositions();
+                    return Flux.fromIterable(positions)
+                            .flatMap(positionInfo -> {
+                                positionRepository.save(mapId, positionInfo).subscribe();
+                                return Mono.empty();
+                            });
                 })
                 .then();
     }
