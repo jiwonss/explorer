@@ -18,7 +18,7 @@ public class LabDataMongoToRedis {
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final MapDataMongoToRedis mapDataMongoToRedis;
 
-    public Mono<Void> process(String channelId, String itemCategory) {
+    public Mono<Void> process(String channelId) {
         log.info("init process");
         return elementLaboratoryRepository.exist(channelId)
                 .flatMap(isExist -> {
@@ -28,7 +28,9 @@ public class LabDataMongoToRedis {
                 .switchIfEmpty(Mono.defer(() -> {
                     log.info("process start");
                     mapDataMongoToRedis.process(channelId).subscribe();
-                    return findMongoData(channelId, itemCategory);
+                    findMongoData(channelId, "element").subscribe();
+                    findMongoData(channelId, "compound").subscribe();
+                    return Mono.empty();
                 }))
                 .then();
     }

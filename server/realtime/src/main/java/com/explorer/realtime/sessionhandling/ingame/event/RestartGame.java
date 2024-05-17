@@ -46,8 +46,7 @@ public class RestartGame {
         // 사용자 정보를 Redis에 저장
         log.info("restart initial");
 //        (existChannel(channelId))
-        labDataMongoToRedis.process(channelId, "element").subscribe();
-        labDataMongoToRedis.process(channelId, "compound").subscribe();
+        labDataMongoToRedis.process(channelId).subscribe();
         inventoryDataMongoToRedis.process(channelId, userInfo.getUserId()).subscribe();
         createConnectionInfo(channelId, userInfo, connection).subscribe();
         userRepository.save(userInfo, channelId, "1").subscribe();
@@ -77,6 +76,7 @@ public class RestartGame {
                             .flatMap(mapData -> {
                                 map.put("mapId", mapId);
                                 map.put("mapData", mapData);
+                                currentMapRepository.save(channelId, 1).subscribe();
                                 unicasting.unicasting(channelId, userInfo.getUserId(), MessageConverter.convert(Message.success("restartGame", CastingType.UNICASTING, map))).subscribe();
                                 return Mono.just(map);
                             });
