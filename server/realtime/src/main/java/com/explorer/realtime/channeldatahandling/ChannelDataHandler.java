@@ -1,5 +1,6 @@
 package com.explorer.realtime.channeldatahandling;
 
+import com.explorer.realtime.channeldatahandling.event.DeleteChannel;
 import com.explorer.realtime.channeldatahandling.event.GetChannelDetails;
 import com.explorer.realtime.channeldatahandling.event.GetChannelList;
 import com.explorer.realtime.channeldatahandling.event.GetEndedChannelList;
@@ -19,6 +20,7 @@ public class ChannelDataHandler {
     private final GetChannelList getChannelList;
     private final GetChannelDetails getChannelDetails;
     private final GetEndedChannelList getEndedChannelList;
+    private final DeleteChannel deleteChannel;
 
     public Mono<Void> channelDataHandler(JSONObject json, Connection connection) {
         String eventName = json.getString("eventName");
@@ -37,6 +39,11 @@ public class ChannelDataHandler {
             case "getEndedChannelList":
                 log.info("eventName : {}", eventName);
                 getEndedChannelList.process(json, connection).subscribe();
+                break;
+
+            case "deleteChannel":
+                log.info("eventName : {}", eventName);
+                deleteChannel.process(json, connection).subscribe();
                 break;
         }
 
