@@ -68,6 +68,7 @@ public class FindUserData {
         Map<String, Object> map = new HashMap<>();
         return currentMapRepository.findMapId(channelId)
                 .flatMap(mapId -> {
+                    map.put("userId", userId);
                     map.put("mapId", mapId);
                     map.put("position", "1:0:1");
                     return userRepository.findAvatarAndNickname(userId)
