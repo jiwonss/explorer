@@ -80,6 +80,7 @@ public class SaveStaticDataToMongoDB {
 
         return Mono.empty();
     }
+
     private Mono<Void> setAvailableInventoryItems(JSONObject json) {
         String[] availableItems = json.getString("availableItems").split(",");
         List<AvailableInventoryItemInfo> itemList = new ArrayList<>();
