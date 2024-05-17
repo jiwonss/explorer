@@ -19,12 +19,15 @@ public class SavePositionToMongoDB {
     public Mono<Void> process(JSONObject json) {
         int mapId = json.getInt("mapId");
         String position = json.getString("position");
-        log.info("[process] mapId : {}, position : {}", mapId, position);
+        String itemCategory = json.getString("itemCategory");
+        int itemId = json.getInt("itemId");
+        log.info("[process] mapId : {}, position : {}, itemCategory : {}, itemId : {}", mapId, position, itemCategory, itemId);
 
         return mongoService.findPositionByMapId(mapId)
                 .flatMap(map -> {
                     log.info("[process] map : {}", map);
-                    map.addPosition(position);
+                    String value = position + ":" + itemCategory + ":" + String.valueOf(itemId);
+                    map.addPosition(value);
                     return positionMongoRepository.save(map);
                 })
                 .then();
