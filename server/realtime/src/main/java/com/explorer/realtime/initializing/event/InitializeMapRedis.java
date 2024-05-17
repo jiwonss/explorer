@@ -22,7 +22,7 @@ public class InitializeMapRedis {
     private final MapMongoRepository mapMongoRepository;
     private final MapRepository mapRepository;
 
-    @PostConstruct
+//    @PostConstruct
     public void initializeMap() {
         log.info("InitializeMapInfo ...");
         initializeMapRedis().subscribe();
