@@ -1,9 +1,6 @@
 package com.explorer.realtime.staticdatahandling;
 
-import com.explorer.realtime.staticdatahandling.event.SavePositionToMongoDB;
-import com.explorer.realtime.staticdatahandling.event.SavePositionsToMongoDB;
-import com.explorer.realtime.staticdatahandling.event.SaveStaticDataToMongoDB;
-import com.explorer.realtime.staticdatahandling.event.SaveStaticDataToRedis;
+import com.explorer.realtime.staticdatahandling.event.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -16,6 +13,7 @@ import reactor.core.publisher.Mono;
 public class StaticDataHandler {
 
     private final SaveStaticDataToMongoDB saveStaticDataToMongoDB;
+    private final SaveNewPositionsToMongoDB saveNewPositionsToMongoDB;
     private final SaveStaticDataToRedis saveStaticDataToRedis;
     private final SavePositionToMongoDB savePositionToMongoDB;
     private final SavePositionsToMongoDB savePositionsToMongoDB;
@@ -42,6 +40,11 @@ public class StaticDataHandler {
             case "savePositionsToMongoDB":
                 log.info("eventName : {}", eventName);
                 savePositionsToMongoDB.process(json).subscribe();
+                break;
+
+            case "saveNewPositionsToMongoDB":
+                log.info("eventName : {}", eventName);
+                saveNewPositionsToMongoDB.process(json).subscribe();
                 break;
         }
 
