@@ -7,12 +7,15 @@ import com.explorer.realtime.sessionhandling.ingame.document.Channel;
 import com.explorer.realtime.sessionhandling.ingame.dto.UserInfo;
 import com.explorer.realtime.sessionhandling.ingame.enums.Status;
 import lombok.RequiredArgsConstructor;
+import org.bson.Document;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.data.mongodb.core.aggregation.DateOperators;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -82,6 +85,36 @@ public class ChannelService {
         Query query = new Query(Criteria.where("_id").is(channelId));
         return reactiveMongoTemplate.findOne(query, Channel.class)
                 .flatMapMany(channel -> Flux.fromIterable(channel.getPlayerList()));
+    }
+
+    public Flux<Integer> countPlayerListByChannelId(String channelId) {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("_id").is(channelId)),
+                Aggregation.project().and(ArrayOperators.Size.lengthOfArray("playerList")).as("cnt")
+        );
+
+        return reactiveMongoTemplate.aggregate(aggregation, "channels", Document.class)
+                .map(result -> result.getInteger("cnt"));
+    }
+
+    public Mono<Void> deleteUserInfoByChannelId(String channelId, Long userId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(channelId));
+        query.addCriteria(Criteria.where("playerList.userId").is(userId));
+
+        Update update = new Update();
+        update.pull("playerList", new Query(Criteria.where("userId").is(userId)));
+
+        return reactiveMongoTemplate.updateFirst(query, update, Channel.class)
+                .then();
+    }
+
+    public Mono<Void> deleteChannelByChannelId(String channelId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(channelId));
+
+        return reactiveMongoTemplate.remove(query, Channel.class)
+                .then();
     }
 
 }

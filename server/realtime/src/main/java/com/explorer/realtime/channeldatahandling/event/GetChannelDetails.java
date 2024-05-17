@@ -35,7 +35,7 @@ public class GetChannelDetails {
     public Mono<Void> process(JSONObject json, Connection connection) {
         Long userId = json.getLong("userId");
         String channelId = json.getString("channelId");
-        log.info("[process] channelId : {}, connection : {}", channelId, connection);
+        log.info("[process] userId : {}, channelId : {}, connection : {}", userId, channelId, connection);
 
         Mono<ChannelDetailsInfo> channelDetailsMono = getChannelDetailsInfo(channelId);
         Mono<List<PlayerInfo>> playerInfoListMono = getPlayerInfoList(channelId, userId);
