@@ -176,7 +176,7 @@ public class StartGame {
                     });
                     inventory.setInventoryData(inventoryDataList);
                     inventoryDataMongoRepository.save(inventory).subscribe();
-                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("startInventory", CastingType.UNICASTING, inventory))).subscribe();
+//                    unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("startInventory", CastingType.UNICASTING, inventory))).subscribe();
                     return Mono.empty();
                 });
     }

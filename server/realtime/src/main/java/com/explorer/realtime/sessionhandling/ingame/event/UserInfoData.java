@@ -57,7 +57,7 @@ public class UserInfoData {
                         inventoryDataList.add(new InventoryData(Integer.parseInt(inventoryIdx), itemCategory, itemId, itemCnt, isFull));
                     });
                     inventory.setInventoryData(inventoryDataList);
-                    inventoryDataMongoRepository.save(inventory).subscribe();
+//                    inventoryDataMongoRepository.save(inventory).subscribe();
                     unicasting.unicasting(channelId, userId, MessageConverter.convert(Message.success("userInventory", CastingType.UNICASTING, inventory))).subscribe();
                     return Mono.empty();
                 });
