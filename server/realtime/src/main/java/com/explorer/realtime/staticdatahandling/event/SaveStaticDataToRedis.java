@@ -57,8 +57,7 @@ public class SaveStaticDataToRedis {
                         saveLabEfficiencyList(),
                         saveNonDiscardableInventoryItemCategoryList(),
                         saveSynthesizedMaterialList(),
-                        saveUpgradeMaterialList(),
-                        savePositionList()
+                        saveUpgradeMaterialList()
                 )
                 .doOnError(error -> log.error("[process] Error processing static data", error))
                 .then();
