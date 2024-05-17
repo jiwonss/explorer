@@ -21,6 +21,7 @@ import com.explorer.realtime.sessionhandling.ingame.repository.ChannelMongoRepos
 import com.explorer.realtime.sessionhandling.ingame.repository.ElementLaboratoryRepository;
 import com.explorer.realtime.sessionhandling.ingame.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
+import com.explorer.realtime.staticdatahandling.event.SaveMapDataToRedis;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class StartGame {
     private final CurrentMapRepository currentMapRepository;
     private final Unicasting unicasting;
     private final LaboratoryLevelRepository laboratoryLevelRepository;
+    private final SaveMapDataToRedis saveMapDataToRedis;
 
 
     private static final int INVENTORY_CNT = 8;
@@ -66,9 +68,9 @@ public class StartGame {
                         return elementLaboratoryRepository.initialize(channelId)
                                 .then(laboratoryLevelRepository.initialize(channelId))
                                 // 아직 맵 정보 update 안되어서 예비로 넣어놈
-                                .then(initializeMapObject.initializeMapObject(channelId, 1))
-                                .then(initializeMapObject.initializeMapObject(channelId, 2))
-                                .then(initializeMapObject.initializeMapObject(channelId, 3))
+//                                .then(initializeMapObject.initializeMapObject(channelId, 1))
+//                                .then(initializeMapObject.initializeMapObject(channelId, 2))
+//                                .then(initializeMapObject.initializeMapObject(channelId, 3))
                                 .then(setInitialPlayerInfo.process(channelId, INVENTORY_CNT))
                                 .then(broadcasting.broadcasting(
                                         channelId,
@@ -76,7 +78,8 @@ public class StartGame {
                                 ));
                     }))
                     .then(initializeSaveLabData.process(channelId))
-                    .then(saveMapData(channelId))
+//                    .then(saveMapData(channelId))
+                    .then(saveMapDataToRedis.save(channelId, 1))
                     .then(saveAllPlayerInventory(channelId))
                     .then(getMapData(channelId))
                     .then(currentMapRepository.save(channelId, 1))
