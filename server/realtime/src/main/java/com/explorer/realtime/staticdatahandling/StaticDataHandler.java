@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class StaticDataHandler {
 
+    private final SaveMapDataToRedis saveMapDataToRedis;
     private final SaveStaticDataToMongoDB saveStaticDataToMongoDB;
     private final SaveNewPositionsToMongoDB saveNewPositionsToMongoDB;
     private final SaveStaticDataToRedis saveStaticDataToRedis;
@@ -22,6 +23,11 @@ public class StaticDataHandler {
         String eventName = json.getString("eventName");
 
         switch (eventName) {
+            case "saveMapDataToRedis":
+                log.info("eventName : {}", eventName);
+                saveMapDataToRedis.process(json).subscribe();
+                break;
+
             case "saveStaticDataToMongoDB":
                 log.info("eventName : {}", eventName);
                 saveStaticDataToMongoDB.process(json).subscribe();
