@@ -1,5 +1,7 @@
 package com.explorer.realtime.staticdatahandling;
 
+import com.explorer.realtime.staticdatahandling.event.SavePositionToMongoDB;
+import com.explorer.realtime.staticdatahandling.event.SavePositionsToMongoDB;
 import com.explorer.realtime.staticdatahandling.event.SaveStaticDataToMongoDB;
 import com.explorer.realtime.staticdatahandling.event.SaveStaticDataToRedis;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,8 @@ public class StaticDataHandler {
 
     private final SaveStaticDataToMongoDB saveStaticDataToMongoDB;
     private final SaveStaticDataToRedis saveStaticDataToRedis;
+    private final SavePositionToMongoDB savePositionToMongoDB;
+    private final SavePositionsToMongoDB savePositionsToMongoDB;
 
     public Mono<Void> staticDataHandler(JSONObject json) {
         String eventName = json.getString("eventName");
@@ -28,6 +32,16 @@ public class StaticDataHandler {
             case "saveStaticDataToRedis":
                 log.info("eventName : {}", eventName);
                 saveStaticDataToRedis.process().subscribe();
+                break;
+
+            case "savePositionToMongoDB":
+                log.info("eventName : {}", eventName);
+                savePositionToMongoDB.process(json).subscribe();
+                break;
+
+            case "savePositionsToMongoDB":
+                log.info("eventName : {}", eventName);
+                savePositionsToMongoDB.process(json).subscribe();
                 break;
         }
 

@@ -1,4 +1,4 @@
-package com.explorer.realtime.gamedatahandling.map.document;
+package com.explorer.realtime.staticdatahandling.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

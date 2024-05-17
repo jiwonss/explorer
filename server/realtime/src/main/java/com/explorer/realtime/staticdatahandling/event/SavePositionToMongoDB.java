@@ -1,7 +1,7 @@
-package com.explorer.realtime.gamedatahandling.map.event;
+package com.explorer.realtime.staticdatahandling.event;
 
-import com.explorer.realtime.gamedatahandling.map.repository.PositionRepository;
-import com.explorer.realtime.gamedatahandling.map.service.PositionService;
+import com.explorer.realtime.staticdatahandling.repository.mongo.PositionMongoRepository;
+import com.explorer.realtime.staticdatahandling.service.MongoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -13,19 +13,19 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SavePositionToMongoDB {
 
-    private final PositionService positionService;
-    private final PositionRepository positionRepository;
+    private final MongoService mongoService;
+    private final PositionMongoRepository positionMongoRepository;
 
     public Mono<Void> process(JSONObject json) {
         int mapId = json.getInt("mapId");
         String position = json.getString("position");
         log.info("[process] mapId : {}, position : {}", mapId, position);
 
-        return positionService.findByMapId(mapId)
+        return mongoService.findPositionByMapId(mapId)
                 .flatMap(map -> {
                     log.info("[process] map : {}", map);
                     map.addPosition(position);
-                    return positionRepository.save(map);
+                    return positionMongoRepository.save(map);
                 })
                 .then();
     }
