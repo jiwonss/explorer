@@ -16,7 +16,7 @@ public class LabDataMongoToRedis {
 
     private final LaboratoryDataMongoRepository laboratoryDataMongoRepository;
     private final ElementLaboratoryRepository elementLaboratoryRepository;
-    private final MapDataMongoToRedis mapDataMongoToRedis;
+//    private final MapDataMongoToRedis mapDataMongoToRedis;
 
     public Mono<Void> process(String channelId) {
         log.info("init process");
@@ -27,7 +27,7 @@ public class LabDataMongoToRedis {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     log.info("process start");
-                    mapDataMongoToRedis.process(channelId).subscribe();
+//                    mapDataMongoToRedis.process(channelId).subscribe();
                     findMongoData(channelId, "element").subscribe();
                     findMongoData(channelId, "compound").subscribe();
                     return Mono.empty();

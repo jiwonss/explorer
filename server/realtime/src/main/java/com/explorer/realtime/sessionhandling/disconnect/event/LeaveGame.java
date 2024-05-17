@@ -5,6 +5,7 @@ import com.explorer.realtime.gamedatahandling.component.common.mapinfo.repositor
 import com.explorer.realtime.gamedatahandling.component.personal.inventoryInfo.repository.InventoryRepository;
 import com.explorer.realtime.gamedatahandling.component.personal.playerInfo.repository.PlayerInfoRepository;
 import com.explorer.realtime.gamedatahandling.laboratory.repository.ElementLaboratoryRepository;
+import com.explorer.realtime.gamedatahandling.tool.repository.ToolRepository;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Broadcasting;
@@ -12,9 +13,11 @@ import com.explorer.realtime.global.component.session.SessionManager;
 import com.explorer.realtime.global.mongo.entity.*;
 import com.explorer.realtime.global.mongo.repository.InventoryDataMongoRepository;
 import com.explorer.realtime.global.mongo.repository.LaboratoryDataMongoRepository;
+import com.explorer.realtime.global.mongo.repository.LaboratoryLevelMongoRepository;
 import com.explorer.realtime.global.mongo.repository.MapDataMongoRepository;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
+import com.explorer.realtime.sessionhandling.ingame.repository.LaboratoryLevelRepository;
 import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,9 @@ public class LeaveGame {
     private final ElementLaboratoryRepository elementLaboratoryRepository;
     private final LaboratoryDataMongoRepository laboratoryDataMongoRepository;
     private final CurrentMapRepository currentMapRepository;
+    private final LaboratoryLevelRepository laboratoryLevelRepository;
+    private final LaboratoryLevelMongoRepository laboratoryLevelMongoRepository;
+    private final ToolRepository toolRepository;
 
     public Mono<Void> process(String channelId, Long userId) {
         log.info("Leave game");
@@ -51,6 +57,7 @@ public class LeaveGame {
         return saveInventory(channelId, userId)
                 .then(saveElementData(channelId))
                 .then(saveCompoundData(channelId))
+                .then(saveLabLevelData(channelId))
                 .then(saveMapData(channelId))
                 .then(userCount(channelId))
                 .flatMap(count -> {
@@ -80,13 +87,15 @@ public class LeaveGame {
         return playerInfoRepository.deleteUserChannelInfo(channelId, userId)
                         .then(userRepository.delete(userId))
                                  .then(channelRepository.deleteByUserId(channelId, userId))
-                                        .then(inventoryRepository.deleteUserInventory(channelId, userId));
+                                        .then(inventoryRepository.deleteUserInventory(channelId, userId))
+                .then(toolRepository.delete(channelId, userId));
     }
 
     private Mono<Void> deleteUserData(String channelId, Long userId) {
         channelRepository.deleteAll(channelId).subscribe();
         mapObjectRepository.deleteAllMap(channelId).subscribe();
         sessionManager.removeConnection(userId);
+        laboratoryLevelRepository.delete(channelId).subscribe();
         elementLaboratoryRepository.deleteAllData(channelId).subscribe();
         return Mono.empty();
     }
@@ -97,8 +106,6 @@ public class LeaveGame {
                     log.info("Id is exist");
                     return elementLaboratoryRepository.findElementData(channelId)
                             .flatMap(elements -> {
-                                // 이 시점에서 elements는 실제 데이터 리스트입니다.
-                                log.info("elements {}", elements);
                                 laboratory.setItemCnt(elements);
                                 return laboratoryDataMongoRepository.save(laboratory);
                             });
@@ -108,11 +115,8 @@ public class LeaveGame {
     private Mono<Laboratory> saveCompoundData(String channelId) {
         return laboratoryDataMongoRepository.findByChannelIdAndItemCategory(channelId, "compound")
                 .flatMap(laboratory -> {
-                    log.info("Id is exist");
                     return elementLaboratoryRepository.findCompoundData(channelId)
                             .flatMap(compounds -> {
-                                // 이 시점에서 elements는 실제 데이터 리스트입니다.
-                                log.info("compound {}", compounds);
                                 laboratory.setItemCnt(compounds);
                                 return laboratoryDataMongoRepository.save(laboratory);
                             });
@@ -161,5 +165,19 @@ public class LeaveGame {
                                     });
                         }))
                 .then();
+    }
+
+    private Mono<Void> saveLabLevelData(String channelId) {
+        return laboratoryLevelMongoRepository.findByChannelId(channelId)
+                .flatMap(levelData -> {
+                    log.info("levelData {}", levelData);
+                    return laboratoryLevelRepository.findValue(channelId)
+                            .flatMap(level -> {
+                                log.info("level {}", level);
+                                levelData.setLevel(String.valueOf(level));
+                                return laboratoryLevelMongoRepository.save(levelData)
+                                        .then();
+                            });
+                });
     }
 }
