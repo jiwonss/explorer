@@ -22,10 +22,10 @@ public class ElementLaboratoryRepository {
     }
 
     public Mono<Void> initialize(String channelId) {
-        Object[] initialElements = new Object[10];
+        Object[] initialElements = new Object[20];
         Arrays.fill(initialElements, 0);
 
-        Object[] initialCompounds = new Object[13];
+        Object[] initialCompounds = new Object[20];
         Arrays.fill(initialCompounds, 0);
 
         String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
