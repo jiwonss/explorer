@@ -78,7 +78,7 @@ public class StartGame {
                     .then(initializeSaveLabData.process(channelId))
                     .then(saveMapData(channelId))
                     .then(saveAllPlayerInventory(channelId))
-//                    .then(getMapData(channelId))
+                    .then(getMapData(channelId))
                     .then(currentMapRepository.save(channelId, 1))
                     .subscribe();
         });
