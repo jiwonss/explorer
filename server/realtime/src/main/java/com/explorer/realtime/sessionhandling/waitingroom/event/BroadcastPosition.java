@@ -24,7 +24,10 @@ public class BroadcastPosition {
     private final Broadcasting broadcasting;
 
     private static final String eventName = "broadcastPosition";
-    private static final String[] positions = {"1:0:1", "2:0:2", "3:0:3", "1:0:2", "2:0:3", "1:0:3"};
+    private static final String[] positions = {
+            "1:0:1:0:0:0", "2:0:2:0:0:0", "3:0:3:0:0:0",
+            "1:0:2:0:0:0", "2:0:3:0:0:0", "1:0:3:0:0:0"
+    };
 
     public Mono<Void> process(JSONObject json) {
         String teamCode = json.getString("teamCode");
