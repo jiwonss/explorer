@@ -176,7 +176,7 @@ public class JoinRoomManager : MonoBehaviour
         int nowUserId = userInfoManager.GetUserId();
         EnterRequest request = new EnterRequest("waitingRoomSession", "broadcastPosition", teamCode, nowUserId, true);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
         // 방 입장 인원 브로드캐스팅
 
         // 인원 업데이트 메시지 송신
@@ -190,7 +190,7 @@ public class JoinRoomManager : MonoBehaviour
     string teamCode = ChannelManager.instance.GetTeamCode();
         UpdateCount request = new UpdateCount("waitingRoomSession", "getWaitingRoomHeadcount", teamCode);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
     }
 
     public class UpdateCount
@@ -270,7 +270,6 @@ public class JoinRoomManager : MonoBehaviour
         if (cameraInfoManager != null)
         {
             positionInfo = cameraInfoManager.UpdateCameraInfo();
-            Debug.Log("positionInfo = " + positionInfo);
         }
         else
         {
@@ -279,7 +278,7 @@ public class JoinRoomManager : MonoBehaviour
 
         SendInitPosition request = new SendInitPosition("waitingRoomSession", "broadcastPosition", teamCode, nowUserId, positionInfo, false);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
 
          // 인원 업데이트 메시지 송신
         StartCoroutine(WaitAndSendUpdateCount());

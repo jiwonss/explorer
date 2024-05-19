@@ -192,3 +192,14 @@
     - ServerConfingLoader.cs 수정
     - TCPMessageHandler.cs 수정
     - JoinRoomManager.cs 수정
+- 원소연구소
+  - 원소 및 화합물 리스트 렌더
+    - ChannelConrtrol.cs 수정
+    - ElementLabRender.cs 수정
+    - ElementList.cs
+    - CompoundList.cs
+
+## ~24.05.19
+
+- realtime, chat 서버 TCP 연결 구현
+- 인게임 채팅 구현 등
