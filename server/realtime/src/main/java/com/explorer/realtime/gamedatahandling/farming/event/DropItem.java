@@ -26,10 +26,10 @@ public class DropItem {
      * 파라미터 JSONObject json: ... channelId, mapId, position, itemCategory, itemId, itemCnt
      */
     public Mono<Void> process(JSONObject json) {
-
+        Long userId = json.getLong("userId");
         log.info("DropItem start...");
         return updateDroppedItemData(json)
-                .then(broadcastingSuccessData(json))
+                .then(broadcastingSuccessData(userId, json))
                 .doOnError(error -> log.error("error: {}", error.getMessage()));
     }
 
@@ -56,7 +56,7 @@ public class DropItem {
      * [파밍 성공 시 BROADCASTING]
      * 파라미터 JSONObject json: ... channelId, mapId, position, itemCategory, itemId, itemCnt
      */
-    private Mono<Void> broadcastingSuccessData(JSONObject json) {
+    private Mono<Void> broadcastingSuccessData(Long userId, JSONObject json) {
 
         String channelId = json.getString("channelId");
         int mapId = json.getInt("mapId");
@@ -71,6 +71,7 @@ public class DropItem {
         dataBody.put("itemCategory", itemCategory);
         dataBody.put("itemId", itemId);
         dataBody.put("itemCnt", itemCnt);
+        dataBody.put("userId", userId);
 
         return broadcasting.broadcasting(
                 channelId,
