@@ -16,11 +16,25 @@ public class ChannelControl : MonoBehaviour
 {
     private TCPClientManager tcpClientManager;
 
+    private int avatar;
+    private string nickname;
+
+    private bool isNickOk;
+
     private string planetName;
 
     private string channel1Id;
     private string channel2Id;
     private string channel3Id;
+
+    public Sprite char0;
+    public Sprite char1; 
+    public Sprite char2; 
+    public Sprite char3; 
+    public Sprite char4; 
+    public Sprite char5; 
+
+
 
     [Header("SignUp")]
     public GameObject SignUpScene;
@@ -28,11 +42,13 @@ public class ChannelControl : MonoBehaviour
     [Header("ProfilePage")]
     public GameObject ProfilePage;
     public GameObject ProfileChanger;
-    public Image ProfileImage;
+    public Image profileAvatarField;
+    public Image profileAvatarFieldChange;
     public Button ProfileDesignLeftBtn;
     public Button ProfileDesignRightBtn;
     public TextMeshProUGUI NowNickName;
-    public TextMeshProUGUI NickNameChange;
+    public TextMeshProUGUI BeforeNickname;
+    public TMP_InputField NickNameChange;
     public Button ProfileChangeBtn;
     public Button ProfileChangeAcceptBtn;
     public Button endingPlanetBtn;
@@ -76,15 +92,19 @@ public class ChannelControl : MonoBehaviour
     void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
+        
+        
     }
 
 
     public void Start()
     {
         Cursor.visible = true;
-
+        
         ProfileChangeBtn.onClick.AddListener(EditProfile);
-        ProfileChangeAcceptBtn.onClick.AddListener(EditAccept);
+        ProfileChangeAcceptBtn.onClick.AddListener(StartEditAccept);
+        ProfileDesignLeftBtn.onClick.AddListener(AvatarChangeLeft); // 왼쪽 버튼 클릭
+        ProfileDesignRightBtn.onClick.AddListener(AvatarChangeRight); // 오른쪽 버튼 클릭
 
         Channel1Image.onClick.AddListener(OnChannel1ButtonClick);
         Channel2Image.onClick.AddListener(OnChannel2ButtonClick);
@@ -102,19 +122,274 @@ public class ChannelControl : MonoBehaviour
         LogOut.onClick.AddListener(ToggleObject);
         Exit.onClick.AddListener(ToggleObject);
     }
-    // 프로필 수정
+    // 첫 렌더 시 아바타, 닉네임 설정
+    public void SetProfile()
+    {
+        avatar = UserInfoManager.Instance.GetAvatar();
+        nickname = UserInfoManager.Instance.GetNickname();
+        // 초기 아바타 설정
+        // 아바타 값에 따라 스프라이트 설정
+        switch (avatar)
+        {
+            case 0:
+                profileAvatarField.sprite = char0;
+                break;
+            case 1:
+                profileAvatarField.sprite = char1;
+                break;
+            case 2:
+                profileAvatarField.sprite = char2;
+                break;
+            case 3:
+                profileAvatarField.sprite = char3;
+                break;
+            case 4:
+                profileAvatarField.sprite = char4;
+                break;
+            case 5:
+                profileAvatarField.sprite = char5;
+                break;
+            default:
+                Debug.LogError("Invalid avatar value: " + avatar);
+                break;
+        }
+        // 초기 닉네임 설정
+        NowNickName.text = nickname;
+    }
+
+    // 프로필 수정 모달
     public void EditProfile()
     {
         ProfileChanger.SetActive(true);
         ProfilePage.SetActive(false);
+        // 초기 아바타 렌더
+        switch (avatar)
+        {
+            case 0:
+                profileAvatarFieldChange.sprite = char0;
+                break;
+            case 1:
+                profileAvatarFieldChange.sprite = char1;
+                break;
+            case 2:
+                profileAvatarFieldChange.sprite = char2;
+                break;
+            case 3:
+                profileAvatarFieldChange.sprite = char3;
+                break;
+            case 4:
+                profileAvatarFieldChange.sprite = char4;
+                break;
+            case 5:
+                profileAvatarFieldChange.sprite = char5;
+                break;
+            default:
+                Debug.LogError("Invalid avatar value: " + avatar);
+                break;
+        }
+        // 닉네임 렌더
+        isNickOk = false;
+        NickNameChange.text = nickname;
+    }
+
+    // 버튼 클릭 시 렌더되는 아바타 변경 - 왼쪽
+    public void AvatarChangeLeft()
+    {
+        avatar -= 1;
+        if(avatar < 0)
+        {
+            avatar = 5;
+        }
+        switch (avatar)
+        {
+            case 0:
+                profileAvatarFieldChange.sprite = char0;
+                break;
+            case 1:
+                profileAvatarFieldChange.sprite = char1;
+                break;
+            case 2:
+                profileAvatarFieldChange.sprite = char2;
+                break;
+            case 3:
+                profileAvatarFieldChange.sprite = char3;
+                break;
+            case 4:
+                profileAvatarFieldChange.sprite = char4;
+                break;
+            case 5:
+                profileAvatarFieldChange.sprite = char5;
+                break;
+            default:
+                Debug.LogError("Invalid avatar value: " + avatar);
+                break;
+        }
+    }
+    
+    // 버튼 클릭 시 렌더되는 아바타 변경 - 오른쪽
+    public void AvatarChangeRight()
+    {
+        avatar += 1;
+        if(avatar > 5)
+        {
+            avatar = 0;
+        }
+        switch (avatar)
+        {
+            case 0:
+                profileAvatarFieldChange.sprite = char0;
+                break;
+            case 1:
+                profileAvatarFieldChange.sprite = char1;
+                break;
+            case 2:
+                profileAvatarFieldChange.sprite = char2;
+                break;
+            case 3:
+                profileAvatarFieldChange.sprite = char3;
+                break;
+            case 4:
+                profileAvatarFieldChange.sprite = char4;
+                break;
+            case 5:
+                profileAvatarFieldChange.sprite = char5;
+                break;
+            default:
+                Debug.LogError("Invalid avatar value: " + avatar);
+                break;
+        }
+    }
+
+    public void StartEditAccept()
+    {
+        StartCoroutine(EditAccept());
     }
 
     // 프로필 수정 저장
-    public void EditAccept()
+    IEnumerator EditAccept()
     {
-        ProfileChanger.SetActive(false);
-        ProfilePage.SetActive(true);
+        CheckOkNickName(NickNameChange.text);
+        // yield return StartCoroutine(CheckDuplicate());
+        // 닉네임이 유효하면
+        if(isNickOk)
+        {
+            if (string.IsNullOrEmpty(TokenManager.Instance.GetAccessToken()))
+            {
+                Debug.LogError("로그인되지 않았습니다. 로그인 후 다시 시도하세요.");
+                yield break;
+            }
+            nickname = NickNameChange.text;
+            string url = ServerConfigLoader.URL + "/user/users/profile";
+            string jsonData =  "{\"nickname\": \"" + nickname + "\", \"avatar\": \"" + avatar + "\"}";
+            UnityWebRequest request = new UnityWebRequest(url, "PATCH");
+
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("Authorization", "Bearer " + TokenManager.Instance.GetAccessToken());
+            yield return request.SendWebRequest();
+
+            // 변경 성공
+            if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
+            {
+                UserInfoManager.Instance.ChangeProfile(nickname, avatar);
+
+                ProfileChanger.SetActive(false);
+                ProfilePage.SetActive(true);
+                SetProfile();
+            
+            }
+            else
+            
+                NickNameChange.text = "이미 존재하는 닉네임";
+                Debug.Log("이미 존재하는 닉네임");
+                isNickOk = false;
+            }
+        else
+        {
+            NickNameChange.text = "조건에 맞지 않습니다";
+            Debug.Log("조건에 맞지 않습니다");
+            isNickOk = false;
+        }
+        }
+        
+        
+    
+    // 닉네임 유효성체크
+    void CheckOkNickName(string nickname)
+    {
+        string pattern = @"^[A-Za-z0-9가-힣]{2,8}$";
+
+        // 정규식과 매치되는지 확인
+        if (Regex.IsMatch(nickname, pattern))
+        {
+            isNickOk = true;
+        }
+        else
+        {
+            isNickOk = false;
+        }
     }
+
+    // IEnumerator CheckDuplicate()
+    // {
+    //     // 중복검사
+    //     if (NickNameChange.text != UserInfoManager.Instance.GetNickname())
+    //     {
+    //         Debug.Log("NickNameChange.text = " + NickNameChange.text + " UserInfoManager : " + UserInfoManager.Instance.GetNickname());
+    //         string url = ServerConfigLoader.URL + "/user/auth.nickname?nickname=" + WWW.EscapeURL(NickNameChange.text);
+    //         UnityWebRequest request = UnityWebRequest.Get(url);
+
+    //         yield return request.SendWebRequest();
+
+    //         if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
+    //         {
+    //             string responseText = request.downloadHandler.text;
+    //             JObject jsonResponse = JObject.Parse(responseText);
+    //             // 여기에서 데이터의 null 체크를 합니다.
+    //             JToken isDuplicateToken = jsonResponse["dataBody"];
+
+    //             // null 검사 추가
+    //             if (isDuplicateToken != null && isDuplicateToken.Type != JTokenType.Null)
+    //             {
+    //                 bool isDuplicate = isDuplicateToken.ToObject<bool>();
+
+    //                 if (isDuplicate)
+    //                 {
+    //                     isDuple = false;
+    //                     Debug.Log("닉네임이 중복됩니다.");
+    //                 }
+    //                 else
+    //                 {
+    //                     isDuple = true;
+    //                     Debug.Log("사용 가능");
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 Debug.Log("서버로부터 유효하지 않은 응답을 받았습니다.");
+    //                 Debug.Log("jsonResponse  : " + jsonResponse);
+    //                 isDuple = false;
+    //             }
+    //         }
+    //         else
+    //         {
+    //             Debug.LogError("중복 검사 실패: " + request.error);
+    //             isDuple = false;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         isDuple = true;
+    //         Debug.Log("사용 가능");
+    //     }
+
+    //     Debug.Log("isDuple = " + isDuple);
+    // }
+    
+
+
     // 존재 채널 모달
     public void IfExistRoom()
     {
@@ -373,12 +648,32 @@ public class ChannelControl : MonoBehaviour
         tcpClientManager.SendTCPRequest(json);
     }
 
-    // 방 입장 성공 반환 시 씬 전환
+    // 방 입장 성공 반환 시 채팅 연결, 씬 전환
     public void EnterRoom()
     {
+        // 채팅 연결
+        int userId = UserInfoManager.Instance.GetUserId();
+        ConnectChatServer request = new ConnectChatServer("session", "channelIn", userId);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendTCPRequest(json);
+
+        // 씬 전환
         SceneManager.LoadScene("WaitingRoom2");
         SignUpScene.SetActive(false);
 
+    }
+
+    public class ConnectChatServer
+    {
+        public string type;
+        public string eventName;
+        public int userId;
+        public ConnectChatServer(string type, string eventName, int userId)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.userId = userId;
+        }
     }
 
     // 행성 이름 입력 모달 on
@@ -450,9 +745,15 @@ public class ChannelControl : MonoBehaviour
         }
     }
 
-    // 방 생성 성공시 씬 전환
+    // 방 생성 성공시 채팅 연결, 씬 전환
     public void MakeRoom()
     {
+        // 채팅 연결
+        int userId = UserInfoManager.Instance.GetUserId();
+        ConnectChatServer request = new ConnectChatServer("session", "channelIn", userId);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendTCPRequest(json);
+
         SignUpScene.SetActive(false);
         SceneManager.LoadScene("WaitingRoom1");
 
