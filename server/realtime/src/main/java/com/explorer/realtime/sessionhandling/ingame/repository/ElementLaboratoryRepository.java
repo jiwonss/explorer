@@ -27,6 +27,8 @@ public class ElementLaboratoryRepository {
 
         Object[] initialCompounds = new Object[20];
         Arrays.fill(initialCompounds, 0);
+        initialCompounds[0] = 1;
+        initialCompounds[4] = 1;
 
         String elementKey = KEY_PREFIX+channelId+ELEMENT_SUFFIX;
         String compoundKey = KEY_PREFIX + channelId + COMPOUND_SUFFIX;
