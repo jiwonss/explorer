@@ -163,7 +163,7 @@ public class StartGame {
 
     private Mono<Void> getMapData(String channelId) {
         return mapObjectRepository.findMapData(channelId, 1)
-                .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapInfo", CastingType.BROADCASTING, mapData))));
+                .flatMap(mapData -> broadcasting.broadcasting(channelId, MessageConverter.convert(Message.success("mainMapInfo", CastingType.BROADCASTING))));
     }
 
     private Mono<Boolean> saveInventory(String channelId, Long userId) {
