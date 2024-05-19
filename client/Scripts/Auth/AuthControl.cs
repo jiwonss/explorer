@@ -1,22 +1,31 @@
-    using System;
     using System.Collections;
-    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.UI;
     using TMPro;
-    using UnityEngine.SceneManagement;
     using System.Text.RegularExpressions;
-    using static UnityEngine.UIElements.UxmlAttributeDescription;
     using UnityEngine.Networking;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using System.Net.Sockets;
 
     public class AuthControl : MonoBehaviour
     {
-        private TCPClientManager tcpClientManager;
 
-        private string accessToken;
+        public static IngameChat ingameChat;
+
+    public static void SetIngameChat(IngameChat ingameChat)
+    {
+        AuthControl.ingameChat = ingameChat;
+        if (ingameChat == null)
+        {
+            Debug.LogError("ingameChat was called with a null reference");
+        }
+        else
+        {
+            // Debug.Log("ingameChat was set successfully");
+        }
+    }
+
+
+    private string accessToken;
         private string refreshToken;
 
         [Header("Pages")]
@@ -139,8 +148,11 @@
                 // Debug.Log("로그아웃 성공");
                 ChannelChoose.SetActive(false);
                 title.SetActive(true);
+                BeforeSignUp.SetActive(true);
                 loginPage.SetActive(true);
+            // TCP 연결 해제
 
+            TCPClientManager.Instance.DisconnectMainServer();
         }
             else
             {
@@ -387,67 +399,68 @@
     }
     // 로그인 요청
     private IEnumerator LoginRequest(string loginId, string password)
+    {
+
+        string requestUrl = ServerConfigLoader.URL + "/user/auth/login";
+        string jsonData = "{\"loginId\": \"" + loginId + "\", \"password\": \"" + password + "\"}";
+        UnityWebRequest request = new UnityWebRequest(requestUrl, "POST");
+        request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData));
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        yield return request.SendWebRequest();
+
+
+        if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
         {
-            string requestUrl = ServerConfigLoader.URL + "/user/auth/login";
-            string jsonData = "{\"loginId\": \"" + loginId + "\", \"password\": \"" + password + "\"}";
-            UnityWebRequest request = new UnityWebRequest(requestUrl, "POST");
-            request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData));
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            // Debug.Log("Request value" + request + "++++request.DownHandler" + request.downloadHandler.text);
-            yield return request.SendWebRequest();
+            //Debug.Log("서버 응답 받음: " + request.downloadHandler.text);
 
-            if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
+            LoginResponse response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
+            if (response.dataHeader.successCode == 0)
             {
-                // Debug.Log("서버 응답 데이터: " + request.downloadHandler.text);
-                LoginResponse response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
-                if (response.dataHeader.successCode == 0)
+
+                TokenManager.Instance.SetTokens(response.dataBody.tokenInfo.accessToken, response.dataBody.tokenInfo.refreshToken);
+
+                int userId = response.dataBody.userInfo.userId;
+                string nickname = response.dataBody.userInfo.nickname;
+                int avatar = response.dataBody.userInfo.avatar;
+
+                UserInfoManager.Instance.SetUserInfo(userId, nickname, avatar);
+                string ip = ServerConfigLoader.serverIp;
+                int mainPort = ServerConfigLoader.serverPort;
+                int chatPort = ServerConfigLoader.chatServerPort;
+
+                TCPClientManager.Instance.Init(ip, mainPort, chatPort);
+
+                if (TCPClientManager.Instance.ConnectMainServer())
                 {
-                    TokenManager.Instance.SetTokens(response.dataBody.tokenInfo.accessToken, response.dataBody.tokenInfo.refreshToken);
-                    // 유저 정보 저장
-                    int userId = response.dataBody.userInfo.userId;
-                    string nickname = response.dataBody.userInfo.nickname;
-                    int avatar = response.dataBody.userInfo.avatar;
+                    //Debug.Log("TCP 연결 성공");
 
-                    UserInfoManager.Instance.SetUserInfo(userId, nickname, avatar);
-                    // Debug.Log("로그인 : userId : " + userId + " nickname : " + nickname + " avatar : " + avatar);
+                    LogOutModal.SetActive(false);
+                    loginPage.SetActive(false);
+                    ChannelChoose.SetActive(true);
 
-                    //TCP
-                    string ip = ServerConfigLoader.serverIp;
-                    int port = int.Parse(ServerConfigLoader.serverPort);
+                    TCPClientManager.Instance.StartReceivingMain();
 
-                    // TCPClientManager의 인스턴스 초기화
-                    TCPClientManager.Instance.Init(ip, port);
-
-                    if (TCPClientManager.Instance.Connect())
-                    {
-                        // Debug.Log("TCP 연결 성공 !!");
-
-                        // TCP 연결 시 채널 목록 조회
-                        loginPage.SetActive(false);
-                        ChannelChoose.SetActive(true);
-                        // TCP 이벤트 수신 시작
-                        TCPClientManager.Instance.StartReceiving();
-                        // 채널 목록 조회 메시지 전송
-                        ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
-                        string json = JsonConvert.SerializeObject(requestData);
-                        TCPClientManager.Instance.SendTCPRequest(json);
-                }
-                    else
-                    {
-                        Debug.LogError("TCP 연결 실패!");
-                    }
+                    ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
+                    string json = JsonConvert.SerializeObject(requestData);
+                    TCPClientManager.Instance.SendMainTCPRequest(json);
                 }
                 else
                 {
-                    Debug.LogError("로그인 실패: " + response.dataHeader.resultMessage);
+                    Debug.LogError("TCP 연결 실패");
                 }
             }
             else
             {
-                Debug.LogError("Login request failed: " + request.error);
+                Debug.LogError("로그인 실패: " + response.dataHeader.resultMessage);
             }
         }
+        else
+        {
+            Debug.LogError("Login request failed: " + request.error);
+        }
+    }
 
         public void SetTokens(string accessToken, string refreshToken)
         {
@@ -551,18 +564,17 @@
     // 방 삭제 메시지 수신
     public void DeleteRoom()
     {
-        Debug.Log("방 삭제 메시지 수신");
         SignUpPage.SetActive(true);
         BeforeSignUp.SetActive(false);
         ChannelChoose.SetActive(true);
-        LogOutBack.SetActive(false);
+        // LogOutBack.SetActive(false);
 
         UserInfoManager userInfoManager = UserInfoManager.Instance;
         int userId = userInfoManager.GetUserId();
-
+        ChannelManager.Instance.SetTeamCode(null);
         ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
         string json = JsonConvert.SerializeObject(requestData);
-        TCPClientManager.Instance.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
 
     }
 
@@ -573,16 +585,14 @@
         SignUpPage.SetActive(true);
         BeforeSignUp.SetActive(false);
         ChannelChoose.SetActive(true);
-        LogOutBack.SetActive(false);
+        LogOutModal.SetActive(false);
+        ChannelManager.Instance.SetTeamCode(null);
+        LogOutModal.SetActive(false);
+        //LogOutBack.SetActive(false);
 
         
     }
 
-    // 방 나가기 메시지 수신
-    public void ExitRoom()
-    {
-        
-    }
 
     public class ExitRoomSelfRequest
     {
@@ -596,6 +606,24 @@
             this.eventName = eventName;
             this.teamCode = teamCode;
         }
+    }
+
+    // 채팅 수신
+    public void EnterChattingRoom(string nickname, string content)
+    {
+        StartCoroutine(DelayedRenderChat(nickname, content));
+
+    }
+
+    private IEnumerator DelayedRenderChat(string nickname, string content)
+    {
+        yield return new WaitForSeconds(1f);
+
+        if (ingameChat != null)
+        {
+            ingameChat.RenderChat(nickname, content);
+        }
+
     }
 
 }
