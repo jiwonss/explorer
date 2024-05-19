@@ -7,22 +7,31 @@ using Newtonsoft.Json;
 
 public class CharacterMove : MonoBehaviour
 {
-    public TCPClientManager tcpClientManager;
 
+    //public TCPClientManager tcpClientManager;
+
+    //public TCPClientManager tcpClientManager;
+
+    //이전 코드 남겨두기
+    //public Transform cameraTransform;
+    //public CharacterController characterController;
+    //public float moveSpeed = 5f;
+    //public float jumpSpeed = 3f;
+    //public float gravity = -10f;
+    //public float yVelocity = 0;
+    public CharacterMove characterMove;
     public Transform cameraTransform;
     public CharacterController characterController;
 
     public float moveSpeed = 5f;
-    public float jumpSpeed = 7f;
-    public float gravity = -10f;
+    public float jumpSpeed = 5f;
     public float yVelocity = 0;
+    public float gravity = -10f;
 
-
-    private bool isMoving = false;
     private float sendTimer = 0f;
-    private float sendInterval = 0.08f; 
+    public float sendInterval = 0.8f;
 
-    private bool isChatting = false; 
+    private bool isChatting;
 
 
 
@@ -30,24 +39,9 @@ public class CharacterMove : MonoBehaviour
     {
         //rb = GetComponent<Rigidbody>();
         cameraTransform = GetComponentInChildren<Camera>().transform;
-
-        tcpClientManager = TCPClientManager.Instance;
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager 없음");
-        }
-        else
-        {
-            SetTCPClientManager(tcpClientManager);
-        }
-        // 플레이어 이동 관련 변수 초기화
         cameraTransform = GetComponentInChildren<Camera>().transform;
         characterController = GetComponent<CharacterController>();
-
-    }
-    public void SetTCPClientManager(TCPClientManager clientManager)
-    {
-        tcpClientManager = clientManager;
+        isChatting = false;
     }
 
     void Update()
@@ -82,6 +76,7 @@ public class CharacterMove : MonoBehaviour
         // 움직임이나 회전이 발생할 때마다 전송
         if (Mathf.Abs(h) > 0 || Mathf.Abs(v) > 0 || Input.GetKeyDown(KeyCode.Space))
         {
+
             SendPlayerPosition();
         }
 
@@ -111,20 +106,6 @@ public class CharacterMove : MonoBehaviour
 
     void SendPlayerPosition()
     {
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager 없음!");
-            return;
-        }
-
-        // TCPClientManager 연결정보
-        NetworkStream stream = tcpClientManager.GetStream();
-
-        if (stream == null)
-        {
-            Debug.LogError("TCPClientManager NetworkStream이 존재하지않음");
-            return;
-        }
 
         // 플레이어의 위치와 회전 가져오기
         Vector3 playerPosition = transform.position;
@@ -136,29 +117,26 @@ public class CharacterMove : MonoBehaviour
 
         // 기타 정보 설정
         int mapId = 0;
-        string teamCode = ChannelManager.instance.GetTeamCode();
-        UserInfoManager userInfoManager = UserInfoManager.Instance;
-        int userId = userInfoManager.GetUserId();
+        string sendCode = ChannelManager.Instance.GetTeamCode();
+        int userId = UserInfoManager.Instance.GetUserId();
+
+        if (sendCode == null)
+        {
+            sendCode = ChannelManager.Instance.GetChannelId();
+        }
 
         // 플레이어 이동 데이터 생성
-        playerMovement data = new playerMovement("ingame", "moving", "move", mapId, teamCode, userId, position);
+        playerMovement data = new playerMovement("ingame", "moving", "move", mapId, sendCode, userId, position);
         string json = JsonConvert.SerializeObject(data);
 
         // 서버로 데이터 전송
-        tcpClientManager.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
     }
 
-    public void StartChatting()
+    public void StartChatting(bool isChat)
     {
-        if(isChatting)
-        {
-            isChatting = false;
-        }
-        else
-        {
-            isChatting = true;
-        }
-        
+        isChatting = isChat;
+
     }
 
     public class playerMovement
@@ -182,5 +160,4 @@ public class CharacterMove : MonoBehaviour
             this.position = position;
         }
     }
-
 }

@@ -7,61 +7,21 @@ public class TCPClientManager : MonoBehaviour
 {
     private static TCPClientManager instance;
 
-    private TcpClient client;
-    private NetworkStream stream;
+    private TcpClient mainClient;
+    private TcpClient chatClient;
+    private NetworkStream mainStream;
+    private NetworkStream chatStream;
     private string serverIp;
     private int serverPort;
+    private int chatServerPort;
 
-    private JoinRoomManager joinRoomManager;
+    public bool IsMainConnected { get; private set; } = false;
+    public bool IsChatConnected { get; private set; } = false;
 
-    public bool isConnected { get; private set; } = false;
+    private bool receivingMain = false;
+    private bool receivingChat = false;
 
-    public bool IsConnected
-    {
-        get { return isConnected; }
-    }
-
-    private bool receiving = false;
-
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject); 
-        }
-    }
-
-    private void Start()
-    {
-        // TCPMessageHandler 클래스에 AuthControl 인스턴스 설정
-        AuthControl authControl = FindObjectOfType<AuthControl>();
-        if (authControl != null)
-        {
-            TCPMessageHandler.SetAuthControlInstance(authControl);
-        }
-        else
-        {
-            Debug.LogError("AuthControl instance not found.");
-        }
-        // JoinRoomManager 인스턴스를 찾거나 생성하여 TCPMessageHandler에 설정
-        joinRoomManager = FindObjectOfType<JoinRoomManager>();
-        if (joinRoomManager != null)
-        {
-            TCPMessageHandler.SetJoinRoomManagerInstance(joinRoomManager);
-        }
-        else
-        {
-            Debug.LogError("JoinRoomManager instance not found.");
-        }
-
-    
-
-    }
+    private string mainServerData;  // Received data from the main server
 
     public static TCPClientManager Instance
     {
@@ -71,131 +31,225 @@ public class TCPClientManager : MonoBehaviour
             {
                 GameObject obj = new GameObject("TCPClientManager");
                 instance = obj.AddComponent<TCPClientManager>();
+                DontDestroyOnLoad(obj);
             }
             return instance;
         }
     }
 
-    public void Init(string ip, int port)
+    private void Awake()
     {
-        serverIp = ip;
-        serverPort = port;
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
+        }
     }
 
-    // TCP 서버에 연결
-    public bool Connect()
+    private void Start()
+    {
+        AuthControl authControl = FindObjectOfType<AuthControl>();
+        if (authControl != null)
+        {
+            TCPMessageHandler.SetAuthControlInstance(authControl);
+        }
+        else
+        {
+            Debug.LogError("AuthControl instance not found.");
+        }
+
+        ChannelControl channelControl = FindObjectOfType<ChannelControl>();
+        if (channelControl == null)
+        {
+            GameObject channelControlObject = new GameObject("ChannelControl");
+            channelControl = channelControlObject.AddComponent<ChannelControl>();
+        }
+        TCPMessageHandler.SetChannelControlInstance(channelControl);
+
+        Init(ServerConfigLoader.serverIp, ServerConfigLoader.serverPort, ServerConfigLoader.chatServerPort);
+
+
+        // DestroyObjectBroadcast 인스턴스 설정
+        DestroyObjectBroadcast destroyObjectBroadcast = FindObjectOfType<DestroyObjectBroadcast>();
+        if (destroyObjectBroadcast == null)
+        {
+            GameObject destroyObjectBroadcastObject = new GameObject("DestroyObjectBroadcast");
+            destroyObjectBroadcast = destroyObjectBroadcastObject.AddComponent<DestroyObjectBroadcast>();
+        }
+        TCPMessageHandler.SetDestroyObjectBroadcastInstance(destroyObjectBroadcast);
+
+        Init(ServerConfigLoader.serverIp, ServerConfigLoader.serverPort, ServerConfigLoader.chatServerPort);
+
+
+    }
+
+    public void Init(string ip, int mainPort, int chatPort)
+    {
+        serverIp = ip;
+        serverPort = mainPort;
+        chatServerPort = chatPort;
+    }
+
+    public bool ConnectMainServer()
     {
         try
         {
-            client = new TcpClient(serverIp, serverPort);
-            stream = client.GetStream();
-            isConnected = true;
-            // Debug.Log("TCP 연결됨");
+            mainClient = new TcpClient(serverIp, serverPort);
+            mainStream = mainClient.GetStream();
+            IsMainConnected = true;
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogError("TCP 연결 실패: " + e.Message);
+            Debug.LogError("Main server 연결 실패: " + e.Message);
             return false;
         }
     }
 
-    public NetworkStream GetStream()
+    public bool ConnectChatServer()
     {
-        return stream;
-    }
-
-    public void Disconnect()
-    {
-        if (client != null)
+        try
         {
-            client.Close();
-            Debug.Log("TCP 연결 종료");
+            chatClient = new TcpClient(serverIp, chatServerPort);
+            chatStream = chatClient.GetStream();
+            IsChatConnected = true;
+            return true;
         }
-        isConnected = false;
-    }
-
-    // TCP 서버 메시지 수신 작업 시작
-    public void StartReceiving()
-    {
-        // Debug.Log("StartReceiving");
-        if (!receiving)
+        catch (Exception e)
         {
-            receiving = true;
-            StartCoroutine(WaitForTCPRequest());
+            Debug.LogError("Chat server 연결 실패: " + e.Message);
+            return false;
         }
     }
 
-    private IEnumerator WaitForTCPRequest()
-    {   
-        // Debug.Log("WaitForTCPRequest");
-        while (true)
+    public void DisconnectMainServer()
+    {
+        if (mainClient != null)
         {
-            yield return StartCoroutine(ReceiveData());
+            mainClient.Close();
+            Debug.Log("Main server 연결 종료");
+        }
+        IsMainConnected = false;
+    }
+
+    public void DisconnectChatServer()
+    {
+        if (chatClient != null)
+        {
+            chatClient.Close();
+            Debug.Log("Chat server 연결 종료");
+        }
+        IsChatConnected = false;
+    }
+
+    public void StartReceivingMain()
+    {
+        if (IsMainConnected && !receivingMain)
+        {
+            receivingMain = true;
+            StartCoroutine(WaitForMainTCPRequest());
+        }
+    }
+
+    public void StartReceivingChat()
+    {
+        if (IsChatConnected && !receivingChat)
+        {
+            receivingChat = true;
+            StartCoroutine(WaitForChatTCPRequest());
+        }
+    }
+
+    private IEnumerator WaitForMainTCPRequest()
+    {
+        while (IsMainConnected)
+        {
+            yield return StartCoroutine(ReceiveMainDataCoroutine());
             yield return null;
         }
     }
 
-    // TCP 서버로부터 메시지 수신
-    private IEnumerator ReceiveData()
+    private IEnumerator WaitForChatTCPRequest()
     {
-        string responseData = null; // 값을 저장할 변수 선언
+        while (IsChatConnected)
+        {
+            yield return StartCoroutine(ReceiveChatDataCoroutine());
+            yield return null;
+        }
+    }
 
+    private IEnumerator ReceiveMainDataCoroutine()
+    {
         try
         {
-            if (isConnected && client.Available > 0)
+            if (IsMainConnected && mainClient.Available > 0)
             {
-                byte[] buffer = new byte[client.Available];
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                responseData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Debug.Log("Received data: " + responseData);
+                byte[] buffer = new byte[mainClient.Available];
+                int bytesRead = mainStream.Read(buffer, 0, buffer.Length);
+                mainServerData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                TCPMessageHandler.HandleReceivedData(mainServerData);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Main server data receive error: " + e);
+        }
+        yield return null;
+    }
+
+    public string ReceiveMainData()
+    {
+        string data = mainServerData;
+        mainServerData = null; // Clear the data after retrieving it
+        return data;
+    }
+
+    private IEnumerator ReceiveChatDataCoroutine()
+    {
+        try
+        {
+            if (IsChatConnected && chatClient.Available > 0)
+            {
+                byte[] buffer = new byte[chatClient.Available];
+                int bytesRead = chatStream.Read(buffer, 0, buffer.Length);
+                string responseData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 TCPMessageHandler.HandleReceivedData(responseData);
             }
         }
         catch (Exception e)
         {
-            Debug.LogError("Error receiving data: " + e);
+            Debug.LogError("Chat server data receive error: " + e);
         }
-
-        yield return responseData; // 변수에 저장된 값을 반환
+        yield return null;
     }
 
-    // TCP 서버로부터 메시지를 동기적으로 수진
-    public string ReceiveTCPResponse()
-    {
-        try
-        {
-            if (isConnected && client.Available > 0)
-            {
-                byte[] buffer = new byte[client.Available];
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                string responseData = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                // Debug.Log("Received message from server: " + responseData);
-                return responseData;
-            }
-            else
-            {
-                return null; // 응답이 없는 경우 null 반환
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("TCP 응답 수신 실패: " + e.Message);
-            return null; // 오류가 발생한 경우 null 반환
-        }
-    }
-
-    // TCP 서버로 메시지 전송
-    public void SendTCPRequest(string request)
+    public void SendMainTCPRequest(string request)
     {
         try
         {
             byte[] requestData = System.Text.Encoding.UTF8.GetBytes(request);
-            stream.Write(requestData, 0, requestData.Length);
+            mainStream.Write(requestData, 0, requestData.Length);
         }
         catch (Exception e)
         {
-            Debug.LogError("TCP 송신 실패: " + e.Message);
+            Debug.LogError("Main server 송신 실패: " + e.Message);
+        }
+    }
+
+    public void SendChatTCPRequest(string request)
+    {
+        try
+        {
+            byte[] requestData = System.Text.Encoding.UTF8.GetBytes(request);
+            chatStream.Write(requestData, 0, requestData.Length);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Chat server 송신 실패: " + e.Message);
         }
     }
 }
