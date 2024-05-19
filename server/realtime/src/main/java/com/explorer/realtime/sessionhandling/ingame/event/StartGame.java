@@ -152,8 +152,12 @@ public class StartGame {
     private Mono<Void> initializeItem(String channelId, Long userId) {
         InventoryInfo item1 = InventoryInfo.of(0, "tool", 0, 1, 1);
         InventoryInfo item2 = InventoryInfo.of(1, "tool", 1, 1, 1);
+        InventoryInfo item3 = InventoryInfo.of(2, "wood", 0, 1, 0);
+        InventoryInfo item4 = InventoryInfo.of(3, "byproduct", 1, 1, 0);
         return inventoryRepository.save(channelId, userId, item1)
                 .then(inventoryRepository.save(channelId, userId, item2))
+                .then(inventoryRepository.save(channelId, userId, item3))
+                .then(inventoryRepository.save(channelId, userId, item4))
                 .then();
     }
 
