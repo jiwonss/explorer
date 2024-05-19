@@ -14,7 +14,6 @@ using System.Net.Sockets;
 
 public class ChannelControl : MonoBehaviour
 {
-    private TCPClientManager tcpClientManager;
 
     private int avatar;
     private string nickname;
@@ -26,14 +25,14 @@ public class ChannelControl : MonoBehaviour
     private string channel1Id;
     private string channel2Id;
     private string channel3Id;
+    private string selectedChanneId;
 
     public Sprite char0;
     public Sprite char1; 
     public Sprite char2; 
     public Sprite char3; 
     public Sprite char4; 
-    public Sprite char5; 
-
+    public Sprite char5;
 
 
     [Header("SignUp")]
@@ -65,6 +64,8 @@ public class ChannelControl : MonoBehaviour
     //채널 관련 페이지
     [Header("ExistChannel")] // 채널 있는 경우
     public GameObject ExistModal; // 모달
+    public TextMeshProUGUI CreatedAText;
+    public TextMeshProUGUI OnlineMember; 
     public Button EnterGameRoomBtn; // 게임(채널) 입장
     public Button ExitGameRooomBtn; // 채널 나가기
 
@@ -83,17 +84,39 @@ public class ChannelControl : MonoBehaviour
     public Button TeamCodeEnter; // 팀코드 입력 후 입장
     public Button TeamcodeCancel; // 입장 취소
 
-    [Header("LogOutModal")] // 로그아웃 모달
-    public GameObject LogOutModal;
-    public bool LogOutOnOff = false;
-    public Button LogOut;
-    public Button Exit;
+    //서버 응답
+    [System.Serializable]
+    public class ServerResponse
+    {
+        public DataHeader dataHeader;
+        public object dataBody;
+    }
+
+    [System.Serializable]
+    public class DataHeader
+    {
+        public int successCode;
+        public string resultCode;
+        public string resultMessage;
+    }
+
+    [System.Serializable]
+    public class ReissueResponse
+    {
+        public DataHeader dataHeader;
+        public TokenInfo dataBody;
+    }
+
+    [System.Serializable]
+    public class TokenInfo
+    {
+        public string accessToken;
+        public string refreshToken;
+    }
 
     void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
-        
-        
     }
 
 
@@ -110,8 +133,8 @@ public class ChannelControl : MonoBehaviour
         Channel2Image.onClick.AddListener(OnChannel2ButtonClick);
         Channel3Image.onClick.AddListener(OnChannel3ButtonClick);
 
-        //EnterGameRoomBtn.onClick.AddListener(EnterGame); // 게임 채널 입장
-        //ExitGameRooomBtn.onClick.AddListener(ExitGame); // 게임 채널 나가기
+        EnterGameRoomBtn.onClick.AddListener(RestartGameRequest); // 게임 채널 입장
+        ExitGameRooomBtn.onClick.AddListener(DeleteChannel); // 게임 채널 나가기
         MakeNewRoomBtn.onClick.AddListener(PlanetModalOn); // 행성 이름 입력 모달 띄우기 버튼
         PlanetEnter.onClick.AddListener(MakeNewRoom); // 행성명 입력 후 입장.
         PlanetCancel.onClick.AddListener(PlanetModalOff); // 새 대기방 cancel
@@ -119,8 +142,8 @@ public class ChannelControl : MonoBehaviour
         TeamCodeEnter.onClick.AddListener(EnterTeamCode); // 팀코드 입력으로 입장
         TeamcodeCancel.onClick.AddListener(TeamCodeModalOff); // 팀코드 입장 취소
 
-        LogOut.onClick.AddListener(ToggleObject);
-        Exit.onClick.AddListener(ToggleObject);
+
+
     }
     // 첫 렌더 시 아바타, 닉네임 설정
     public void SetProfile()
@@ -271,7 +294,7 @@ public class ChannelControl : MonoBehaviour
         CheckOkNickName(NickNameChange.text);
         // yield return StartCoroutine(CheckDuplicate());
         // 닉네임이 유효하면
-        if(isNickOk)
+        if (isNickOk)
         {
             if (string.IsNullOrEmpty(TokenManager.Instance.GetAccessToken()))
             {
@@ -280,7 +303,7 @@ public class ChannelControl : MonoBehaviour
             }
             nickname = NickNameChange.text;
             string url = ServerConfigLoader.URL + "/user/users/profile";
-            string jsonData =  "{\"nickname\": \"" + nickname + "\", \"avatar\": \"" + avatar + "\"}";
+            string jsonData = "{\"nickname\": \"" + nickname + "\", \"avatar\": \"" + avatar + "\"}";
             UnityWebRequest request = new UnityWebRequest(url, "PATCH");
 
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
@@ -290,30 +313,49 @@ public class ChannelControl : MonoBehaviour
             request.SetRequestHeader("Authorization", "Bearer " + TokenManager.Instance.GetAccessToken());
             yield return request.SendWebRequest();
 
-            // 변경 성공
             if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
             {
-                UserInfoManager.Instance.ChangeProfile(nickname, avatar);
+                ServerResponse response = JsonUtility.FromJson<ServerResponse>(request.downloadHandler.text);
 
-                ProfileChanger.SetActive(false);
-                ProfilePage.SetActive(true);
-                SetProfile();
-            
+
+
+
+                if (response.dataHeader.resultCode == "EXPIRED_TOKEN")
+                {
+                    Debug.Log("토큰 만료");
+                    //토큰 재발급
+                    yield return StartCoroutine(TokenManager.Instance.ReissueToken(TokenManager.Instance.GetAccessToken(), TokenManager.Instance.GetRefreshToken()));
+
+                    //다시 프로필 수정 요청
+                    StartCoroutine(EditAccept());
+                    yield break;
+                }
+                // 프로필 수정 성공
+                else
+                {
+                    UserInfoManager.Instance.ChangeProfile(nickname, avatar);
+
+                    ProfileChanger.SetActive(false);
+                    ProfilePage.SetActive(true);
+                    SetProfile();
+                }
+
             }
             else
-            
+            {
                 NickNameChange.text = "이미 존재하는 닉네임";
                 Debug.Log("이미 존재하는 닉네임");
                 isNickOk = false;
             }
+        }
         else
         {
             NickNameChange.text = "조건에 맞지 않습니다";
             Debug.Log("조건에 맞지 않습니다");
             isNickOk = false;
         }
-        }
         
+    }
         
     
     // 닉네임 유효성체크
@@ -331,64 +373,6 @@ public class ChannelControl : MonoBehaviour
             isNickOk = false;
         }
     }
-
-    // IEnumerator CheckDuplicate()
-    // {
-    //     // 중복검사
-    //     if (NickNameChange.text != UserInfoManager.Instance.GetNickname())
-    //     {
-    //         Debug.Log("NickNameChange.text = " + NickNameChange.text + " UserInfoManager : " + UserInfoManager.Instance.GetNickname());
-    //         string url = ServerConfigLoader.URL + "/user/auth.nickname?nickname=" + WWW.EscapeURL(NickNameChange.text);
-    //         UnityWebRequest request = UnityWebRequest.Get(url);
-
-    //         yield return request.SendWebRequest();
-
-    //         if (request.result == UnityWebRequest.Result.Success && request.responseCode == 200)
-    //         {
-    //             string responseText = request.downloadHandler.text;
-    //             JObject jsonResponse = JObject.Parse(responseText);
-    //             // 여기에서 데이터의 null 체크를 합니다.
-    //             JToken isDuplicateToken = jsonResponse["dataBody"];
-
-    //             // null 검사 추가
-    //             if (isDuplicateToken != null && isDuplicateToken.Type != JTokenType.Null)
-    //             {
-    //                 bool isDuplicate = isDuplicateToken.ToObject<bool>();
-
-    //                 if (isDuplicate)
-    //                 {
-    //                     isDuple = false;
-    //                     Debug.Log("닉네임이 중복됩니다.");
-    //                 }
-    //                 else
-    //                 {
-    //                     isDuple = true;
-    //                     Debug.Log("사용 가능");
-    //                 }
-    //             }
-    //             else
-    //             {
-    //                 Debug.Log("서버로부터 유효하지 않은 응답을 받았습니다.");
-    //                 Debug.Log("jsonResponse  : " + jsonResponse);
-    //                 isDuple = false;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             Debug.LogError("중복 검사 실패: " + request.error);
-    //             isDuple = false;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         isDuple = true;
-    //         Debug.Log("사용 가능");
-    //     }
-
-    //     Debug.Log("isDuple = " + isDuple);
-    // }
-    
-
 
     // 존재 채널 모달
     public void IfExistRoom()
@@ -426,23 +410,56 @@ public class ChannelControl : MonoBehaviour
                     case 0:
                         Channel1Text.text = channelName;
                         channel1Id = channelId;
+                        Channel2Text.text = "새 게임";
+                        channel2Id = null;
+                        Channel3Text.text = "새 게임";
+                        channel3Id = null;
                         break;
                     case 1:
                         Channel2Text.text = channelName;
                         channel2Id = channelId;
+                        Channel3Text.text = "새 게임";
+                        channel3Id = null;
                         break;
                     case 2:
                         Channel3Text.text = channelName;
                         channel3Id = channelId;
                         break;
                 }
+                OnChannel1ButtonClick();
             }
         }
         else
         {
+            Channel1Text.text = "새 게임";
+            channel1Id = null;
+            Channel2Text.text = "새 게임";
+            channel2Id = null;
+            Channel3Text.text = "새 게임";
+            channel3Id = null;
             IfNoneRoom();
         }
 
+    }
+    // 채널리스트 조회 메시지 송신
+    public void GetChannelList()
+    {
+        int userId = UserInfoManager.Instance.GetUserId();
+        ChannelListRequest requestData = new ChannelListRequest("channel", "getChannelList", userId);
+        string json = JsonConvert.SerializeObject(requestData);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
+    }
+    public class ChannelListRequest
+    {
+        public string type;
+        public string eventName;
+        public int userId;
+        public ChannelListRequest(string type, string eventName, int userId)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.userId = userId;
+        }
     }
 
 
@@ -462,7 +479,35 @@ public class ChannelControl : MonoBehaviour
             this.channelId = channelId;
         }
     }
+    // 채널 상세 조회 메시지 수신
+    public void SetChannelDetail(JObject data)
+    {
+        IfExistRoom();
+        var playerInfoList = data["dataBody"]["playerInfoList"];
+        var channelDetailsInfo = data["dataBody"]["channelDetailsInfo"];
 
+        if (data["dataBody"]["playerInfoList"].HasValues)
+        {
+            // 플레이어 정보를 추출
+            foreach (var player in playerInfoList)
+            {
+                string nickname = player["nickname"].ToString();
+                bool online = bool.Parse(player["online"].ToString());
+                if (online)
+                {
+                    OnlineMember.text = OnlineMember.text + "\t" + nickname;
+                }
+            }
+        }
+        else
+        {
+            OnlineMember.text = "현재 접속한 멤버가 없습니다";
+        }
+
+        // 채널 정보 추출
+        string createdAt = channelDetailsInfo["createdAt"].ToString();
+        CreatedAText.text = createdAt;
+    }
     // 1번 채널 상세 조회 요청 메시지 송신
     public void OnChannel1ButtonClick()
     {
@@ -472,30 +517,12 @@ public class ChannelControl : MonoBehaviour
         }
         else
         {
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
-            
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-
-            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails",  userId, channel1Id);
-
+            int userId = UserInfoManager.Instance.GetUserId();
+            selectedChanneId = channel1Id;
+            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails",  userId, selectedChanneId);
+            string json = JsonConvert.SerializeObject(request);
+            TCPClientManager.Instance.SendMainTCPRequest(json);
+            ChannelManager.Instance.SetChannelId(selectedChanneId);
             IfExistRoom();
         }
     }
@@ -510,30 +537,12 @@ public class ChannelControl : MonoBehaviour
         }
         else
         {
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
-            // 채널 상세 조회 메시지 송신
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-
-            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails", userId, channel2Id);
-
+            int userId = UserInfoManager.Instance.GetUserId();
+            selectedChanneId = channel2Id;
+            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails", userId, selectedChanneId);
+            string json = JsonConvert.SerializeObject(request);
+            TCPClientManager.Instance.SendMainTCPRequest(json);
+            ChannelManager.Instance.SetChannelId(selectedChanneId);
             IfExistRoom();
         }
     }
@@ -547,30 +556,12 @@ public class ChannelControl : MonoBehaviour
         }
         else
         {
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
-            // 채널 상세 조회 메시지 송신
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-
-            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails", userId, channel3Id);
-
+            int userId = UserInfoManager.Instance.GetUserId();
+            selectedChanneId = channel3Id;
+            ChannelDetailRequest request = new ChannelDetailRequest("channel", "getChannelDetails", userId, selectedChanneId);
+            string json = JsonConvert.SerializeObject(request);
+            TCPClientManager.Instance.SendMainTCPRequest(json);
+            ChannelManager.Instance.SetChannelId(selectedChanneId);
             IfExistRoom();
         }
     }
@@ -618,25 +609,6 @@ public class ChannelControl : MonoBehaviour
         teamCode = teamCode.Replace("\u200b", "");
         ChannelManager instance = ChannelManager.Instance;
         ChannelManager.instance.SetTeamCode(teamCode);
-
-        // TCP Check
-        tcpClientManager = TCPClientManager.Instance;
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-            return;
-        }
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-            return;
-        }
-        NetworkStream stream = tcpClientManager.GetStream();
-        if (stream == null)
-        {
-            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-            return;
-        }
         // 유저 정보
         UserInfoManager userInfoManager = UserInfoManager.Instance;
         int userId = userInfoManager.GetUserId();
@@ -645,18 +617,20 @@ public class ChannelControl : MonoBehaviour
         // 방 입장 요청 보냄
         JoinRoomRequest request = new JoinRoomRequest("waitingRoomSession", "joinWaitingRoom", teamCode, userId, nickname, avatar);
         string json = JsonConvert.SerializeObject(request);
-        tcpClientManager.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
     }
 
     // 방 입장 성공 반환 시 채팅 연결, 씬 전환
     public void EnterRoom()
     {
         // 채팅 연결
+        TCPClientManager.Instance.ConnectChatServer();
+        TCPClientManager.Instance.StartReceivingChat();
         int userId = UserInfoManager.Instance.GetUserId();
-        ConnectChatServer request = new ConnectChatServer("session", "channelIn", userId);
+        string teamCode = ChannelManager.Instance.GetTeamCode();
+        ConnectChatServer request = new ConnectChatServer("chat", "joinChattingRoom", teamCode, userId);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
-
+        TCPClientManager.Instance.SendChatTCPRequest(json);
         // 씬 전환
         SceneManager.LoadScene("WaitingRoom2");
         SignUpScene.SetActive(false);
@@ -667,11 +641,13 @@ public class ChannelControl : MonoBehaviour
     {
         public string type;
         public string eventName;
+        public string teamCode;
         public int userId;
-        public ConnectChatServer(string type, string eventName, int userId)
+        public ConnectChatServer(string type, string eventName, string teamCode, int userId)
         {
             this.type = type;
             this.eventName = eventName;
+            this.teamCode = teamCode;
             this.userId = userId;
         }
     }
@@ -713,20 +689,9 @@ public class ChannelControl : MonoBehaviour
         {
             PlanetModal.SetActive(false);
             planetName = PlanetInput.text; // 행성 이름 저장. 
-
-            // TCP Check
-            tcpClientManager = TCPClientManager.Instance;
-            if (tcpClientManager == null)
-            {
-                Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-                return;
-            }
-            NetworkStream stream = tcpClientManager.GetStream();
-            if (stream == null)
-            {
-                Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-                return;
-            }
+            planetName = planetName.Replace(" ", "");
+            planetName = planetName.Replace("\u200b", "");
+            ChannelManager.Instance.SetChannelName(planetName);
 
             // 저장된 유저 정보
             UserInfoManager userInfoManager = UserInfoManager.Instance;
@@ -737,7 +702,7 @@ public class ChannelControl : MonoBehaviour
             // 방 생성 메시지 발신
             MakeRoomRequest request = new MakeRoomRequest("waitingRoomSession", "createWaitingRoom", userId, nickname, avatar);
             string json = JsonConvert.SerializeObject(request);
-            tcpClientManager.SendTCPRequest(json);
+            TCPClientManager.Instance.SendMainTCPRequest(json);
         }
         else
         {
@@ -749,36 +714,128 @@ public class ChannelControl : MonoBehaviour
     public void MakeRoom()
     {
         // 채팅 연결
+        TCPClientManager.Instance.ConnectChatServer();
+        TCPClientManager.Instance.StartReceivingChat();
         int userId = UserInfoManager.Instance.GetUserId();
-        ConnectChatServer request = new ConnectChatServer("session", "channelIn", userId);
+        string teamCode = ChannelManager.Instance.GetTeamCode();
+        ConnectChatServer request = new ConnectChatServer("chat", "joinChattingRoom", teamCode, userId);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
-
+        TCPClientManager.Instance.SendChatTCPRequest(json);
         SignUpScene.SetActive(false);
         SceneManager.LoadScene("WaitingRoom1");
 
     }
 
-   
-
-    // 로그아웃 토글
-    private void Update()
+    // 채널 재입장
+    public class RestartGame
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        public string type;
+        public string eventName;
+        public string channelId;
+        public int userId;
+        public string nickname;
+        public int avatar;
+
+        public RestartGame(string type, string eventName, string channelId, int userId, string nickname, int avatar)
         {
-            ToggleObject();
+            this.type = type;
+            this.eventName = eventName;
+            this.channelId = channelId;
+            this.userId = userId;
+            this.nickname = nickname;
+            this.avatar = avatar;
         }
-        // LogOutModal이 null이 아닐 때만 접근
-        if (LogOutModal != null)
+    }
+    // 채널 재입장 요청 송신
+    public void RestartGameRequest()
+    {
+        int userId = UserInfoManager.Instance.GetUserId();
+        string channelId = ChannelManager.Instance.GetChannelId();
+        RestartGame request = new RestartGame("ingameSession", "restartGame", channelId, userId, nickname, avatar);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
+    }
+    // 채널 재입장 허용 메시지 수신
+    public void AllowedGameRestart(JObject data)
+    {
+        // 채팅 연결
+        TCPClientManager.Instance.ConnectChatServer();
+        TCPClientManager.Instance.StartReceivingChat();
+        int userId = UserInfoManager.Instance.GetUserId();
+        string channelId = ChannelManager.Instance.GetChannelId();
+        ConnectChatServer request = new ConnectChatServer("chat", "joinChattingRoom", channelId, userId);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendChatTCPRequest(json);
+        int mapId = (int)data["dataBody"]["mapId"];
+        ChannelManager.Instance.SetMapId(mapId);
+        // 맵정보 처리 필요
+        StartCoroutine(LoadSceneAndExecute(mapId));
+    }
+
+    private IEnumerator LoadSceneAndExecute(int mapId)
+    {
+        AsyncOperation asyncLoad = null;
+
+        if (mapId == 1)
         {
-            LogOutModal.SetActive(LogOutOnOff);
+            // 주행성 씬전환
+            asyncLoad = SceneManager.LoadSceneAsync("IngameTest");
+        }
+        else if (mapId == 2)
+        {
+            // 소행성 씬전환
+            asyncLoad = SceneManager.LoadSceneAsync("IngameTest");
+        }
+        else if (mapId == 3)
+        {
+            // 수성 씬전환
+            asyncLoad = SceneManager.LoadSceneAsync("IngameTest");
+        }
+        else if (mapId == 4)
+        {
+            // 금성 씬전환
+            asyncLoad = SceneManager.LoadSceneAsync("IngameTest");
+        }
+
+        // 씬이 로드될 때까지 대기
+        if (asyncLoad != null)
+        {
+            while (!asyncLoad.isDone)
+            {
+                yield return null;
+            }
+
+            // 씬 로드가 완료된 후 작업 실행
+            GameObject.FindObjectOfType<IngameRender>().SendPositionTCPRequest();
+
+            SignUpScene.SetActive(false);
         }
     }
 
-    void ToggleObject()
+
+    // 채널 삭제
+    public void DeleteChannel()
     {
-        // isActive 값을 반대로 변경하고 그에 따라 게임 오브젝트를 활성화 또는 비활성화
-        LogOutOnOff = !LogOutOnOff;
+        int userId = UserInfoManager.Instance.GetUserId();
+        string channelId = ChannelManager.Instance.GetChannelId();
+        DeleteChannelRequest request = new DeleteChannelRequest("channel", "deleteChannel", userId, channelId);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
+    }
+    public class DeleteChannelRequest
+    {
+        public string type;
+        public string eventName;
+        public int userId;
+        public string channelId;
+
+        public DeleteChannelRequest(string type, string eventName, int userId, string channelId)
+        {
+            this.type = type;
+            this.eventName = eventName;
+            this.userId = userId;
+            this.channelId = channelId;
+        }
     }
 
 

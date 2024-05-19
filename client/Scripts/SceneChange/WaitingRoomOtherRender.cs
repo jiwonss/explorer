@@ -1,30 +1,20 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
-using System.Text.RegularExpressions;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
-using UnityEngine.Networking;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Net.Sockets;
 
 
 public class WaitingRoomOtherRender : MonoBehaviour
 {
-    private TCPClientManager tcpClientManager;
     public string nowTeamCode;
+    private bool isChatting;
     private CharacterMove characterMove; 
-
 
     [Header("TextField")]
     public TextMeshProUGUI playerCount;
     public TextMeshProUGUI teamCode;
-    public TMP_InputField chatInputField;
-    public TMP_Text chatDisplay; 
 
     [Header("Button")]
     public Button exitBtn;
@@ -36,58 +26,18 @@ public class WaitingRoomOtherRender : MonoBehaviour
         {
             ExitWaitingRoom();
         }
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-        {
-            ActivateChatInputField();
-        }
     }
 
-    private void ActivateChatInputField()
-    {
-        // 채팅 입력 필드가 비활성화 상태라면 활성화
-        if (!chatInputField.gameObject.activeSelf)
-        {
-            chatInputField.gameObject.SetActive(true);
-        }
-
-        // 채팅 입력 필드에 포커스
-        chatInputField.Select();
-        chatInputField.ActivateInputField();
-    }
 
     void Start()
     {
-
-        // CharacterMove 스크립트의 인스턴스가 있는지 확인
-        if (characterMove != null)
-        {
-            // StartChatting 메서드를 호출
-            characterMove.StartChatting();
-        }
-        else
-        {
-            Debug.LogError("CharacterMove 스크립트의 인스턴스를 찾을 수 없습니다.");
-        }
+        isChatting = false;
         Cursor.visible = false;
         nowTeamCode = ChannelManager.instance.GetTeamCode();
         teamCode.text = nowTeamCode;
+
         exitBtn.onClick.AddListener(ExitWaitingRoom);
         TCPMessageHandler.SetWaitingRoomOtherRender(this);
-        chatInputField.onEndEdit.AddListener(HandleChatInputSubmit);
-        // 채팅 메시지 표시 컴포넌트 초기화
-        if (chatDisplay == null)
-        {
-            Debug.LogError("ChatDisplay is not assigned in the inspector!");
-        }
-        characterMove = FindObjectOfType<CharacterMove>();
-        if (characterMove != null)
-        {
-            characterMove.StartChatting();
-        }
-        else
-        {
-            Debug.LogError("CharacterMove 스크립트의 인스턴스를 찾을 수 없습니다.");
-        }
 
     }
 
@@ -95,44 +45,35 @@ public class WaitingRoomOtherRender : MonoBehaviour
     public void ExitWaitingRoom()
     {
         // 방 나가기 메시지 송신
-        if (isVaildTCP())
+        UserInfoManager userInfoManager = UserInfoManager.Instance;
+        int userId = userInfoManager.GetUserId();
+
+        // 방 나가기 메시지 송신
+        ExitWaitingRoomRequest request = new ExitWaitingRoomRequest("waitingRoomSession", "leaveWaitingRoom", nowTeamCode, userId, false);
+        string json = JsonConvert.SerializeObject(request);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
+
+        // 인원 업데이트 메시지 송신
+        UpdateCount request2 = new UpdateCount("waitingRoomSession", "getWaitingRoomHeadcount", nowTeamCode);
+        string json2 = JsonConvert.SerializeObject(request2);
+        TCPClientManager.Instance.SendMainTCPRequest(json2);
+        AuthControl authControlInstance = GameObject.FindObjectOfType<AuthControl>();
+        // AuthControl 인스턴스가 유효한지 확인 후 ExitRoomSelf 호출
+        if (authControlInstance != null)
         {
-            Debug.Log("방 나가기");
-            UserInfoManager userInfoManager = UserInfoManager.Instance;
-            int userId = userInfoManager.GetUserId();
-
-            // 방 나가기 메시지 송신
-            ExitWaitingRoomRequest request = new ExitWaitingRoomRequest("waitingRoomSession", "leaveWaitingRoom", nowTeamCode, userId, false);
-            string json = JsonConvert.SerializeObject(request);
-            tcpClientManager.SendTCPRequest(json);
-
-            // 인원 업데이트 메시지 송신
-            UpdateCount request2 = new UpdateCount("waitingRoomSession", "getWaitingRoomHeadcount", nowTeamCode);
-            string json2 = JsonConvert.SerializeObject(request2);
-            tcpClientManager.SendTCPRequest(json2);
-
-
-            AuthControl authControlInstance = GameObject.FindObjectOfType<AuthControl>();
-
-            // AuthControl 인스턴스가 유효한지 확인 후 ExitRoomSelf 호출
-            if (authControlInstance != null)
-            {
-                SceneManager.LoadScene("SignUp");
-                authControlInstance.ExitRoomSelf();
-
-            }
-            else
-            {
-                
-                Debug.LogError("AuthControl 인스턴스를 찾을 수 없습니다.");
-            }
-
+            SceneManager.LoadScene("SignUp");
+            authControlInstance.ExitRoomSelf();
+            ChannelManager.Instance.SetTeamCode(null);
+            TCPClientManager.Instance.DisconnectChatServer();
+            Cursor.visible = true;
         }
-
+        else
+        {
+            Debug.LogError("AuthControl 인스턴스를 찾을 수 없습니다.");
+        }
     }
     public void UpdateCountValue(string count)
     {
-        Debug.Log("count = " + count);
         playerCount.text = count;
     }
 
@@ -167,7 +108,7 @@ public class WaitingRoomOtherRender : MonoBehaviour
 
         UpdateCount request = new UpdateCount("waitingRoomSession", "getWaitingRoomHeadcount", nowTeamCode);
         string json = JsonConvert.SerializeObject(request);
-        TCPClientManager.Instance.SendTCPRequest(json);
+        TCPClientManager.Instance.SendMainTCPRequest(json);
     }
     
 
@@ -202,75 +143,12 @@ public class WaitingRoomOtherRender : MonoBehaviour
         }
     }
 
-        // 채팅 전송
-    private void HandleChatInputSubmit(string input)
-    {
-        if (!string.IsNullOrEmpty(input) && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
-        {
-            SubmitChatMessage(input);
-            
-            characterMove.StartChatting();
-        }
-    }
-    private void SubmitChatMessage(string message)
-    {
-        if (!string.IsNullOrEmpty(message))
-        {
-            int userId = UserInfoManager.Instance.GetUserId();
-            chatMessage request = new chatMessage("chat", nowTeamCode, userId, message);
-            string json = JsonConvert.SerializeObject(request);
-            TCPClientManager.Instance.SendTCPRequest(json);
 
-            chatInputField.text = ""; // 입력 필드 초기화
-            chatInputField.ActivateInputField(); // 입력 필드 재활성화
-            characterMove.StartChatting();
-        }
-    }
-    // 채팅 수신
-    public void RenderChat(string nickname, string content)
-    {
-        if (chatDisplay != null)
-        {
-            chatDisplay.text += $"{nickname}: {content}\n"; // 새로운 메시지를 기존 텍스트에 추가
-        }
-    }
 
-    public class chatMessage
-    {
-        public string type;
-        public string teamCode;
-        public int userId;
-        public string content;
-        public chatMessage(string type, string teamCode, int userId, string content)
-        {
-            this.type = type;
-            this.teamCode = teamCode;
-            this.userId = userId;
-            this.content = content;
-        }
-    }
 
-    public bool isVaildTCP()
+    // 게임시작 메시지 수신
+    public void StartGameResponse()
     {
-        // TCP Check
-        tcpClientManager = TCPClientManager.Instance;
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 초기화되지 않았습니다.");
-            return false;
-        }
-        if (tcpClientManager == null)
-        {
-            Debug.LogError("TCPClientManager가 설정되지 않았습니다.");
-            return false;
-        }
-        NetworkStream stream = tcpClientManager.GetStream();
-        if (stream == null)
-        {
-            Debug.LogError("TCPClientManager의 NetworkStream이 존재하지 않습니다.");
-            return false;
-        }
-
-        return true;
+        SceneManager.LoadScene("IngameTest");
     }
 }

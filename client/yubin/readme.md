@@ -198,3 +198,8 @@
     - ElementLabRender.cs 수정
     - ElementList.cs
     - CompoundList.cs
+
+## ~24.05.19
+
+- realtime, chat 서버 TCP 연결 구현
+- 인게임 채팅 구현 등
