@@ -248,7 +248,6 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
     - Docker compose 2.27.0
     - Jenkins 2.457
 
-[data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAQAAAAngNWGAAAA/0lEQVR4AYXNMSiEcRyA4cfmGHQbCZIipkuxnJgMStlMNmeyD2dwmc8+sZgxYJd9ErIZFHUyYYD7fkr6l4/rnvmtl7+KitrqV/fq2Y5eLY3Z9S48eRLe7BmVZ9qhTLhQ0algzZWQOVKSsCF8OjAnwbxDTWFDUhPK/jMr1H6HE/IqRky2DyvCefuwItwZzodVoYRiLqMkVCXrwpJ9twZ+sgfDYEFYl8wIWxZ9uFf7zkallxlJh4YrLGsKjZRx7VGHhLqwgFUN45DGdb8MeXGpgB4ABZdeDcpZEY51A+hyLKz4S1W4MQWm3AibWtgWmk6dyISa1pSdyWTOlLXVp0+eL9D/ZPfBTNanAAAAAElFTkSuQmCC](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAQAAAAngNWGAAAA/0lEQVR4AYXNMSiEcRyA4cfmGHQbCZIipkuxnJgMStlMNmeyD2dwmc8+sZgxYJd9ErIZFHUyYYD7fkr6l4/rnvmtl7+KitrqV/fq2Y5eLY3Z9S48eRLe7BmVZ9qhTLhQ0algzZWQOVKSsCF8OjAnwbxDTWFDUhPK/jMr1H6HE/IqRky2DyvCefuwItwZzodVoYRiLqMkVCXrwpJ9twZ+sgfDYEFYl8wIWxZ9uFf7zkallxlJh4YrLGsKjZRx7VGHhLqwgFUN45DGdb8MeXGpgB4ABZdeDcpZEY51A+hyLKz4S1W4MQWm3AibWtgWmk6dyISa1pSdyWTOlLXVp0+eL9D/ZPfBTNanAAAAAElFTkSuQmCC)
 
 ## ③ 어뷰징 방지를 위한 게임 로직 검증 및 처리
 
@@ -292,59 +291,59 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 
 ## ④ Unity Game Project
 
-![로그인페이지](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_22-35-16.gif)
+<img src="./img/login.gif">
 
 로그인페이지
 
-![비밀번호 유효성검사](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_22-33-58_(2).gif)
+<img src="./img/passwordCheck.gif">
 
 비밀번호 유효성검사
 
-![랜덤 생성 오브젝트 비치](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-03-09.gif)
+<img src="./img/randomObject.gif">
 
 랜덤 생성 오브젝트 비치
 
-![연구소 입장](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-32-43_(1).gif)
+<img src="./img/lab.gif">
 
 연구소 입장
 
-![방입장코드 입장](README%20md%2021c93055ca324659a8fe9c67215e30d4/%25EC%258B%259C%25EC%2597%25B0%25EC%2598%2581%25EC%2583%2581_(1).gif)
+<img src="./img/joinCode.gif">
 
 방입장코드 입장
 
-![아이디 유효성검사](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_22-33-58.gif)
+<img src="./img/Id.gif">
 
 아이디 유효성검사
 
-![닉네임 변경및 아바타 적용](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_22-43-46.gif)
+<img src="./img/nickname.gif">
 
 닉네임 변경및 아바타 적용
 
-![오브젝트 파괴](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-03-09_(1).gif)
+<img src="./img/destoryObject.gif">
 
-오브젝트 파괴
+오브젝트 파괴  
 
-![원소 추출](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-32-43_(2).gif)
+<img src="./img/element.gif">
 
 원소 추출
 
-![타플레이어와의 소통](README%20md%2021c93055ca324659a8fe9c67215e30d4/%25EC%258B%259C%25EC%2597%25B0%25EC%2598%2581%25EC%2583%2581_(2).gif)
+<img src="./img/communication.gif">
 
 타플레이어와의 소통
 
-![아이디 중복검사](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_22-33-58_(1).gif)
+<img src="./img/password.gif">
 
 아이디 중복검사
 
-![오브젝트 랜덤생성](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-00-11.gif)
+<img src="./img/random.gif">
 
 오브젝트 랜덤생성
 
-![원소 자동획득및 아이템습득](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-32-43.gif)
+<img src="./img/farming.gif">
 
 원소 자동획득및 아이템습득
 
-![광물 추출](README%20md%2021c93055ca324659a8fe9c67215e30d4/Explorer_2024-05-19_23-32-43_(3).gif)
+<img src="./img/Explorer_2024-05-19_23-32-43_(3).gif">
 
 광물 추출
 
@@ -1150,26 +1149,9 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 
 # 3️⃣ Team Gainers
 
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/454debb4-73ee-499a-9c32-c616c57dc427.png)
 
-팀장, 클라이언트 : 이유빈
-
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/ff763271-f500-4393-af09-a3f4b1dc1437.png)
-
-서버 : 서지원
-
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/44e71ac8-464e-40cd-90a1-f4732a6a3b8f.png)
-
-클라이언트 : 강승원
-
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/e6f924bf-f9ff-4f79-8b66-95ed148a6300.png)
-
-서버 : 이주현
-
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/52653e45-d16b-479e-80d7-1586e8018581.png)
-
-인프라 : 문혜린
-
-![Untitled](README%20md%2021c93055ca324659a8fe9c67215e30d4/62a9144a-8024-4911-936a-5c04c67bd554.png)
-
-서버 : 전재완
+| <img src="./img/character_client.png" width=150 height=200/> | <img src="./img/character_server.png" width=150 height=200/> | <img src="./img/character_client_1.png" width=150 height=200/> |
+| --- | --- | --- |
+| 팀장, 클라이언트 : 이유빈 | 클라이언트 : 강승원 | 인프라 : 문혜린 |
+| <img src="./img/character_server_1.png" width=150 height=200/> | <img src="./img/character_infra.png" width=150 height=200/>| <img src="./img/character_server_2.png" width=150 height=200/> |
+| 서버 : 서지원 | 서버 : 이주현 | 서버 : 전재완 |
