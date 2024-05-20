@@ -320,7 +320,8 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 닉네임 변경및 아바타 적용
 
 <img src="./img/destoryObject.gif">
-오브젝트 파괴
+
+오브젝트 파괴  
 
 <img src="./img/element.gif">
 
@@ -1148,26 +1149,26 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 
 # 3️⃣ Team Gainers
 
-<img src="./img/character_client.png">
+<img src="./img/character_client.png" width=150 height=200/>
 
 팀장, 클라이언트 : 이유빈
 
-<img src="./img/character_server.png">
+<img src="./img/character_server.png" width=150 height=200/>
 
 서버 : 서지원
 
-<img src="./img/character_client_1.png">
+<img src="./img/character_client_1.png" width=150 height=200/>
 
 클라이언트 : 강승원
 
-<img src="./img/character_server_1.png">
+<img src="./img/character_server_1.png" width=150 height=200/>
 
 서버 : 이주현
 
-<img src="./img/character_infra.png">
+<img src="./img/character_infra.png" width=150 height=200/>
 
 인프라 : 문혜린
 
-<img src="./img/character_server_2.png">
+<img src="./img/character_server_2.png" width=150 height=200/>
 
 서버 : 전재완
