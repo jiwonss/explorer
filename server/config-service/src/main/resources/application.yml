@@ -1,0 +1,73 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-service
+
+  profiles:
+    active: prod
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: git@github.com:RIN-1011/explorer-config.git
+          default-label: main
+          ignore-local-ssh-settings: true
+          private-key: |
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACDqbDz0ErKPO9mI5iU8cDPImOyw6K61XbjXW11a5rCpqAAAAJjj9jSn4/Y0
+            pwAAAAtzc2gtZWQyNTUxOQAAACDqbDz0ErKPO9mI5iU8cDPImOyw6K61XbjXW11a5rCpqA
+            AAAEBVeaeCrekeZv3m3Ouw7QeO3VVvc/3IHEaEWsSatpA+0epsPPQSso872YjmJTxwM8iY
+            7LDorrVduNdbXVrmsKmoAAAAFVNTQUZZQERFU0tUT1AtTEw4MzJGNA==
+            -----END OPENSSH PRIVATE KEY-----
+
+passphrase:
+          host-key: AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+          host-key-algorithm: ecdsa-sha2-nistp256
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: 3.36.60.98
+    hostname: config-service
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://3.36.60.98:8761/eureka
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: localhost
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

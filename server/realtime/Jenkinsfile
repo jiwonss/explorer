@@ -1,0 +1,226 @@
+pipeline {
+    environment {
+        repository = "vlwli99/realtime"
+        dockerImage = ''
+    }
+
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Project') {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                dir("./server/chat") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+                dir("./server/realtime") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+                dir("./server/logic") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+            }
+        }
+
+        stage('Build Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script {
+                    dir("./server/chat") {
+                        sh 'docker build --tag vlwli99/chat .'
+                    }
+                    dir("./server/realtime") {
+                        sh 'docker build --tag vlwli99/realtime .'
+                    }
+                    dir("./server/logic") {
+                        sh 'docker build --tag vlwli99/logic .'
+                    }
+                }
+            }
+        }
+
+        stage('DockerHub Login'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script{
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                            set +x
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
+                            set -x
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps{
+                script{
+                    dir("./server/chat") {
+                        sh 'docker push vlwli99/chat'
+                    }
+                    dir("./server/realtime") {
+                        sh 'docker push vlwli99/realtime'
+                    }
+                    dir("./server/logic") {
+                        sh 'docker push vlwli99/logic'
+                    }
+                }
+            }
+        }
+
+        stage('Clean Image'){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                script {
+                    def imageNames = [
+                        "vlwli99/chat",
+                        "vlwli99/realtime",
+                        "vlwli99/logic",
+                        "rabbitmq",
+                        "redis-channel",
+                        "redis-game",
+                        "redis-staticgame",
+                    ]
+
+                    imageNames.each { imageName ->
+                        def imageIds = sh(script: "docker images -q ${imageName}", returnStdout: true).trim().split()
+                        imageIds.each { id ->
+                            if (id) {
+                                sh "docker rmi ${id} || true"
+                            }
+                        }
+                    }
+
+                    sh 'docker image prune -f --filter until=1h'
+                }
+            }
+        }
+
+        stage("Down") {
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                sshPublisher(
+                    continueOnError: false, failOnError: true,
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: "explorer",
+                            verbose: true,
+                            transfers: [
+                                sshTransfer(
+                                    execCommand: """
+                                        cd /home/ubuntu/docker/realtime;
+                                        echo "Attempting to bring down containers...";
+                                        sudo docker-compose down --remove-orphans --volumes || true;
+                                        sudo docker system prune -af --volumes || true;
+                                    """
+                                )
+                            ]
+                        )
+                    ]
+                )
+            }
+        }
+
+        stage("Up"){
+            when {
+                anyOf {
+                    changeset "**/server/chat/**"
+                    changeset "**/server/realtime/**"
+                    changeset "**/server/logic/**"
+                }
+            }
+            steps {
+                sshPublisher(
+                    continueOnError: false, failOnError: true,
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: "explorer",
+                            verbose: true,
+                            transfers: [
+                                sshTransfer(execCommand: "cd /home/ubuntu/docker/realtime && sudo docker-compose up -d --build")
+                            ]
+                        )
+                    ]
+                )
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'good',
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+        failure {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'danger',
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+    }
+}
