@@ -1149,26 +1149,9 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 
 # 3️⃣ Team Gainers
 
-<img src="./img/character_client.png" width=150 height=200/>
 
-팀장, 클라이언트 : 이유빈
-
-<img src="./img/character_server.png" width=150 height=200/>
-
-서버 : 서지원
-
-<img src="./img/character_client_1.png" width=150 height=200/>
-
-클라이언트 : 강승원
-
-<img src="./img/character_server_1.png" width=150 height=200/>
-
-서버 : 이주현
-
-<img src="./img/character_infra.png" width=150 height=200/>
-
-인프라 : 문혜린
-
-<img src="./img/character_server_2.png" width=150 height=200/>
-
-서버 : 전재완
+| <img src="./img/character_client.png" width=150 height=200/> | <img src="./img/character_server.png" width=150 height=200/> | <img src="./img/character_client_1.png" width=150 height=200/> |
+| --- | --- | --- |
+| 팀장, 클라이언트 : 이유빈 | 클라이언트 : 강승원 | 인프라 : 문혜린 |
+| <img src="./img/character_server_1.png" width=150 height=200/> | <img src="./img/character_infra.png" width=150 height=200/>| <img src="./img/character_server_2.png" width=150 height=200/> |
+| 서버 : 서지원 | 서버 : 이주현 | 서버 : 전재완 |
