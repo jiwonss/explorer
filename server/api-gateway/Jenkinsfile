@@ -1,0 +1,212 @@
+pipeline {
+    environment {
+        repository = "vlwli99/api-gateway"
+        dockerImage = ''
+    }
+
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Project') {
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                dir("./server/api-gateway") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+                dir("./server/user") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+            }
+        }
+        stage('Build Image'){
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps{
+                script {
+                    dir("./server/api-gateway") {
+                        sh 'docker-compose -f docker-compose.yml build'
+                    }
+                }
+            }
+        }
+
+        stage('DockerHub Login'){
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps{
+                script{
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                            set +x
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
+                            set -x
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Image'){
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps{
+                script{
+                    dir("./server/api-gateway") {
+                        sh 'docker-compose -f docker-compose.yml push'
+                    }
+                }
+            }
+        }
+
+        stage('Clean Image'){
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                script {
+                    def imageNames = [
+                        "vlwli99/api-gateway",
+                        "vlwli99/user",
+                        "api-gateway-redis-user",
+                        "api-gateway-redis-gateway",
+                        "api-gateway-rabbitmq"
+                    ]
+
+                    imageNames.each { imageName ->
+                        def imageIds = sh(script: "docker images -q ${imageName}", returnStdout: true).trim().split()
+                        imageIds.each { id ->
+                            if (id) {
+                                sh "docker rmi ${id} || true"
+                            }
+                        }
+                    }
+
+                    sh 'docker image prune -f --filter until=1h'
+                }
+            }
+        }
+
+        stage('Pull') {
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                script {
+                    dir("./server/api-gateway") {
+                        sh "docker-compose pull"
+                    }
+                }
+            }
+        }
+
+        stage("Down") {
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                script {
+                    dir("./server/api-gateway") {
+                        echo "Attempting to bring down containers..."
+                        sh "docker-compose down --remove-orphans --volumes || true"
+
+                        echo "Forcing container stop and removal..."
+                        sh "docker-compose rm -fsv || true"
+
+                    }
+                    echo "Attempting to clean up all unused Docker resources..."
+                    retry(3) {
+                        sleep time: 10, unit: 'SECONDS'
+                        sh "docker system prune -af --volumes || true"
+                    }
+                }
+            }
+        }
+
+        stage("Up"){
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps{
+                script{
+                    dir("./server/api-gateway") {
+                        sh "docker-compose up -d --build"
+                    }
+                }
+            }
+        }
+
+//         stage('SonarQube analysis') {
+//              steps {
+//                  withSonarQubeEnv('SonarQube') {
+//                      sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://172.17.0.5:9000'
+//                  }
+//              }
+//          }
+    }
+    post {
+        success {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'good',
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+        failure {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'danger',
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+    }
+}

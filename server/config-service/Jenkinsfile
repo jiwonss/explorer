@@ -1,0 +1,146 @@
+pipeline {
+    environment {
+        repository = "vlwli99/config-service"
+        dockerImage = ''
+    }
+
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Project') {
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps {
+                dir("./server/config-service") {
+                    sh "chmod +x ./gradlew"
+                    sh "./gradlew clean build"
+                }
+            }
+        }
+        stage('Build Image'){
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps{
+                script{
+                    dockerImage = docker.build("${repository}:config-service-${BUILD_NUMBER}", "-f server/config-service/Dockerfile ./server/config-service")
+                }
+            }
+        }
+
+        stage('DockerHub Login'){
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps{
+                script{
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_token', usernameVariable: 'DOCKERHUB_ID', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh """
+                            set +x
+                            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_ID --password-stdin
+                            set -x
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Image'){
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps{
+                script{
+                    if (dockerImage) {
+                        sh "docker push \${repository}:config-service-\${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage('Clean Image'){
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps{
+                script{
+                    def imageExists = sh(script: "docker images -q \${repository}:config-service-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    if (imageExists) {
+                        sh "docker rmi \${repository}:config-service-\${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Garbage Collect") {
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps {
+                script {
+                    def containers = sh(script: "docker ps -q --filter ancestor=\${repository}:config-service-\${BUILD_NUMBER}", returnStdout: true).trim()
+                    if (containers) {
+                        sh "docker kill \${containers}"
+                    }
+                    sh "docker system prune -af --volumes"
+                }
+            }
+        }
+
+        stage("Deploy"){
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps{
+                script{
+                    def containerExists = sh(script: "docker ps -aq --filter 'name=config-service'", returnStdout: true).trim()
+                    if (containerExists) {
+                        sh "docker rm -f config-service"
+                    }
+                    sh "docker run -d -p 8888:8888 --name config-service \${repository}:config-service-\${BUILD_NUMBER}"
+                }
+            }
+        }
+
+//         stage('SonarQube analysis') {
+//              steps {
+//                  withSonarQubeEnv('SonarQube') {
+//                      sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://172.17.0.5:9000'
+//                  }
+//              }
+//          }
+    }
+    post {
+        success {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'good',
+                message: "빌드 성공: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+        failure {
+            script {
+                def Author_ID = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
+                def Author_Name = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
+                mattermostSend (color: 'danger',
+                message: "빌드 실패: ${env.JOB_NAME} #${env.BUILD_NUMBER} by ${Author_ID}(${Author_Name})\n(<${env.BUILD_URL}|Details>)",
+                endpoint: 'https://meeting.ssafy.com/hooks/sdq6nmebninyff7pdd9nszymko',
+                channel: 'C201_Jenkins'
+                )
+            }
+        }
+    }
+}

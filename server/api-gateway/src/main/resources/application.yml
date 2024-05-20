@@ -1,0 +1,66 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: api-gateway
+
+  config:
+    name: api-gateway
+
+  profiles:
+    active: prod
+
+  cloud:
+    gateway:
+      httpclient:
+        ssl:
+          useInsecureTrustManager: true
+      routes:
+        - id: auth
+          uri: lb://USER
+          predicates:
+            - Path=/user/auth/**
+          filters:
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
+        - id: user
+          uri: lb://USER
+          predicates:
+            - Path=/user/users/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: ${BASIC}
+    hostname: api-gateway
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${BASIC}:8761/eureka
+#
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "optional:configserver:http://3.36.60.98:8888"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configserver:http://localhost:8888"

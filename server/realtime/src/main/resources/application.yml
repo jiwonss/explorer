@@ -1,0 +1,52 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: realtime
+
+  config:
+    name: realtime
+
+  profiles:
+    active: prod
+
+  cloud:
+    config:
+      server:
+        git:
+          default-label: main
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    ip-address: ${BASIC}
+    hostname: realtime
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${BASIC}:8761/eureka
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: "optional:configserver:http://3.36.60.98:8888"
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configserver:http://localhost:8888"
