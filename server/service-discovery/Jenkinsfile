@@ -118,14 +118,8 @@ pipeline {
 
        stage('SonarQube analysis') {
            steps {
-               withSonarQubeEnv(credentialsId: 'SONARQUBE-TOKEN', installationName:'SonarQube') {
-                   bat """
-                       ./gradlew sonar \
-                       -Dsonar.projectKey=Explorer \
-                       -Dsonar.projectName='Explorer' \
-                       -Dsonar.host.url=${env.SONARQUBE-URL} \
-                       -Dsonar.token=${env.SONARQUBE-TOKEN}
-                   """
+               withSonarQubeEnv('SonarQube') {
+                   sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
                }
            }
        }
