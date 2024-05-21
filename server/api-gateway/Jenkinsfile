@@ -177,13 +177,17 @@ pipeline {
             }
         }
 
-//         stage('SonarQube analysis') {
-//              steps {
-//                  withSonarQubeEnv('SonarQube') {
-//                      sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://172.17.0.5:9000'
-//                  }
-//              }
-//          }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv(credentialsId: 'SONARQUBE-TOKEN', installationName:'SonarQube') {
+                    bat "./gradlew sonar \
+                    -Dsonar.projectKey=Explorer \
+                    -Dsonar.projectName='Explorer' \
+                    -Dsonar.host.url=${SONARQUBE-URL} \
+                    -Dsonar.token=${SONARQUBE-TOKEN}"
+                }
+            }
+        }
     }
     post {
         success {
