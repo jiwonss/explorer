@@ -116,17 +116,19 @@ pipeline {
             }
         }
 
-        stage('SonarQube analysis') {
-            steps {
-                withSonarQubeEnv(credentialsId: 'SONARQUBE-TOKEN', installationName:'SonarQube') {
-                    bat "./gradlew sonar \
-                    -Dsonar.projectKey=Explorer \
-                    -Dsonar.projectName='Explorer' \
-                    -Dsonar.host.url=${SONARQUBE-URL} \
-                    -Dsonar.token=${SONARQUBE-TOKEN}"
-                }
-            }
-        }
+       stage('SonarQube analysis') {
+           steps {
+               withSonarQubeEnv(credentialsId: 'SONARQUBE-TOKEN', installationName:'SonarQube') {
+                   bat """
+                       ./gradlew sonar \
+                       -Dsonar.projectKey=Explorer \
+                       -Dsonar.projectName='Explorer' \
+                       -Dsonar.host.url=${env.SONARQUBE-URL} \
+                       -Dsonar.token=${env.SONARQUBE-TOKEN}
+                   """
+               }
+           }
+       }
     }
     post {
         success {
