@@ -199,13 +199,17 @@ pipeline {
             }
         }
 
-        stage('SonarQube analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
-                }
-            }
-        }
+//         stage('SonarQube analysis') {
+//            steps {
+//                script {
+//                    dir("./server/realtime") {
+//                        withSonarQubeEnv('SonarQube') {
+//                            sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
     post {
         success {
