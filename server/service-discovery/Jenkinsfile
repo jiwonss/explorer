@@ -118,8 +118,12 @@ pipeline {
 
        stage('SonarQube analysis') {
            steps {
-               withSonarQubeEnv('SonarQube') {
-                   sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
+               script {
+                   dir("./server/service-discovery") {
+                       withSonarQubeEnv('SonarQube') {
+                           sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
+                       }
+                   }
                }
            }
        }
