@@ -112,11 +112,18 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
+//             when {
+//                 changeset "**/server/config-service/**"
+//             }
             steps {
                 script {
                     dir("./server/config-service") {
-                        withSonarQubeEnv('SonarQube') {
-                            sh "./gradlew sonar -Dsonar.projectKey=Explorer -Dsonar.projectName='Explorer' -Dsonar.host.url=$SONARQUBE_URL -Dsonar.token=$SONARQUBE_TOKEN"
+                        withSonarQubeEnv('Config-Service-SonarQube') {
+                            sh "./gradlew sonar \
+                                  -Dsonar.projectKey=Config-Service \
+                                  -Dsonar.projectName='Config-Service' \
+                                  -Dsonar.host.url=$SONARQUBE_URL \
+                                  -Dsonar.token=$CONFIG_SERVICE_SONARQUBE_TOKEN"
                         }
                     }
                 }
