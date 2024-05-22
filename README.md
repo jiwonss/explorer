@@ -292,98 +292,98 @@ MongoDB 연결 설정 등 주요 설정을 확인하고 필요에 따라 변경�
 ## ④ Unity Game Project
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/login.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/login.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         로그인페이지
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/password_check.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/password_check.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         비밀번호 유효성검사
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/random_object.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/random_object.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         랜덤 생성 오브젝트 비치
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/lab.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/lab.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         연구소 입장
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/join_code.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/join_code.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         방입장코드 입장
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/id.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/id.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         아이디 유효성검사
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/nickname.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/nickname.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         닉네임 변경및 아바타 적용
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/destory_object.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/destory_object.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         오브젝트 파괴
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/element.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/element.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         원소 추출
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/communication.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/communication.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         타플레이어와의 소통
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/password.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/password.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         아이디 중복검사
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/random.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/random.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         오브젝트 랜덤생성
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/farming.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/farming.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         원소 자동획득및 아이템습득
     </div>
 </div>
 
 <div style="margin-bottom: 20px; text-align: left;">
-    <img src="./img/gif/element_extraction.gif" width="700" height="500" style="display: block;">
+    <img src="./img/gif/element_extraction.gif" width="700" height="350" style="display: block;">
     <div style="text-align: center; font-weight: bold; margin-top: 10px;">
         광물 추출
     </div>
