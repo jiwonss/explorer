@@ -66,6 +66,47 @@ pipeline {
             }
         }
 
+        stage('SonarQube analysis') {
+           when {
+               anyOf {
+                   changeset "**/server/chat/**"
+                   changeset "**/server/realtime/**"
+                   changeset "**/server/logic/**"
+               }
+           }
+           steps {
+               script {
+                   dir("./server/chat") {
+                      withSonarQubeEnv('Chat-SonarQube') {
+                          sh "./gradlew sonar \
+                                -Dsonar.projectKey=Chat \
+                                -Dsonar.projectName='Chat' \
+                                -Dsonar.host.url=$SONARQUBE_URL \
+                                -Dsonar.token=$CHAT_SONARQUBE_TOKEN"
+                      }
+                   }
+                   dir("./server/realtime") {
+                       withSonarQubeEnv('Realtime-SonarQube') {
+                           sh "./gradlew sonar \
+                                 -Dsonar.projectKey=Realtime \
+                                 -Dsonar.projectName='Realtime' \
+                                 -Dsonar.host.url=$SONARQUBE_URL \
+                                 -Dsonar.token=$REALTIME_SONARQUBE_TOKEN"
+                       }
+                   }
+                   dir("./server/logic") {
+                      withSonarQubeEnv('Logic-SonarQube') {
+                          sh "./gradlew sonar \
+                                -Dsonar.projectKey=Logic \
+                                -Dsonar.projectName='Logic' \
+                                -Dsonar.host.url=$SONARQUBE_URL \
+                                -Dsonar.token=$LOGIC_SONARQUBE_TOKEN"
+                      }
+                   }
+               }
+           }
+       }
+
         stage('DockerHub Login'){
             when {
                 anyOf {
