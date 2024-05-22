@@ -178,12 +178,12 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
-//             when {
-//                 anyOf {
-//                     changeset "**/server/api-gateway/**"
-//                     changeset "**/server/user/**"
-//                 }
-//             }
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
             steps {
                 script {
                     dir("./server/api-gateway") {

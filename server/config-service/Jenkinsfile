@@ -112,9 +112,9 @@ pipeline {
         }
 
         stage('SonarQube analysis') {
-//             when {
-//                 changeset "**/server/config-service/**"
-//             }
+            when {
+                changeset "**/server/config-service/**"
+            }
             steps {
                 script {
                     dir("./server/config-service") {
