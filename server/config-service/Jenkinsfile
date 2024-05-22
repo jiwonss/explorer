@@ -111,13 +111,24 @@ pipeline {
             }
         }
 
-//         stage('SonarQube analysis') {
-//              steps {
-//                  withSonarQubeEnv('SonarQube') {
-//                      sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://172.17.0.5:9000'
-//                  }
-//              }
-//          }
+        stage('SonarQube analysis') {
+            when {
+                changeset "**/server/config-service/**"
+            }
+            steps {
+                script {
+                    dir("./server/config-service") {
+                        withSonarQubeEnv('Config-Service-SonarQube') {
+                            sh "./gradlew sonar \
+                                  -Dsonar.projectKey=Config-Service \
+                                  -Dsonar.projectName='Config-Service' \
+                                  -Dsonar.host.url=$SONARQUBE_URL \
+                                  -Dsonar.token=$CONFIG_SERVICE_SONARQUBE_TOKEN"
+                        }
+                    }
+                }
+            }
+        }
     }
     post {
         success {

@@ -177,13 +177,36 @@ pipeline {
             }
         }
 
-//         stage('SonarQube analysis') {
-//              steps {
-//                  withSonarQubeEnv('SonarQube') {
-//                      sh './gradlew sonarqube -Dsonar.projectKey=api-gateway -Dsonar.host.url=http://172.17.0.5:9000'
-//                  }
-//              }
-//          }
+        stage('SonarQube analysis') {
+            when {
+                anyOf {
+                    changeset "**/server/api-gateway/**"
+                    changeset "**/server/user/**"
+                }
+            }
+            steps {
+                script {
+                    dir("./server/api-gateway") {
+                        withSonarQubeEnv('API-Gateway-SonarQube') {
+                            sh "./gradlew sonar \
+                                  -Dsonar.projectKey=API-Gateway \
+                                  -Dsonar.projectName='API-Gateway' \
+                                  -Dsonar.host.url=$SONARQUBE_URL \
+                                  -Dsonar.token=$API_GATEWAY_SONARQUBE_TOKEN"
+                        }
+                    }
+                    dir("./server/user") {
+                        withSonarQubeEnv('User-SonarQube') {
+                            sh "./gradlew sonar \
+                                  -Dsonar.projectKey=User \
+                                  -Dsonar.projectName='User' \
+                                  -Dsonar.host.url=$SONARQUBE_URL \
+                                  -Dsonar.token=$USER_SONARQUBE_TOKEN"
+                        }
+                    }
+                }
+            }
+        }
     }
     post {
         success {
