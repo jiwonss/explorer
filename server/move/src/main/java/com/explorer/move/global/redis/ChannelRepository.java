@@ -17,7 +17,7 @@ public class ChannelRepository {
 
     private static final String KEY_PREFIX = "channel:";
 
-    public ChannelRepository(@Qualifier("channelReactiveRedisTemplate")ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
+    public ChannelRepository(@Qualifier("customReactiveRedisTemplate")ReactiveRedisTemplate<String, Object> reactiveRedisTemplate) {
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.reactiveHashOperations = reactiveRedisTemplate.opsForHash();
     }
