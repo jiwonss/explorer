@@ -19,7 +19,6 @@ public class InGameSessionHandler {
 
     private final StartGame startGame;
     private final RestartGame restartGame;
-    private final EndGame endGame;
     private final IngameBroadcastPosition ingameBroadcastPosition;
     private final FindUserData findUserData;
     private final UserInfoData userInfoData;
@@ -39,10 +38,6 @@ public class InGameSessionHandler {
             case "restartGame":
                 log.info("restart game");
                 return restartGame.process(channelId, UserInfo.ofJson(json), connection);
-
-            case "endGame":
-                log.info("end game");
-                return endGame.process(channelId, json);
 
             case "broadcastPosition":
                 log.info("broadcastPosition");
