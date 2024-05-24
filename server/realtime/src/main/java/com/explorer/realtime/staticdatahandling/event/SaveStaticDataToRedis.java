@@ -1,13 +1,8 @@
 package com.explorer.realtime.staticdatahandling.event;
 
-import com.explorer.realtime.staticdatahandling.document.NonDiscardableInventoryItemCategory;
-import com.explorer.realtime.staticdatahandling.dto.AvailableInventoryItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.DroppedItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.ItemInfo;
 import com.explorer.realtime.staticdatahandling.dto.MaterialItemInfo;
-import com.explorer.realtime.staticdatahandling.repository.mongo.AvailableInventoryItemMongoRepository;
-import com.explorer.realtime.staticdatahandling.repository.mongo.InvalidInventoryItemCategoryMongoRepository;
-import com.explorer.realtime.staticdatahandling.repository.mongo.NonDiscardableInventoryItemCategoryMongoRepository;
 import com.explorer.realtime.staticdatahandling.repository.redis.*;
 import com.explorer.realtime.staticdatahandling.service.MongoService;
 import jakarta.annotation.PostConstruct;
@@ -18,7 +13,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -26,17 +20,13 @@ import java.util.Set;
 public class SaveStaticDataToRedis {
 
     private final MongoService mongoService;
-    private final AvailableInventoryItemRepository availableInventoryItemRepository;
     private final DroppedItemRepository droppedItemRepository;
     private final ExtractionMaterialRepository extractionMaterialRepository;
     private final FarmableCategoryRepository farmableCategoryRepository;
-    private final InvalidInventoryItemCategoryRepository invalidInventoryItemCategoryRepository;
     private final LabEfficiencyRepository labEfficiencyRepository;
     private final StaticItemRepository staticItemRepository;
-    private final NonDiscardableInventoryItemCategoryRepository nonDiscardableInventoryItemCategoryRepository;
     private final SynthesizedMaterialRepository synthesizedMaterialRepository;
     private final UpgradeMaterialRepository upgradeMaterialRepository;
-    private final PositionRepository positionRepository;
 
     @PostConstruct
     public void init() {
@@ -48,28 +38,15 @@ public class SaveStaticDataToRedis {
 
     public Mono<Void> process() {
         return Mono.when(
-                        saveAvailableInventoryItemList(),
                         saveDroppedItemList(),
                         saveExtractionMaterialList(),
                         saveFarmableCategoryList(),
-                        saveInvalidInventoryItemCategoryList(),
                         saveItemList(),
                         saveLabEfficiencyList(),
-                        saveNonDiscardableInventoryItemCategoryList(),
                         saveSynthesizedMaterialList(),
                         saveUpgradeMaterialList()
                 )
                 .doOnError(error -> log.error("[process] Error processing static data", error))
-                .then();
-    }
-
-    private Mono<Void> saveAvailableInventoryItemList() {
-        return mongoService.findAllAvailableInventoryItem()
-                .flatMap(availableInventoryItem -> {
-                    List<AvailableInventoryItemInfo> availableInventoryItemList = availableInventoryItem.getAvailableInventoryItemList();
-                    return Flux.fromIterable(availableInventoryItemList)
-                            .flatMap(availableInventoryItemRepository::save);
-                })
                 .then();
     }
 
@@ -99,12 +76,6 @@ public class SaveStaticDataToRedis {
                 .then();
     }
 
-    private Mono<Void> saveInvalidInventoryItemCategoryList() {
-        return mongoService.findAllInvalidInventoryItemCategory()
-                .flatMap(invalidInventoryItemCategory -> invalidInventoryItemCategoryRepository.save(invalidInventoryItemCategory.getCategory()))
-                .then();
-    }
-
     private Mono<Void> saveItemList() {
         return mongoService.findAllItem()
                 .flatMap(staticItem -> {
@@ -118,12 +89,6 @@ public class SaveStaticDataToRedis {
     private Mono<Void> saveLabEfficiencyList() {
         return mongoService.findAllLabEfficiency()
                 .flatMap(labEfficiency -> labEfficiencyRepository.save(labEfficiency.getLevel(), labEfficiency.getEfficiency()))
-                .then();
-    }
-
-    private Mono<Void> saveNonDiscardableInventoryItemCategoryList() {
-        return mongoService.findAllNonDiscardableInventoryItemCategory()
-                .flatMap(nonDiscardableInventoryItemCategory -> nonDiscardableInventoryItemCategoryRepository.save(nonDiscardableInventoryItemCategory.getCategory()))
                 .then();
     }
 
@@ -143,20 +108,6 @@ public class SaveStaticDataToRedis {
                     List<MaterialItemInfo> materialList = upgradeMaterial.getMaterialList();
                     return Flux.fromIterable(materialList)
                             .flatMap(item -> upgradeMaterialRepository.save(upgradeMaterial.getLevel(), item));
-                })
-                .then();
-    }
-
-    private Mono<Void> savePositionList() {
-        return mongoService.findAllPosition()
-                .flatMap(position -> {
-                    int mapId = position.getMapId();
-                    Set<String> positions = position.getPositions();
-                    return Flux.fromIterable(positions)
-                            .flatMap(positionInfo -> {
-                                positionRepository.save(mapId, positionInfo).subscribe();
-                                return Mono.empty();
-                            });
                 })
                 .then();
     }

@@ -2,7 +2,6 @@ package com.explorer.realtime.staticdatahandling.event;
 
 import com.explorer.realtime.staticdatahandling.document.Position;
 import com.explorer.realtime.staticdatahandling.repository.mongo.PositionMongoRepository;
-import com.explorer.realtime.staticdatahandling.service.MongoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -19,7 +18,6 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class SaveNewPositionsToMongoDB {
 
-    private final MongoService mongoService;
     private final PositionMongoRepository positionMongoRepository;
 
     public Mono<Void> process(JSONObject json) {
