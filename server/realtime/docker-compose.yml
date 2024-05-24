@@ -101,6 +101,17 @@ services:
       explorer:
         ipv4_address: 172.21.0.9
 
+  springboot-move:
+    image: vlwli99/move
+    container_name: move
+    depends_on:
+      - redis-channel
+    ports:
+      - "9004:9004"
+    networks:
+      explorer:
+        ipv4_address: 172.21.0.10
+
 networks:
   explorer:
     ipam:
