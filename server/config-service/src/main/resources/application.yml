@@ -18,11 +18,12 @@ spring:
           private-key: |
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-            QyNTUxOQAAACDqbDz0ErKPO9mI5iU8cDPImOyw6K61XbjXW11a5rCpqAAAAJjj9jSn4/Y0
-            pwAAAAtzc2gtZWQyNTUxOQAAACDqbDz0ErKPO9mI5iU8cDPImOyw6K61XbjXW11a5rCpqA
-            AAAEBVeaeCrekeZv3m3Ouw7QeO3VVvc/3IHEaEWsSatpA+0epsPPQSso872YjmJTxwM8iY
-            7LDorrVduNdbXVrmsKmoAAAAFVNTQUZZQERFU0tUT1AtTEw4MzJGNA==
+            QyNTUxOQAAACDMInmPB/nSz2eVi2/XC7kKSKSOp2AzwsMSHudlJtXcXAAAAJglbSeSJW0n
+            kgAAAAtzc2gtZWQyNTUxOQAAACDMInmPB/nSz2eVi2/XC7kKSKSOp2AzwsMSHudlJtXcXA
+            AAAEBC4mrOLjJl3hHqmwiEBf8/o7JA+PsT0k4QLTskpUudF8wieY8H+dLPZ5WLb9cLuQpI
+            pI6nYDPCwxIe52Um1dxcAAAAFVNTQUZZQERFU0tUT1AtTEw4MzJGNA==
             -----END OPENSSH PRIVATE KEY-----
+
 
 passphrase:
           host-key: AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
