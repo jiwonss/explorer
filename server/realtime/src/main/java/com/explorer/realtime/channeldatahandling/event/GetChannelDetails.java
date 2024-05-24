@@ -8,7 +8,6 @@ import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
 import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
-import com.explorer.realtime.sessionhandling.waitingroom.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -27,7 +26,6 @@ public class GetChannelDetails {
 
     private final ChannelService channelService;
     private final ChannelRepository channelRepository;
-    private final UserRepository userRepository;
     private final Unicasting unicasting;
 
     private static final String eventName = "getChannelDetails";

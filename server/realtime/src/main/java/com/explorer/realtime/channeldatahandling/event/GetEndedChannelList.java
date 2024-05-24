@@ -1,12 +1,9 @@
 package com.explorer.realtime.channeldatahandling.event;
 
-import com.explorer.realtime.channeldatahandling.dto.ChannelDetailsInfo;
-import com.explorer.realtime.channeldatahandling.dto.PlayerInfo;
 import com.explorer.realtime.channeldatahandling.service.ChannelService;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
 import com.explorer.realtime.global.component.broadcasting.Unicasting;
-import com.explorer.realtime.global.redis.ChannelRepository;
 import com.explorer.realtime.global.util.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +11,6 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
-
-import java.util.List;
 
 @Slf4j
 @Service

@@ -1,6 +1,5 @@
 package com.explorer.realtime.channeldatahandling.event;
 
-import com.explorer.realtime.channeldatahandling.client.UserClient;
 import com.explorer.realtime.channeldatahandling.service.ChannelService;
 import com.explorer.realtime.global.common.dto.Message;
 import com.explorer.realtime.global.common.enums.CastingType;
@@ -18,11 +17,9 @@ import reactor.netty.Connection;
 @RequiredArgsConstructor
 public class GetChannelList {
 
-    private final UserClient userClient;
     private final ChannelService channelService;
     private final Unicasting unicasting;
-
-    private static final String TOKEN_PREFIX = "Bearer ";
+    
     private static final String eventName = "getChannelList";
 
     public Mono<Void> process(JSONObject json, Connection connection) {
