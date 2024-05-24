@@ -1,6 +1,5 @@
 package com.explorer.realtime.gamedatahandling;
 
-import com.explorer.realtime.gamedatahandling.component.common.boxinfo.InstallHandler;
 import com.explorer.realtime.gamedatahandling.component.common.mapinfo.MapDataHandler;
 import com.explorer.realtime.gamedatahandling.craft.CraftHandler;
 import com.explorer.realtime.gamedatahandling.ending.EndingHandler;
@@ -24,7 +23,6 @@ public class GameDataHandler {
     private final FarmingHandler farmingHandler;
     private final MapDataHandler mapDataHandler;
     private final LaboratoryHandler laboratoryHandler;
-    private final InstallHandler installHandler;
     private final InventoryHandler inventoryHandler;
     private final ToolHandler toolHandler;
     private final CraftHandler craftHandler;
@@ -52,11 +50,6 @@ public class GameDataHandler {
             case "laboratory":
                 log.info("category : {}", category);
                 laboratoryHandler.laboratoryHandler(json).subscribe();
-                break;
-
-            case "install":
-                log.info("category : {}", category);
-                installHandler.boxHandler(json);
                 break;
 
             case "inventory":
